@@ -1,0 +1,809 @@
+[
+  {
+    "id": "one_inch",
+    "name": "一寸",
+    "pixelWidth": 295,
+    "pixelHeight": 413,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 295,
+    "maxWidth": 295,
+    "minHeight": 413,
+    "maxHeight": 413,
+    "minRatio": 1.35,
+    "maxRatio": 1.45,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "冲印尺寸 25×35mm",
+      "最佳尺寸 295×413 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "two_inch",
+    "name": "二寸",
+    "pixelWidth": 413,
+    "pixelHeight": 579,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 413,
+    "maxWidth": 413,
+    "minHeight": 579,
+    "maxHeight": 579,
+    "minRatio": 1.3519,
+    "maxRatio": 1.4519,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "冲印尺寸 35×49mm",
+      "最佳尺寸 413×579 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "one_inch_large",
+    "name": "大一寸",
+    "pixelWidth": 390,
+    "pixelHeight": 567,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 390,
+    "maxWidth": 390,
+    "minHeight": 567,
+    "maxHeight": 567,
+    "minRatio": 1.4038,
+    "maxRatio": 1.5038,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "冲印尺寸 33×48mm",
+      "最佳尺寸 390×567 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "two_inch_small",
+    "name": "小二寸",
+    "pixelWidth": 413,
+    "pixelHeight": 531,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 413,
+    "maxWidth": 413,
+    "minHeight": 531,
+    "maxHeight": 531,
+    "minRatio": 1.2357,
+    "maxRatio": 1.3357,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "冲印尺寸 35×45mm",
+      "最佳尺寸 413×531 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "one_inch_small",
+    "name": "小一寸",
+    "pixelWidth": 260,
+    "pixelHeight": 378,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 260,
+    "maxWidth": 260,
+    "minHeight": 378,
+    "maxHeight": 378,
+    "minRatio": 1.4038,
+    "maxRatio": 1.5038,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "冲印尺寸 22×32mm",
+      "最佳尺寸 260×378 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "cet_english",
+    "name": "英语四六级",
+    "pixelWidth": 144,
+    "pixelHeight": 192,
+    "minFileKb": 50,
+    "maxFileKb": 200,
+    "minWidth": 144,
+    "maxWidth": 144,
+    "minHeight": 192,
+    "maxHeight": 192,
+    "minRatio": 1.2833,
+    "maxRatio": 1.3833,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "冲印尺寸 25×35mm",
+      "最佳尺寸 144×192 像素",
+      "文件大小 50KB–200KB"
+    ]
+  },
+  {
+    "id": "gaokao",
+    "name": "高考报名",
+    "pixelWidth": 480,
+    "pixelHeight": 640,
+    "minFileKb": 20,
+    "maxFileKb": 30,
+    "minWidth": 480,
+    "maxWidth": 480,
+    "minHeight": 640,
+    "maxHeight": 640,
+    "minRatio": 1.2833,
+    "maxRatio": 1.3833,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "最佳尺寸 480×640 像素",
+      "文件大小 20KB–30KB"
+    ]
+  },
+  {
+    "id": "student_record",
+    "name": "学籍照片",
+    "pixelWidth": 307,
+    "pixelHeight": 378,
+    "minFileKb": 0,
+    "maxFileKb": 60,
+    "minWidth": 307,
+    "maxWidth": 307,
+    "minHeight": 378,
+    "maxHeight": 378,
+    "minRatio": 1.1813,
+    "maxRatio": 1.2813,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "最佳尺寸 307×378 像素",
+      "文件大小 0KB–60KB"
+    ]
+  },
+  {
+    "id": "university_image_collect",
+    "name": "大学生图像采集",
+    "pixelWidth": 480,
+    "pixelHeight": 640,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 480,
+    "maxWidth": 480,
+    "minHeight": 640,
+    "maxHeight": 640,
+    "minRatio": 1.2833,
+    "maxRatio": 1.3833,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "最佳尺寸 480×640 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "id_card",
+    "name": "身份证照",
+    "pixelWidth": 358,
+    "pixelHeight": 441,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 358,
+    "maxWidth": 358,
+    "minHeight": 441,
+    "maxHeight": 441,
+    "minRatio": 1.1818,
+    "maxRatio": 1.2818,
+    "background": {
+      "name": "白底",
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "requirements": [
+      "最佳尺寸 358×441 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "social_security",
+    "name": "社保证",
+    "pixelWidth": 358,
+    "pixelHeight": 441,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 358,
+    "maxWidth": 358,
+    "minHeight": 441,
+    "maxHeight": 441,
+    "minRatio": 1.1818,
+    "maxRatio": 1.2818,
+    "background": {
+      "name": "白底",
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "requirements": [
+      "最佳尺寸 358×441 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "driving_license",
+    "name": "驾驶证",
+    "pixelWidth": 380,
+    "pixelHeight": 520,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 380,
+    "maxWidth": 380,
+    "minHeight": 520,
+    "maxHeight": 520,
+    "minRatio": 1.3184,
+    "maxRatio": 1.4184,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "最佳尺寸 380×520 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "driving_license_small",
+    "name": "驾驶证小一寸",
+    "pixelWidth": 260,
+    "pixelHeight": 378,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 260,
+    "maxWidth": 260,
+    "minHeight": 378,
+    "maxHeight": 378,
+    "minRatio": 1.4038,
+    "maxRatio": 1.5038,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "最佳尺寸 260×378 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "tour_guide",
+    "name": "导游证",
+    "pixelWidth": 285,
+    "pixelHeight": 385,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 285,
+    "maxWidth": 285,
+    "minHeight": 385,
+    "maxHeight": 385,
+    "minRatio": 1.3009,
+    "maxRatio": 1.4009,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "最佳尺寸 285×385 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "three_inch",
+    "name": "三寸",
+    "pixelWidth": 649,
+    "pixelHeight": 991,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 649,
+    "maxWidth": 649,
+    "minHeight": 991,
+    "maxHeight": 991,
+    "minRatio": 1.477,
+    "maxRatio": 1.577,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "冲印尺寸 55×84mm",
+      "最佳尺寸 649×991 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "five_inch",
+    "name": "五寸",
+    "pixelWidth": 1050,
+    "pixelHeight": 1499,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 1050,
+    "maxWidth": 1050,
+    "minHeight": 1499,
+    "maxHeight": 1499,
+    "minRatio": 1.3776,
+    "maxRatio": 1.4776,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "冲印尺寸 89×127mm",
+      "最佳尺寸 1050×1499 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "primary_school_entry",
+    "name": "幼升小",
+    "pixelWidth": 272,
+    "pixelHeight": 354,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 272,
+    "maxWidth": 272,
+    "minHeight": 354,
+    "maxHeight": 354,
+    "minRatio": 1.2515,
+    "maxRatio": 1.3515,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "最佳尺寸 272×354 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "grade7_new",
+    "name": "七年级新生",
+    "pixelWidth": 147,
+    "pixelHeight": 206,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 147,
+    "maxWidth": 147,
+    "minHeight": 206,
+    "maxHeight": 206,
+    "minRatio": 1.3514,
+    "maxRatio": 1.4514,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "最佳尺寸 147×206 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "zhuanshengben",
+    "name": "专升本",
+    "pixelWidth": 360,
+    "pixelHeight": 480,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 360,
+    "maxWidth": 360,
+    "minHeight": 480,
+    "maxHeight": 480,
+    "minRatio": 1.2833,
+    "maxRatio": 1.3833,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "最佳尺寸 360×480 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "adult_self_exam",
+    "name": "成人自考",
+    "pixelWidth": 360,
+    "pixelHeight": 480,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 360,
+    "maxWidth": 360,
+    "minHeight": 480,
+    "maxHeight": 480,
+    "minRatio": 1.2833,
+    "maxRatio": 1.3833,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "最佳尺寸 360×480 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "adult_self_exam_anhui",
+    "name": "安徽成人自考",
+    "pixelWidth": 480,
+    "pixelHeight": 640,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 480,
+    "maxWidth": 480,
+    "minHeight": 640,
+    "maxHeight": 640,
+    "minRatio": 1.2833,
+    "maxRatio": 1.3833,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "最佳尺寸 480×640 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "adult_self_exam_hebei",
+    "name": "河北成人自考",
+    "pixelWidth": 480,
+    "pixelHeight": 640,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 480,
+    "maxWidth": 480,
+    "minHeight": 640,
+    "maxHeight": 640,
+    "minRatio": 1.2833,
+    "maxRatio": 1.3833,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "最佳尺寸 480×640 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "adult_self_exam_shandong",
+    "name": "山东成人自考",
+    "pixelWidth": 480,
+    "pixelHeight": 640,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 480,
+    "maxWidth": 480,
+    "minHeight": 640,
+    "maxHeight": 640,
+    "minRatio": 1.2833,
+    "maxRatio": 1.3833,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "最佳尺寸 480×640 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "marriage_registration",
+    "name": "结婚登记照",
+    "pixelWidth": 626,
+    "pixelHeight": 413,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 626,
+    "maxWidth": 626,
+    "minHeight": 413,
+    "maxHeight": 413,
+    "minRatio": 0.6097,
+    "maxRatio": 0.7097,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "冲印尺寸 53×35mm",
+      "最佳尺寸 626×413 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "china_passport",
+    "name": "中国护照",
+    "pixelWidth": 390,
+    "pixelHeight": 567,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 390,
+    "maxWidth": 390,
+    "minHeight": 567,
+    "maxHeight": 567,
+    "minRatio": 1.4038,
+    "maxRatio": 1.5038,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "冲印尺寸 33×48mm",
+      "最佳尺寸 390×567 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "occupational_appraisal",
+    "name": "职业鉴定",
+    "pixelWidth": 200,
+    "pixelHeight": 300,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 200,
+    "maxWidth": 200,
+    "minHeight": 300,
+    "maxHeight": 300,
+    "minRatio": 1.45,
+    "maxRatio": 1.55,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "最佳尺寸 200×300 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "insurance_agent",
+    "name": "保险从业",
+    "pixelWidth": 210,
+    "pixelHeight": 370,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 210,
+    "maxWidth": 210,
+    "minHeight": 370,
+    "maxHeight": 370,
+    "minRatio": 1.7119,
+    "maxRatio": 1.8119,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "最佳尺寸 210×370 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "two_inch_large",
+    "name": "大二寸",
+    "pixelWidth": 413,
+    "pixelHeight": 626,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 413,
+    "maxWidth": 413,
+    "minHeight": 626,
+    "maxHeight": 626,
+    "minRatio": 1.4657,
+    "maxRatio": 1.5657,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "冲印尺寸 35×53mm",
+      "最佳尺寸 413×626 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "us_visa",
+    "name": "美国签证",
+    "pixelWidth": 600,
+    "pixelHeight": 600,
+    "minFileKb": 0,
+    "maxFileKb": 240,
+    "minWidth": 600,
+    "maxWidth": 600,
+    "minHeight": 600,
+    "maxHeight": 600,
+    "minRatio": 0.95,
+    "maxRatio": 1.05,
+    "background": {
+      "name": "白底",
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "requirements": [
+      "冲印尺寸 51×51mm",
+      "最佳尺寸 600×600 像素",
+      "文件大小 0KB–240KB"
+    ]
+  },
+  {
+    "id": "kr_visa",
+    "name": "韩国签证",
+    "pixelWidth": 413,
+    "pixelHeight": 531,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 413,
+    "maxWidth": 413,
+    "minHeight": 531,
+    "maxHeight": 531,
+    "minRatio": 1.2357,
+    "maxRatio": 1.3357,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "冲印尺寸 35×45mm",
+      "最佳尺寸 413×531 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "ca_visa",
+    "name": "加拿大签证",
+    "pixelWidth": 413,
+    "pixelHeight": 531,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 413,
+    "maxWidth": 413,
+    "minHeight": 531,
+    "maxHeight": 531,
+    "minRatio": 1.2357,
+    "maxRatio": 1.3357,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "冲印尺寸 35×45mm",
+      "最佳尺寸 413×531 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "th_visa",
+    "name": "泰国签证",
+    "pixelWidth": 413,
+    "pixelHeight": 531,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 413,
+    "maxWidth": 413,
+    "minHeight": 531,
+    "maxHeight": 531,
+    "minRatio": 1.2357,
+    "maxRatio": 1.3357,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "冲印尺寸 35×45mm",
+      "最佳尺寸 413×531 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  },
+  {
+    "id": "campus_card",
+    "name": "校园一卡通",
+    "pixelWidth": 480,
+    "pixelHeight": 640,
+    "minFileKb": 0,
+    "maxFileKb": 10240,
+    "minWidth": 480,
+    "maxWidth": 480,
+    "minHeight": 640,
+    "maxHeight": 640,
+    "minRatio": 1.2833,
+    "maxRatio": 1.3833,
+    "background": {
+      "name": "蓝底",
+      "r": 67,
+      "g": 142,
+      "b": 219
+    },
+    "requirements": [
+      "最佳尺寸 480×640 像素",
+      "文件大小 0KB–10240KB"
+    ]
+  }
+]

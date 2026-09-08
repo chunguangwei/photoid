@@ -1,0 +1,129 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Smart ID Photo",
+
+  "privacyNote": "All processing happens on this device. Photos are never uploaded to a server.",
+  "specStudentName": "Student application photo (Edu ID)",
+  "bgBlue": "Blue background",
+  "requirementsTitle": "Photo requirements",
+  "reqEduIdName": "Name the file with your Education ID (JPG format)",
+  "reqFileSize": "File size between 10KB and 500KB",
+  "reqBlueBg": "Photo background must be blue",
+  "reqBestSize": "Best size 480×640 px (width 380–580, height 540–740)",
+  "reqRatio": "Aspect ratio (height/width) between 1.2 and 1.4",
+  "reqClothing": "Wear the autumn school uniform jacket over a white short-sleeve shirt",
+  "takePhoto": "Take ID photo",
+  "pickFromGallery": "Choose from gallery",
+
+  "cameraNotFound": "No available camera found",
+  "cameraInitFailed": "Camera initialization failed: {detail}",
+  "@cameraInitFailed": {
+    "placeholders": { "detail": { "type": "String" } }
+  },
+  "captureFailed": "Capture failed: {detail}",
+  "@captureFailed": {
+    "placeholders": { "detail": { "type": "String" } }
+  },
+  "cameraGuide": "Face the camera, show both ears, align your head with the oval frame",
+
+  "stepPreparing": "Preparing…",
+  "stepReading": "Reading photo…",
+  "stepSegmenting": "Cutting out portrait…",
+  "stepCompositing": "Compositing {bg}…",
+  "@stepCompositing": {
+    "placeholders": { "bg": { "type": "String" } }
+  },
+  "stepDetectingFace": "Detecting face and composing…",
+  "stepCompressing": "Compressing and exporting…",
+  "errReadPhoto": "Cannot read this photo. Please choose another JPG/PNG image.",
+  "errNoPerson": "Cutout failed: no person detected. Please use a single-person front-facing photo.",
+  "errNoFace": "No front-facing face detected. Please retake: face the camera, keep your face unobstructed.",
+  "processFailed": "Processing failed: {detail}",
+  "@processFailed": {
+    "placeholders": { "detail": { "type": "String" } }
+  },
+  "retakeOrPick": "Retake / choose again",
+  "retry": "Retry",
+  "chipPreview": "Result",
+  "chipOriginal": "Original",
+  "complianceCheckSave": "Run compliance check & save",
+
+  "resultTitle": "Compliance check",
+  "checkItemsTitle": "Checks",
+  "verdictPass": "Meets school requirements",
+  "verdictFail": "Some checks failed",
+  "eduIdLabel": "Education ID (used as file name)",
+  "eduIdHint": "e.g. 2026010101",
+  "eduIdRequired": "Enter your Education ID as the file name first",
+  "galleryPermissionDenied": "Photo library write permission not granted",
+  "savedToGallery": "Saved to gallery: {fileName}",
+  "@savedToGallery": {
+    "placeholders": { "fileName": { "type": "String" } }
+  },
+  "saveFailed": "Save failed: {detail}",
+  "@saveFailed": {
+    "placeholders": { "detail": { "type": "String" } }
+  },
+  "saveToGallery": "Save to gallery",
+  "doneRetake": "Done, take another",
+  "referenceSuffix": " (reference)",
+  "referenceJoiner": "; ",
+
+  "checkJpgFormat": "File format is JPG",
+  "checkFileSizeRange": "File size {min}–{max}KB",
+  "@checkFileSizeRange": {
+    "placeholders": {
+      "min": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+  "checkDecodable": "Image decodable",
+  "checkPixelSize": "Pixel size width {minW}–{maxW}, height {minH}–{maxH}",
+  "@checkPixelSize": {
+    "placeholders": {
+      "minW": { "type": "int" },
+      "maxW": { "type": "int" },
+      "minH": { "type": "int" },
+      "maxH": { "type": "int" }
+    }
+  },
+  "checkBestSize": "Best size {w}×{h}",
+  "@checkBestSize": {
+    "placeholders": {
+      "w": { "type": "int" },
+      "h": { "type": "int" }
+    }
+  },
+  "checkRatio": "Ratio (height/width) {min}–{max}",
+  "@checkRatio": {
+    "placeholders": {
+      "min": { "type": "String" },
+      "max": { "type": "String" }
+    }
+  },
+  "checkBlueBg": "Background is blue",
+  "checkFaceDetected": "Front-facing face detected",
+  "checkHeadRatio": "Head ratio 45%–85%",
+  "checkHeadCentered": "Head horizontally centered",
+  "checkEyesOpen": "Eyes open",
+  "fixFileTooLarge": "File too large. Regenerate with stronger compression.",
+  "fixFileTooSmall": "File too small. Export with higher quality.",
+  "fixFileCorrupt": "File corrupted. Please regenerate.",
+  "fixSizeOutOfRange": "Size out of range. Please regenerate.",
+  "fixRatioMismatch": "Ratio mismatch. Please re-crop.",
+  "fixNotBlue": "Background is not blue. Use background replacement to regenerate.",
+  "fixNoFace": "No face detected. Use a front-facing hatless photo and retake.",
+  "fixHeadRatio": "Head ratio out of range. Adjust the shooting distance.",
+  "fixNotCentered": "Person not centered. Recompose the shot.",
+  "fixEyesClosed": "Eyes closed detected. Please retake.",
+  "deviationPercent": "Deviation {n}",
+  "@deviationPercent": {
+    "placeholders": { "n": { "type": "String" } }
+  },
+
+  "updateTitle": "New version available",
+  "updateLater": "Later",
+  "updateNow": "Update now",
+  "updateDownloadFailed": "Download failed. Please try again later."
+}
