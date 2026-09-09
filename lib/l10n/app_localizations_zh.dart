@@ -543,4 +543,58 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get updateRetryInstall => '重试安装';
+
+  @override
+  String get beautyLabel => '美颜';
+
+  @override
+  String get beautyOff => '关';
+
+  @override
+  String get beautyLight => '轻度';
+
+  @override
+  String get beautyStandard => '标准';
+
+  @override
+  String get beautyStrong => '较强';
+
+  @override
+  String get suitLabel => '正装';
+
+  @override
+  String get suitNone => '无';
+
+  @override
+  String get suitMenNavy => '男·深蓝';
+
+  @override
+  String get suitMenCharcoal => '男·深灰';
+
+  @override
+  String get suitWomen => '女·圆领';
+
+  @override
+  String get suitComplianceHint => '提示：身份证/签证等严格场景不建议使用正装合成';
+
+  @override
+  String get customUnitPx => 'PX';
+
+  @override
+  String get customUnitMm => 'mm';
+
+  @override
+  String get customDpi => '分辨率（DPI）';
+
+  @override
+  String get customReset => '重置';
+
+  @override
+  String get customTapToSwitch => '点击切换单位';
+
+  @override
+  String get customWidthMm => '宽度（mm）';
+
+  @override
+  String get customHeightMm => '高度（mm）';
 }

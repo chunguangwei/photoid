@@ -10,6 +10,7 @@ import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 import '../models/photo_spec.dart';
 import '../services/image_pipeline.dart';
+import '../services/suit_compositor.dart';
 import 'crop_editor.dart';
 import 'result_page.dart';
 
@@ -40,6 +41,14 @@ class _EditPageState extends State<EditPage> {
   bool _regenerating = false;
 
   static const _hdPrefKey = 'hd_mode_enabled';
+  static const _beautyPrefKey = 'beauty_level';
+
+  /// 美颜档位（持久化）；正装样式（会话内）
+  BeautyLevel _beauty = BeautyLevel.standard;
+  SuitStyle _suit = SuitStyle.none;
+
+  /// 预览用合成图缓存：应用美颜/正装后的 compositedJpg
+  Uint8List? _previewJpg;
 
   /// 高精修版（MODNet 发丝级抠图+磨皮）开关；false=普通版（ML Kit 快速）。
   /// 持久化到 SharedPreferences，下次进编辑页保持上次选择。
@@ -59,7 +68,36 @@ class _EditPageState extends State<EditPage> {
   Future<void> _loadHdPref() async {
     final prefs = await SharedPreferences.getInstance();
     final v = prefs.getBool(_hdPrefKey);
-    if (v != null && mounted) setState(() => _hd = v);
+    final b = prefs.getInt(_beautyPrefKey);
+    if (mounted) {
+      setState(() {
+        if (v != null) _hd = v;
+        if (b != null && b >= 0 && b < BeautyLevel.values.length) {
+          _beauty = BeautyLevel.values[b];
+        }
+      });
+    }
+  }
+
+  /// 美颜/正装变化：重算预览合成图（编辑器回到自动构图，与成片参数一致）
+  void _refreshEffects({bool persistBeauty = false}) {
+    if (persistBeauty) {
+      SharedPreferences.getInstance()
+          .then((p) => p.setInt(_beautyPrefKey, _beauty.index));
+    }
+    final r = _result;
+    if (r == null) return;
+    var imgOut = r.composited.clone();
+    if (_suit != SuitStyle.none) {
+      imgOut = SuitCompositor.apply(imgOut, r.faceRect, _suit);
+    }
+    if (_beauty != BeautyLevel.off) {
+      imgOut = ImagePipeline.beautify(imgOut, r.faceRect, _beauty);
+    }
+    setState(() {
+      _previewJpg = img.encodeJpg(imgOut, quality: 90);
+      _currentCrop = null; // 预览重算后回自动构图，避免用户框与效果错位
+    });
   }
 
   /// 换底色：更新规格后重跑流水线，预览与 KB 随之刷新。
@@ -102,7 +140,11 @@ class _EditPageState extends State<EditPage> {
           flipHorizontal: widget.flipHorizontal,
           engine: _hd ? MattingEngine.modnet : MattingEngine.mlkit);
       if (!mounted) return;
-      setState(() => _result = result);
+      setState(() {
+        _result = result;
+        _previewJpg = null;
+      });
+      _refreshEffects();
     } on PipelineException catch (e) {
       if (mounted) setState(() => _error = Tr.of(context).pipelineError(e));
     } on PlatformException {
@@ -168,16 +210,19 @@ class _EditPageState extends State<EditPage> {
         _spec.pixelHeight,
         img.ColorRgb8(
             _spec.background.r, _spec.background.g, _spec.background.b));
-    if (_hd) {
-      // 人脸框：composited 坐标 → 裁剪后输出坐标（保守参数磨皮/提亮）
-      final sx = _spec.pixelWidth / w;
-      final sy = _spec.pixelHeight / h;
-      final face = Rect.fromLTRB(
-          (r.faceRect.left - x) * sx,
-          (r.faceRect.top - y) * sy,
-          (r.faceRect.right - x) * sx,
-          (r.faceRect.bottom - y) * sy);
-      out = ImagePipeline.beautify(out, face);
+    // 人脸框：composited 坐标 → 裁剪后输出坐标
+    final sx = _spec.pixelWidth / w;
+    final sy = _spec.pixelHeight / h;
+    final face = Rect.fromLTRB(
+        (r.faceRect.left - x) * sx,
+        (r.faceRect.top - y) * sy,
+        (r.faceRect.right - x) * sx,
+        (r.faceRect.bottom - y) * sy);
+    if (_suit != SuitStyle.none) {
+      out = SuitCompositor.apply(out, face, _suit);
+    }
+    if (_beauty != BeautyLevel.off) {
+      out = ImagePipeline.beautify(out, face, _beauty);
     }
     return ImagePipeline.encodeToKbRange(out, _spec.minFileKb, _spec.maxFileKb);
   }
@@ -277,8 +322,8 @@ class _EditPageState extends State<EditPage> {
               child: _showOriginal
                   ? Image.memory(result.originalBytes, fit: BoxFit.contain)
                   : CropEditor(
-                      key: _editorKey,
-                      imageBytes: result.compositedJpg,
+                      key: ValueKey(_previewJpg?.length),
+                      imageBytes: _previewJpg ?? result.compositedJpg,
                       imageWidth: result.composited.width,
                       imageHeight: result.composited.height,
                       autoCrop: result.autoCrop,
@@ -353,6 +398,7 @@ class _EditPageState extends State<EditPage> {
             ],
           ),
         ),
+        _effectsBar(),
         Padding(
           padding: const EdgeInsets.all(12),
           child: Text(
@@ -365,6 +411,87 @@ class _EditPageState extends State<EditPage> {
       ],
     );
   }
+
+  /// 美颜档位 + 正装选择行（与成片同参数，预览实时生效）
+  Widget _effectsBar() {
+    final l = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Text(l.beautyLabel,
+                style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(width: 8),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(children: [
+                  for (final lv in BeautyLevel.values)
+                    _miniChip(_beautyLabel(lv, l), _beauty == lv, () {
+                      _beauty = lv;
+                      _refreshEffects(persistBeauty: true);
+                    }),
+                ]),
+              ),
+            ),
+          ]),
+          const SizedBox(height: 6),
+          Row(children: [
+            Text(l.suitLabel,
+                style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(width: 8),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(children: [
+                  for (final st in SuitStyle.values)
+                    _miniChip(_suitLabel(st, l), _suit == st, () {
+                      _suit = st;
+                      _refreshEffects();
+                    }),
+                ]),
+              ),
+            ),
+          ]),
+          if (_suit != SuitStyle.none)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(l.suitComplianceHint,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.error)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniChip(String label, bool selected, VoidCallback onTap) =>
+      Padding(
+        padding: const EdgeInsets.only(right: 6),
+        child: ChoiceChip(
+          label: Text(label),
+          labelStyle: const TextStyle(fontSize: 12),
+          visualDensity: VisualDensity.compact,
+          selected: selected,
+          onSelected: (_) => onTap(),
+        ),
+      );
+
+  String _beautyLabel(BeautyLevel lv, AppLocalizations l) => switch (lv) {
+        BeautyLevel.off => l.beautyOff,
+        BeautyLevel.light => l.beautyLight,
+        BeautyLevel.standard => l.beautyStandard,
+        BeautyLevel.strong => l.beautyStrong,
+      };
+
+  String _suitLabel(SuitStyle st, AppLocalizations l) => switch (st) {
+        SuitStyle.none => l.suitNone,
+        SuitStyle.menNavy => l.suitMenNavy,
+        SuitStyle.menCharcoal => l.suitMenCharcoal,
+        SuitStyle.womenNavy => l.suitWomen,
+      };
 
   /// 色块选底（对标行业交互：圆角色块 + 选中描边✓ + 名称）
   Widget _bgSwatch(SpecBackground bg) {

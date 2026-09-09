@@ -96,8 +96,7 @@ class Tr {
       case 'bestSize':
         return _l.checkBestSize(spec.pixelWidth, spec.pixelHeight);
       case 'ratio':
-        return _l.checkRatio(
-            _num(spec.minRatio.toString()), _num(spec.maxRatio.toString()));
+        return _l.checkRatio(_ratio(spec.minRatio), _ratio(spec.maxRatio));
       case 'blueBg':
         return _l.checkBgColor(bgName(spec.background));
       case 'faceDetected':
@@ -147,7 +146,6 @@ class Tr {
     return item.detail;
   }
 
-  /// 1.2 → "1.2"，1.0 → "1"（与 ARB 中文原文格式一致）
-  static String _num(String s) =>
-      s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
+  /// 1.2833333… → "1.28"（比例区间标签用，保留两位小数）
+  static String _ratio(double v) => v.toStringAsFixed(2);
 }

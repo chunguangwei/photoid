@@ -1087,6 +1087,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry install'**
   String get updateRetryInstall;
+
+  /// No description provided for @beautyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Beauty'**
+  String get beautyLabel;
+
+  /// No description provided for @beautyOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get beautyOff;
+
+  /// No description provided for @beautyLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get beautyLight;
+
+  /// No description provided for @beautyStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Std'**
+  String get beautyStandard;
+
+  /// No description provided for @beautyStrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Strong'**
+  String get beautyStrong;
+
+  /// No description provided for @suitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Suit'**
+  String get suitLabel;
+
+  /// No description provided for @suitNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get suitNone;
+
+  /// No description provided for @suitMenNavy.
+  ///
+  /// In en, this message translates to:
+  /// **'Men Navy'**
+  String get suitMenNavy;
+
+  /// No description provided for @suitMenCharcoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Men Gray'**
+  String get suitMenCharcoal;
+
+  /// No description provided for @suitWomen.
+  ///
+  /// In en, this message translates to:
+  /// **'Women'**
+  String get suitWomen;
+
+  /// No description provided for @suitComplianceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: not recommended for strict scenarios (passport/visa)'**
+  String get suitComplianceHint;
+
+  /// No description provided for @customUnitPx.
+  ///
+  /// In en, this message translates to:
+  /// **'PX'**
+  String get customUnitPx;
+
+  /// No description provided for @customUnitMm.
+  ///
+  /// In en, this message translates to:
+  /// **'mm'**
+  String get customUnitMm;
+
+  /// No description provided for @customDpi.
+  ///
+  /// In en, this message translates to:
+  /// **'DPI'**
+  String get customDpi;
+
+  /// No description provided for @customReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get customReset;
+
+  /// No description provided for @customTapToSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to switch unit'**
+  String get customTapToSwitch;
+
+  /// No description provided for @customWidthMm.
+  ///
+  /// In en, this message translates to:
+  /// **'Width (mm)'**
+  String get customWidthMm;
+
+  /// No description provided for @customHeightMm.
+  ///
+  /// In en, this message translates to:
+  /// **'Height (mm)'**
+  String get customHeightMm;
 }
 
 class _AppLocalizationsDelegate

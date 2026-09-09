@@ -1,7 +1,7 @@
 name: photoid
 description: 智能证件照 - 本地处理的合规证件照
 publish_to: 'none'
-version: 0.3.0+12
+version: 0.3.1+13
 
 environment:
   sdk: ^3.5.0

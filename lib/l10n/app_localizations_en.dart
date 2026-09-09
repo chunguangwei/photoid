@@ -564,4 +564,59 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateRetryInstall => 'Retry install';
+
+  @override
+  String get beautyLabel => 'Beauty';
+
+  @override
+  String get beautyOff => 'Off';
+
+  @override
+  String get beautyLight => 'Light';
+
+  @override
+  String get beautyStandard => 'Std';
+
+  @override
+  String get beautyStrong => 'Strong';
+
+  @override
+  String get suitLabel => 'Suit';
+
+  @override
+  String get suitNone => 'None';
+
+  @override
+  String get suitMenNavy => 'Men Navy';
+
+  @override
+  String get suitMenCharcoal => 'Men Gray';
+
+  @override
+  String get suitWomen => 'Women';
+
+  @override
+  String get suitComplianceHint =>
+      'Note: not recommended for strict scenarios (passport/visa)';
+
+  @override
+  String get customUnitPx => 'PX';
+
+  @override
+  String get customUnitMm => 'mm';
+
+  @override
+  String get customDpi => 'DPI';
+
+  @override
+  String get customReset => 'Reset';
+
+  @override
+  String get customTapToSwitch => 'Tap to switch unit';
+
+  @override
+  String get customWidthMm => 'Width (mm)';
+
+  @override
+  String get customHeightMm => 'Height (mm)';
 }

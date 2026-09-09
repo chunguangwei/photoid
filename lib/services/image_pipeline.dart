@@ -15,6 +15,25 @@ import 'modnet_segmenter.dart';
 /// 抠图引擎：mlkit=快速普通版；modnet=高精修发丝级（失败自动回退 mlkit）。
 enum MattingEngine { mlkit, modnet }
 
+/// 美颜档位（仅皮肤域磨皮/提亮/润色，不瘦脸不大眼，保真不失真）。
+enum BeautyLevel {
+  off(0, 1.0, 1.0),
+  light(0.30, 1.02, 1.03),
+  standard(0.45, 1.04, 1.05),
+  strong(0.60, 1.06, 1.08);
+
+  const BeautyLevel(this.smoothBlend, this.brightness, this.saturation);
+
+  /// 磨皮混合比例（0-1）
+  final double smoothBlend;
+
+  /// 提亮系数（1=不变）
+  final double brightness;
+
+  /// 饱和系数（1=不变）
+  final double saturation;
+}
+
 /// 流水线处理步骤（UI 层据此映射 l10n 键，文案改动不影响翻译）。
 enum PipelineStep { preparing, reading, segmenting, compositing, framing, compressing }
 class PipelineException implements Exception {
@@ -229,10 +248,11 @@ class ImagePipeline {
   Rect _cropRect(img.Image source, Rect face, PhotoSpec spec) =>
       cropRectFor(source.width, source.height, face, spec.aspect);
 
-  /// 高清精修（保守参数，避免审核失真）：
-  /// 面部椭圆区域 45% 磨皮 + 全图微提亮/微饱和。
-  /// [face] 为输出图坐标系人脸框（编辑器按裁剪比例换算后传入）。
-  static img.Image beautify(img.Image src, Rect face) {
+  /// 美颜（仅皮肤域，保真不失真）：面部椭圆区域按档位磨皮 +
+  /// 全图微提亮/微润色。[face] 为输出图坐标系人脸框。
+  static img.Image beautify(img.Image src, Rect face,
+      [BeautyLevel level = BeautyLevel.standard]) {
+    if (level == BeautyLevel.off) return src;
     final blurred = img.gaussianBlur(src.clone(), radius: 4);
     final cx = face.left + face.width / 2;
     final cy = face.top + face.height / 2;
@@ -249,17 +269,19 @@ class ImagePipeline {
         if (dx * dx + dy * dy > 1) continue;
         final sp = src.getPixel(x, y);
         final bp = blurred.getPixel(x, y);
-        // 45% 混合磨皮
+        // 按档位混合磨皮
+        final k = level.smoothBlend;
         src.setPixelRgb(
             x,
             y,
-            (sp.r * 0.55 + bp.r * 0.45).round(),
-            (sp.g * 0.55 + bp.g * 0.45).round(),
-            (sp.b * 0.55 + bp.b * 0.45).round());
+            (sp.r * (1 - k) + bp.r * k).round(),
+            (sp.g * (1 - k) + bp.g * k).round(),
+            (sp.b * (1 - k) + bp.b * k).round());
       }
     }
-    // 微提亮 + 微饱和（保守）
-    return img.adjustColor(src, brightness: 1.04, saturation: 1.05);
+    // 微提亮 + 微润色（保守，防失真）
+    return img.adjustColor(src,
+        brightness: level.brightness, saturation: level.saturation);
   }
 
   /// 等比缩放到规格像素：只用单一缩放因子（宽向对齐），杜绝拉伸。
