@@ -8,8 +8,9 @@ PhotoID is an AI-powered ID photo maker that runs **entirely on-device**. Take a
 
 ### Features
 
-- 📷 **Capture or import** — shoot directly in the app or pick an existing photo
-- ✂️ **Smart cutout & five background colors** — on-device selfie segmentation, one-tap switch between blue / white / red / gray / dark-blue backgrounds
+- 🏠 **Redesigned home** — brand header, 2×2 quick-action cards (shoot / recolor / resize KB / album), privacy banner and hot-spec picks; consistent on Android & iOS
+- 📷 **Capture or import** — shoot directly in the app (front/back camera switch with a portrait outline guide) or pick an existing photo
+- ✂️ **Smart cutout & five background colors** — on-device selfie segmentation, one-tap switch between blue / white / red / gray / dark-blue backgrounds, with a per-spec recommended default
 - 🎯 **Auto framing & cropping** — face detection drives automatic composition and spec-exact cropping
 - ✅ **Compliance check** — format, file size (KB), pixel size, aspect ratio, background color, head ratio, head centering, and eyes-open checks against built-in specs
 - 🎓 **Student ID photo (education ID naming)** — save files with student-style IDs for easy archiving
@@ -51,6 +52,16 @@ See [docs/development.md](docs/development.md) for architecture, build, test and
 - Android 8.0 (API 26)+
 - iOS 15.5+
 
+### Release Signing
+
+Since v0.2.0, release builds are signed with a dedicated release keystore
+(configured via the gitignored `android/key.properties`; without it the build
+falls back to the debug signature, which must never be distributed). The
+in-app updater only installs APKs signed with the **same** key — losing the
+keystore means existing users can no longer upgrade and must reinstall.
+**Back up the keystore file and its passwords.** Users coming from a
+differently-signed build also need one uninstall/reinstall.
+
 ### License
 
 Non-Commercial License — free for personal use; **commercial use requires the author's written permission: please contact chunguangwee@gmail.com.** See [LICENSE](LICENSE).
@@ -67,8 +78,9 @@ PhotoID 是一款**纯端侧**的 AI 证件照制作应用。支持拍摄或从�
 
 ### 功能特性
 
-- 📷 **拍摄 / 上传**——应用内直接拍摄，或从相册导入现有照片
-- ✨ **智能抠图 · 五色换底**——端侧人像分割，一键切换蓝 / 白 / 红 / 灰 / 深蓝五种底色
+- 🏠 **全新主页**——品牌渐变头 + 2×2 功能大卡（拍证件照 / 换底色 / 改 KB / 我的相册）+ 隐私横幅 + 热门规格，Android / iOS 双端一致
+- 📷 **拍摄 / 上传**——应用内直接拍摄（支持前后置切换与人像轮廓参考框），或从相册导入现有照片
+- ✨ **智能抠图 · 五色换底**——端侧人像分割，一键切换蓝 / 白 / 红 / 灰 / 深蓝五种底色，规格自带推荐默认色
 - 🎯 **自动构图裁剪**——基于人脸检测自动定位头部，按规格精确裁剪
 - ✅ **合规检测**——格式、文件大小（KB）、像素尺寸、宽高比例、底色、头部占比、居中、睁眼逐项校验
 - 🎓 **学生报名照（教育 ID 命名）**——按学号式 ID 命名文件，便于归档管理
@@ -109,6 +121,14 @@ flutter run
 
 - Android 8.0（API 26）及以上
 - iOS 15.5 及以上
+
+### 发布签名
+
+自 v0.2.0 起，release 构建使用专用正式 keystore 签名（通过 gitignored 的
+`android/key.properties` 配置；缺该文件时回退 debug 签名，**绝不可用于分发**）。
+应用内自升级只接受**同签名**覆盖安装——keystore 丢失意味着老用户无法再升级，
+只能卸载重装。**务必备份 keystore 文件及其密码**；从其他签名版本升级的用户
+同样需要卸载重装一次。
 
 ### 许可证
 
