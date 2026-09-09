@@ -280,5 +280,10 @@
       }
     }
   },
-  "updateBgStarted": "Downloading in background — progress in the notification bar. Tap it to install when done."
+  "updateBgStarted": "Downloading in background — progress in the notification bar. Tap it to install when done.",
+  "settingsLanguage": "Language",
+  "langSystem": "System",
+  "langZh": "中文",
+  "langEn": "English",
+  "errMlkit": "AI processing is unavailable on this device. Retry or use another photo."
 }

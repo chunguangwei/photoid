@@ -133,8 +133,6 @@ class _HomeTabState extends State<_HomeTab> {
                     _primaryGrid(context, l),
                     const SizedBox(height: 8),
                     _secondaryTools(context, l),
-                    const SizedBox(height: 12),
-                    _privacyBanner(context, l),
                     const SizedBox(height: 16),
                     TextField(
                       controller: _searchCtrl,
@@ -310,21 +308,6 @@ class _HomeTabState extends State<_HomeTab> {
         ),
       );
 
-  /// 隐私横幅（对标参考图黄色运营位，文案为可验证的真卖点）。
-  Widget _privacyBanner(BuildContext context, AppLocalizations l) => Card(
-        color: Colors.amber.shade100,
-        margin: EdgeInsets.zero,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              const Icon(Icons.lock_outline),
-              const SizedBox(width: 8),
-              Expanded(child: Text(l.privacyNote)),
-            ],
-          ),
-        ),
-      );
 
   Widget _hotHeader(AppLocalizations l) => Padding(
         key: _hotHeaderKey,

@@ -185,5 +185,10 @@
       }
     }
   },
-  "updateBgStarted": "已开始后台下载，进度见通知栏；完成后点击通知安装"
+  "updateBgStarted": "已开始后台下载，进度见通知栏；完成后点击通知安装",
+  "settingsLanguage": "语言",
+  "langSystem": "跟随系统",
+  "langZh": "中文",
+  "langEn": "English",
+  "errMlkit": "AI 处理在当前设备上不可用，请重试或更换照片"
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../l10n/app_localizations.dart';
+import '../services/locale_service.dart';
 import '../services/update_service.dart';
 import 'update_dialog.dart';
 import 'my_album_page.dart';
@@ -51,6 +52,44 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  String _langLabel(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final cur = LocaleService.locale.value;
+    if (cur == null) return l.langSystem;
+    return cur.languageCode == 'en' ? l.langEn : l.langZh;
+  }
+
+  /// 语言选择：跟随系统 / 中文 / English（持久化，立即生效）。
+  Future<void> _chooseLanguage(BuildContext context) async {
+    final l = AppLocalizations.of(context);
+    final picked = await showModalBottomSheet<Locale?>(
+      context: context,
+      builder: (sheetCtx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text(l.langSystem),
+              onTap: () => Navigator.of(sheetCtx).pop(const Locale('__system__')),
+            ),
+            ListTile(
+              title: Text(l.langZh),
+              onTap: () => Navigator.of(sheetCtx).pop(const Locale('zh')),
+            ),
+            ListTile(
+              title: Text(l.langEn),
+              onTap: () => Navigator.of(sheetCtx).pop(const Locale('en')),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (picked == null) return;
+    await LocaleService.setLocale(
+        picked.languageCode == '__system__' ? null : picked);
+    if (mounted) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -67,6 +106,12 @@ class _SettingsPageState extends State<SettingsPage> {
                 builder: (_) => const MyAlbumPage(),
               )),
             ),
+          ListTile(
+            leading: const Icon(Icons.language),
+            title: Text(l.settingsLanguage),
+            trailing: Text(_langLabel(context)),
+            onTap: () => _chooseLanguage(context),
+          ),
           if (Platform.isAndroid)
             ListTile(
               leading: const Icon(Icons.system_update_alt),

@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'pages/home_page.dart';
 import 'pages/update_dialog.dart';
+import 'services/locale_service.dart';
 import 'services/update_service.dart';
 
 void main() async {
@@ -19,6 +20,7 @@ void main() async {
   if (Platform.isAndroid) {
     await FlutterDownloader.initialize(debug: false);
   }
+  await LocaleService.load();
   runApp(const PhotoIdApp());
 }
 class PhotoIdApp extends StatefulWidget {
@@ -86,9 +88,13 @@ class _PhotoIdAppState extends State<PhotoIdApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return ValueListenableBuilder<Locale?>(
+      valueListenable: LocaleService.locale,
+      builder: (context, localeOverride, _) => MaterialApp(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       navigatorKey: _navigatorKey,
+      // 手动语言设置（设置页可改）；null 时按系统语言回退
+      locale: localeOverride,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       localeResolutionCallback: (deviceLocale, supported) {
@@ -103,7 +109,8 @@ class _PhotoIdAppState extends State<PhotoIdApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2B6CB0)),
         useMaterial3: true,
       ),
-      home: const HomePage(),
+        home: const HomePage(),
+      ),
     );
   }
 }

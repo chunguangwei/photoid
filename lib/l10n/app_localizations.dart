@@ -907,6 +907,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Downloading in background — progress in the notification bar. Tap it to install when done.'**
   String get updateBgStarted;
+
+  /// No description provided for @settingsLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settingsLanguage;
+
+  /// No description provided for @langSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get langSystem;
+
+  /// No description provided for @langZh.
+  ///
+  /// In en, this message translates to:
+  /// **'中文'**
+  String get langZh;
+
+  /// No description provided for @langEn.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get langEn;
+
+  /// No description provided for @errMlkit.
+  ///
+  /// In en, this message translates to:
+  /// **'AI processing is unavailable on this device. Retry or use another photo.'**
+  String get errMlkit;
 }
 
 class _AppLocalizationsDelegate

@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:ui' show Rect, Size;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:google_mlkit_selfie_segmentation/google_mlkit_selfie_segmentation.dart';
 import 'package:image/image.dart' as img;
@@ -80,8 +80,7 @@ class ImagePipeline {
     _report(PipelineStep.segmenting);
     final segmenter = SelfieSegmenter(
         mode: SegmenterMode.single, enableRawSizeMask: false);
-    final segMask =
-        await segmenter.processImage(await _inputImage(mlFile, work));
+    final segMask = await _withMlKitFallback(segmenter.processImage, mlFile, work);
     segmenter.close();
     if (segMask == null) {
       throw PipelineException('noPerson');
@@ -128,7 +127,7 @@ class ImagePipeline {
     final detector = FaceDetector(
         options:
             FaceDetectorOptions(performanceMode: FaceDetectorMode.accurate));
-    final faces = await detector.processImage(await _inputImage(mlFile, work));
+    final faces = await _withMlKitFallback(detector.processImage, mlFile, work);
     detector.close();
     if (faces.isEmpty) {
       throw PipelineException('noFace');
@@ -226,12 +225,23 @@ class ImagePipeline {
 
   void _report(PipelineStep step) => onProgress?.call(step);
 
-  /// 构造 ML Kit 输入图像。
-  /// Android：fromFilePath 不挂 MediaImage，ML Kit 原生层会 NPE（已知 bug），
-  /// 改走 fromBytes + NV21（与 camera 插件数据通路一致）；
-  /// iOS：fromFile 工作正常，保持原路径。
+  /// 双通路执行 ML Kit 任务：NV21 为主，PlatformException 时回退 fromFile。
+  /// 背景：fromFilePath 在部分机型 NPE（不挂 MediaImage）；NV21 在华为等
+  /// 无 GMS/受限设备上又报 internal error——两路互备覆盖两类故障。
+  Future<T> _withMlKitFallback<T>(
+      Future<T> Function(InputImage input) task,
+      File file,
+      img.Image work) async {
+    if (!Platform.isAndroid) return task(InputImage.fromFile(file));
+    try {
+      return await task(await _inputImage(file, work));
+    } on PlatformException {
+      return task(InputImage.fromFile(file));
+    }
+  }
+
+  /// 构造 NV21 输入图像（仅 Android）。
   Future<InputImage> _inputImage(File file, img.Image work) async {
-    if (!Platform.isAndroid) return InputImage.fromFile(file);
     final nv21 = await compute(rgbaToNv21, <String, Object>{
       'rgba': work.getBytes(order: img.ChannelOrder.rgba),
       'width': work.width,

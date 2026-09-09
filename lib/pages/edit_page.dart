@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
@@ -72,6 +73,11 @@ class _EditPageState extends State<EditPage> {
       setState(() => _result = result);
     } on PipelineException catch (e) {
       if (mounted) setState(() => _error = Tr.of(context).pipelineError(e));
+    } on PlatformException {
+      // ML Kit 双通路均失败（如华为无 GMS 设备）：给可读提示而非堆栈
+      if (mounted) {
+        setState(() => _error = AppLocalizations.of(context).errMlkit);
+      }
     } catch (e) {
       if (mounted) setState(() => _error = AppLocalizations.of(context).processFailed('$e'));
     }

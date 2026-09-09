@@ -446,4 +446,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get updateBgStarted => '已开始后台下载，进度见通知栏；完成后点击通知安装';
+
+  @override
+  String get settingsLanguage => '语言';
+
+  @override
+  String get langSystem => '跟随系统';
+
+  @override
+  String get langZh => '中文';
+
+  @override
+  String get langEn => 'English';
+
+  @override
+  String get errMlkit => 'AI 处理在当前设备上不可用，请重试或更换照片';
 }

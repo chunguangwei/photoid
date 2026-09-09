@@ -463,4 +463,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get updateBgStarted =>
       'Downloading in background — progress in the notification bar. Tap it to install when done.';
+
+  @override
+  String get settingsLanguage => 'Language';
+
+  @override
+  String get langSystem => 'System';
+
+  @override
+  String get langZh => '中文';
+
+  @override
+  String get langEn => 'English';
+
+  @override
+  String get errMlkit =>
+      'AI processing is unavailable on this device. Retry or use another photo.';
 }
