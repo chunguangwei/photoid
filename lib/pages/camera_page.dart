@@ -53,7 +53,7 @@ class _CameraPageState extends State<CameraPage> {
   Future<void> _startController() async {
     final controller = CameraController(
       _current,
-      ResolutionPreset.veryHigh,
+      ResolutionPreset.high,
       enableAudio: false,
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
@@ -104,6 +104,13 @@ class _CameraPageState extends State<CameraPage> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(AppLocalizations.of(context)
               .captureFailed(e.description ?? e.code))));
+    } catch (e) {
+      // 部分机型（华为/HarmonyOS）会抛非 CameraException 的插件错误
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content:
+                Text(AppLocalizations.of(context).captureFailed('$e'))));
+      }
     } finally {
       if (mounted) setState(() => _capturing = false);
     }
