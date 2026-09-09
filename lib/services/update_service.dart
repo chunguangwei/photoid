@@ -65,6 +65,25 @@ class UpdateService {
     }
   }
 
+  /// 严格版检查（手动触发用）：网络/HTTP 错误抛异常，由调用方提示
+  /// 「检查失败」；仅确认无新版本时才返回 null。
+  Future<UpdateInfo?> checkUpdateStrict() async {
+    if (!Platform.isAndroid) return null;
+    final response = await http
+        .get(
+          Uri.parse(_apiUrl),
+          headers: const {'Accept': 'application/vnd.github+json'},
+        )
+        .timeout(_timeout);
+    if (response.statusCode != 200) {
+      throw Exception('GitHub API ${response.statusCode}');
+    }
+    final release = jsonDecode(response.body) as Map<String, dynamic>;
+    final currentVersion =
+        stripVPrefix((await PackageInfo.fromPlatform()).version.trim());
+    return parseRelease(release, currentVersion: currentVersion);
+  }
+
   /// 从 GitHub Release JSON 解析出升级信息；无 APK 资源或版本不更新时返回
   /// null。纯函数，便于脱离平台测试。
   static UpdateInfo? parseRelease(

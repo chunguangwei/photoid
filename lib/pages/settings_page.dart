@@ -33,7 +33,8 @@ class _SettingsPageState extends State<SettingsPage> {
     final l = AppLocalizations.of(context);
     setState(() => _checking = true);
     try {
-      final info = await UpdateService().checkUpdate();
+      // 严格版：网络失败抛异常 → 明确提示「检查失败」，而非误报「已是最新」
+      final info = await UpdateService().checkUpdateStrict();
       if (!mounted) return;
       if (info != null) {
         showUpdateDialog(context, info);
@@ -41,6 +42,10 @@ class _SettingsPageState extends State<SettingsPage> {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(l.updateLatest)));
       }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l.updateCheckFailed)));
     } finally {
       if (mounted) setState(() => _checking = false);
     }
