@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
@@ -42,7 +43,9 @@ class UpdateService {
   static const Duration _timeout = Duration(seconds: 15);
 
   /// 检查是否有新版本。无新版本或出错时返回 null。
+  /// 仅 Android 支持 APK 自升级；iOS 走 App Store，直接返回 null。
   Future<UpdateInfo?> checkUpdate() async {
+    if (!Platform.isAndroid) return null;
     try {
       final response = await http
           .get(

@@ -38,7 +38,7 @@ flutter run
 
 ### License
 
-MIT License — see [LICENSE](LICENSE). **Commercial use requires the author's permission: please contact <your-email@example.com>.**
+Non-Commercial License — free for personal use; **commercial use requires the author's written permission: please contact <your-email@example.com>.** See [LICENSE](LICENSE).
 
 ### Disclaimer
 
@@ -82,7 +82,7 @@ flutter run
 
 ### 许可证
 
-本项目采用 MIT License，详见 [LICENSE](LICENSE)。**商业使用需获得作者授权，请联系 <your-email@example.com>。**
+本项目采用非商业许可证：个人使用免费；**商业使用需获得作者书面授权，请联系 <your-email@example.com>。** 详见 [LICENSE](LICENSE)。
 
 ### 免责声明
 
