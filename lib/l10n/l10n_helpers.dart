@@ -19,9 +19,23 @@ class Tr {
   /// 规格名。目前仅内置学生规格有译文；其余（如未来 JSON 规格）原样显示。
   String specName(PhotoSpec spec) =>
       spec.id == 'student_edu_id' ? _l.specStudentName : spec.name;
-
-  String bgName(SpecBackground bg) =>
-      bg.name == '蓝底' ? _l.bgBlue : bg.name;
+  /// 底色本地化名（五色经 backgroundL10nKeys 映射，未知原样显示）。
+  String bgName(SpecBackground bg) {
+    switch (backgroundL10nKeys[bg.name]) {
+      case 'bgBlue':
+        return _l.bgBlue;
+      case 'bgWhite':
+        return _l.bgWhite;
+      case 'bgRed':
+        return _l.bgRed;
+      case 'bgGray':
+        return _l.bgGray;
+      case 'bgDarkBlue':
+        return _l.bgDarkBlue;
+      default:
+        return bg.name;
+    }
+  }
 
   List<String> requirements(PhotoSpec spec) {
     if (spec.id != 'student_edu_id') return spec.requirements;
@@ -37,7 +51,7 @@ class Tr {
 
   // ── ImagePipeline 进度步骤 / 异常 ────────────────────────────────
 
-  String step(PipelineStep step) {
+  String step(PipelineStep step, {String? bgName}) {
     switch (step) {
       case PipelineStep.preparing:
         return _l.stepPreparing;
@@ -46,7 +60,7 @@ class Tr {
       case PipelineStep.segmenting:
         return _l.stepSegmenting;
       case PipelineStep.compositing:
-        return _l.stepCompositing(_l.bgBlue);
+        return _l.stepCompositing(bgName ?? _l.bgBlue);
       case PipelineStep.framing:
         return _l.stepDetectingFace;
       case PipelineStep.compressing:
@@ -85,7 +99,7 @@ class Tr {
         return _l.checkRatio(
             _num(spec.minRatio.toString()), _num(spec.maxRatio.toString()));
       case 'blueBg':
-        return _l.checkBlueBg;
+        return _l.checkBgColor(bgName(spec.background));
       case 'faceDetected':
         return _l.checkFaceDetected;
       case 'headRatio':
@@ -98,7 +112,7 @@ class Tr {
     return item.id;
   }
 
-  String? fix(CheckItem item) {
+  String? fix(CheckItem item, PhotoSpec spec) {
     if (item.fixId == null) return null;
     switch (item.fixId!) {
       case 'fileTooLarge':
@@ -112,7 +126,7 @@ class Tr {
       case 'ratioMismatch':
         return _l.fixRatioMismatch;
       case 'notBlue':
-        return _l.fixNotBlue;
+        return _l.fixBgMismatch(bgName(spec.background));
       case 'noFace':
         return _l.fixNoFace;
       case 'headRatio':

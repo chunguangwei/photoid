@@ -387,7 +387,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get customInvalid =>
-      'Enter valid values (W/H 50–2000, KB 5–2048, min ≤ max)';
+      'Enter valid values (W/H 50–2000, aspect 0.5–2, KB 5–2048, min ≤ max)';
 
   @override
   String get editSwitchBg => 'Switch background (regenerate)';
@@ -437,4 +437,26 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cameraGuidePerson =>
       'Face the camera, show both ears, align with the outline';
+
+  @override
+  String get tabHome => 'Home';
+
+  @override
+  String get tabMine => 'Mine';
+
+  @override
+  String get privacySlogan => 'Photos never leave your device';
+
+  @override
+  String get hotNow => 'Trending';
+
+  @override
+  String checkBgColor(String bg) {
+    return 'Background is $bg';
+  }
+
+  @override
+  String fixBgMismatch(String bg) {
+    return 'Background is not $bg. Regenerate with background replacement.';
+  }
 }

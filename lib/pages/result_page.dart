@@ -26,15 +26,19 @@ class ResultPage extends StatefulWidget {
 class _ResultPageState extends State<ResultPage> {
   final _eduIdController = TextEditingController();
   ComplianceReport? _report;
+  String? _reportError;
   bool _saving = false;
   bool _saved = false;
 
   @override
   void initState() {
     super.initState();
-    ComplianceService()
-        .check(widget.jpgBytes, widget.spec)
-        .then((r) => mounted ? setState(() => _report = r) : null);
+    ComplianceService().check(widget.jpgBytes, widget.spec).then((r) {
+      if (mounted) setState(() => _report = r);
+    }).catchError((Object e) {
+      // 检测失败（如 ML Kit 异常）时给出错误态而非无限转圈
+      if (mounted) setState(() => _reportError = '$e');
+    });
   }
 
   @override
@@ -138,9 +142,13 @@ class _ResultPageState extends State<ResultPage> {
             Text(l.checkItemsTitle, style: theme.textTheme.titleSmall),
             const SizedBox(height: 4),
             if (report == null)
-              const Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(child: CircularProgressIndicator()),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Center(
+                  child: _reportError != null
+                      ? Text(_reportError!, textAlign: TextAlign.center)
+                      : const CircularProgressIndicator(),
+                ),
               )
             else
               ...report.items.map(_buildCheckTile),
@@ -216,7 +224,7 @@ class _ResultPageState extends State<ResultPage> {
           (item.soft ? l.referenceSuffix : '')),
       subtitle: item.pass
           ? (item.detail != null ? Text(tr.detail(item)!) : null)
-          : Text([tr.detail(item), tr.fix(item)]
+          : Text([tr.detail(item), tr.fix(item, widget.spec)]
               .whereType<String>()
               .join(l.referenceJoiner)),
       trailing: item.detail != null && item.pass ? null : null,

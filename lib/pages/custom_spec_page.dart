@@ -43,6 +43,10 @@ class _CustomSpecPageState extends State<CustomSpecPage> {
         w <= 2000 &&
         h >= 50 &&
         h <= 2000 &&
+        // aspect（宽/高）限制在 [0.5, 2]：构图算法的扩边画布按 cropH 设计，
+        // 超出该范围的极端比例会导致裁剪越界
+        w / h >= 0.5 &&
+        w / h <= 2.0 &&
         minKb != null &&
         maxKb != null &&
         minKb >= 5 &&

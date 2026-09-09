@@ -124,7 +124,7 @@
     "name": "英语四六级",
     "pixelWidth": 144,
     "pixelHeight": 192,
-    "minFileKb": 50,
+    "minFileKb": 20,
     "maxFileKb": 200,
     "minWidth": 144,
     "maxWidth": 144,
@@ -274,10 +274,10 @@
     "minRatio": 1.3184,
     "maxRatio": 1.4184,
     "background": {
-      "name": "蓝底",
-      "r": 67,
-      "g": 142,
-      "b": 219
+      "name": "白底",
+      "r": 255,
+      "g": 255,
+      "b": 255
     },
     "requirements": [
       "最佳尺寸 380×520 像素"
@@ -297,10 +297,10 @@
     "minRatio": 1.4038,
     "maxRatio": 1.5038,
     "background": {
-      "name": "蓝底",
-      "r": 67,
-      "g": 142,
-      "b": 219
+      "name": "白底",
+      "r": 255,
+      "g": 255,
+      "b": 255
     },
     "requirements": [
       "最佳尺寸 260×378 像素"
@@ -552,10 +552,10 @@
     "minRatio": 0.6097,
     "maxRatio": 0.7097,
     "background": {
-      "name": "蓝底",
-      "r": 67,
-      "g": 142,
-      "b": 219
+      "name": "红底",
+      "r": 255,
+      "g": 0,
+      "b": 0
     },
     "requirements": [
       "冲印尺寸 53×35mm",
@@ -576,10 +576,10 @@
     "minRatio": 1.4038,
     "maxRatio": 1.5038,
     "background": {
-      "name": "蓝底",
-      "r": 67,
-      "g": 142,
-      "b": 219
+      "name": "白底",
+      "r": 255,
+      "g": 255,
+      "b": 255
     },
     "requirements": [
       "冲印尺寸 33×48mm",

@@ -6,10 +6,13 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../l10n/app_localizations.dart';
 import '../services/update_service.dart';
 import 'update_dialog.dart';
+import 'my_album_page.dart';
 
-/// 设置页：检查更新 + 隐私说明 + 关于（版本/许可/联系方式）。
+/// 设置页（「我的」Tab）：我的相册 + 检查更新 + 隐私说明 + 关于。
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, this.showAlbumEntry = false});
+
+  final bool showAlbumEntry;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -50,6 +53,15 @@ class _SettingsPageState extends State<SettingsPage> {
       appBar: AppBar(title: Text(l.settingsTitle)),
       body: ListView(
         children: [
+          if (widget.showAlbumEntry)
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(l.homeMyAlbum),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const MyAlbumPage(),
+              )),
+            ),
           if (Platform.isAndroid)
             ListTile(
               leading: const Icon(Icons.system_update_alt),

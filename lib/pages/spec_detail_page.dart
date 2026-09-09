@@ -40,9 +40,10 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
   late PhotoSpec _spec = widget.spec;
 
   Future<void> _upload(BuildContext context) async {
-    // imageQuality 触发 image_picker 转码输出 JPG，规避 HEIC 解码问题
+    // imageQuality<100 才触发 image_picker 转码（Android quality=100 按字节
+    // 拷贝原文件，HEIC 会原样漏入）；99 强制转 JPG 且质量损失可忽略
     final picked = await ImagePicker()
-        .pickImage(source: ImageSource.gallery, imageQuality: 100);
+        .pickImage(source: ImageSource.gallery, imageQuality: 99);
     if (picked == null || !context.mounted) return;
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => EditPage(sourcePath: picked.path, spec: _spec),

@@ -373,7 +373,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get customCreate => '创建并使用';
 
   @override
-  String get customInvalid => '请填写合法数值（宽/高 50–2000，KB 5–2048，且最小≤最大）';
+  String get customInvalid => '请填写合法数值（宽/高 50–2000，宽高比 0.5–2，KB 5–2048，且最小≤最大）';
 
   @override
   String get editSwitchBg => '切换底色（重新生成）';
@@ -421,4 +421,26 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cameraGuidePerson => '请正对镜头，露出双耳，身体对齐人像框';
+
+  @override
+  String get tabHome => '首页';
+
+  @override
+  String get tabMine => '我的';
+
+  @override
+  String get privacySlogan => '照片不出机 · 全部本地处理';
+
+  @override
+  String get hotNow => '近期热门';
+
+  @override
+  String checkBgColor(String bg) {
+    return '底色为$bg';
+  }
+
+  @override
+  String fixBgMismatch(String bg) {
+    return '检测到底色不是$bg，请使用换底功能重新生成';
+  }
 }

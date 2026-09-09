@@ -237,7 +237,7 @@
   "customMinKb": "Min file (KB)",
   "customMaxKb": "Max file (KB)",
   "customCreate": "Create & use",
-  "customInvalid": "Enter valid values (W/H 50–2000, KB 5–2048, min ≤ max)",
+  "customInvalid": "Enter valid values (W/H 50–2000, aspect 0.5–2, KB 5–2048, min ≤ max)",
   "editSwitchBg": "Switch background (regenerate)",
   "editRegenerating": "Regenerating with new background…",
   "updateLatest": "You're up to date",
@@ -259,5 +259,25 @@
   "settingsLicense": "Free for personal use. Commercial use requires the author's permission.",
   "settingsContact": "Contact: chunguangwee@gmail.com",
   "cameraSwitch": "Switch camera",
-  "cameraGuidePerson": "Face the camera, show both ears, align with the outline"
+  "cameraGuidePerson": "Face the camera, show both ears, align with the outline",
+  "tabHome": "Home",
+  "tabMine": "Mine",
+  "privacySlogan": "Photos never leave your device",
+  "hotNow": "Trending",
+  "checkBgColor": "Background is {bg}",
+  "@checkBgColor": {
+    "placeholders": {
+      "bg": {
+        "type": "String"
+      }
+    }
+  },
+  "fixBgMismatch": "Background is not {bg}. Regenerate with background replacement.",
+  "@fixBgMismatch": {
+    "placeholders": {
+      "bg": {
+        "type": "String"
+      }
+    }
+  }
 }

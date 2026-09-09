@@ -773,7 +773,7 @@ abstract class AppLocalizations {
   /// No description provided for @customInvalid.
   ///
   /// In en, this message translates to:
-  /// **'Enter valid values (W/H 50–2000, KB 5–2048, min ≤ max)'**
+  /// **'Enter valid values (W/H 50–2000, aspect 0.5–2, KB 5–2048, min ≤ max)'**
   String get customInvalid;
 
   /// No description provided for @editSwitchBg.
@@ -865,6 +865,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Face the camera, show both ears, align with the outline'**
   String get cameraGuidePerson;
+
+  /// No description provided for @tabHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get tabHome;
+
+  /// No description provided for @tabMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Mine'**
+  String get tabMine;
+
+  /// No description provided for @privacySlogan.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos never leave your device'**
+  String get privacySlogan;
+
+  /// No description provided for @hotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Trending'**
+  String get hotNow;
+
+  /// No description provided for @checkBgColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Background is {bg}'**
+  String checkBgColor(String bg);
+
+  /// No description provided for @fixBgMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Background is not {bg}. Regenerate with background replacement.'**
+  String fixBgMismatch(String bg);
 }
 
 class _AppLocalizationsDelegate

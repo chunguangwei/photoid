@@ -1,5 +1,7 @@
 import 'dart:io';
-import 'dart:typed_data';
+import 'dart:ui' show Size;
+
+import 'package:flutter/foundation.dart';
 
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image/image.dart' as img;
@@ -7,6 +9,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../models/photo_spec.dart';
+import 'image_pipeline.dart';
 
 class CheckItem {
   const CheckItem(this.id, this.pass, {this.detail, this.fixId, this.soft = false});
@@ -84,25 +87,28 @@ class ComplianceService {
       fixId: 'ratioMismatch',
     ));
 
-    // 5. 背景色：四角采样判蓝
+    // 5. 背景色：四角采样，与规格目标底色按 HSV 容差比对
     final bg = _sampleCorners(image);
     final hsv = _rgbToHsv(bg.$1, bg.$2, bg.$3);
-    final isBlue = hsv.$1 >= 190 && hsv.$1 <= 260 && hsv.$2 > 0.25;
+    final expected =
+        _rgbToHsv(spec.background.r, spec.background.g, spec.background.b);
+    final bgOk = _bgMatches(hsv, expected);
     items.add(CheckItem(
       'blueBg',
-      isBlue,
+      bgOk,
       detail: 'RGB(${bg.$1},${bg.$2},${bg.$3})',
       fixId: 'notBlue',
     ));
-    // 6. 人脸与头部占比（软指标：通知未明确要求）
+
     items.addAll(await _faceChecks(image));
 
     return ComplianceReport(items);
   }
 
-  /// 四角 8% 区域均值
+  /// 四角 8% 区域均值（边长取短边比例，避免横版/竖版越界采样到黑像素）
   (int, int, int) _sampleCorners(img.Image image) {
-    final s = (image.width * 0.08).round().clamp(4, image.width ~/ 3).toInt();
+    final short = image.width < image.height ? image.width : image.height;
+    final s = (short * 0.08).round().clamp(4, short ~/ 3).toInt();
     final regions = [
       (0, 0),
       (image.width - s, 0),
@@ -122,6 +128,18 @@ class ComplianceService {
       }
     }
     return (r ~/ n, g ~/ n, b ~/ n);
+  }
+
+  /// 底色比对：低饱和目标（白/灰）比明度与饱和度；彩色目标（蓝/红/深蓝）
+  /// 比色相（±20°，环形）与饱和度下限。
+  bool _bgMatches(
+      (double, double, double) got, (double, double, double) expected) {
+    if (expected.$2 <= 0.25) {
+      return got.$2 <= 0.35 && (got.$3 - expected.$3).abs() <= 0.25;
+    }
+    var dh = (got.$1 - expected.$1).abs();
+    if (dh > 180) dh = 360 - dh;
+    return dh <= 20 && got.$2 > 0.2 && (got.$3 - expected.$3).abs() <= 0.3;
   }
 
   /// H ∈ [0,360), S,V ∈ [0,1]
@@ -148,16 +166,38 @@ class ComplianceService {
   Future<List<CheckItem>> _faceChecks(img.Image image) async {
     // 小图检测不到人脸，放大 2 倍再检
     final up = img.copyResize(image, width: image.width * 2);
-    final dir = await getTemporaryDirectory();
-    final f = File(p.join(
-        dir.path, 'photoid_check_${DateTime.now().millisecondsSinceEpoch}.jpg'));
-    await f.writeAsBytes(img.encodeJpg(up, quality: 90));
+    // Android：fromFilePath 不挂 MediaImage 会 NPE（与 image_pipeline 同一
+    // 已知 bug），统一走 fromBytes+NV21；iOS 用临时文件
+    InputImage input;
+    File? tmp;
+    if (Platform.isAndroid) {
+      final nv21 = await compute(rgbaToNv21, <String, Object>{
+        'rgba': up.getBytes(order: img.ChannelOrder.rgba),
+        'width': up.width,
+        'height': up.height,
+      });
+      input = InputImage.fromBytes(
+        bytes: nv21,
+        metadata: InputImageMetadata(
+          size: Size(up.width.toDouble(), up.height.toDouble()),
+          rotation: InputImageRotation.rotation0deg,
+          format: InputImageFormat.nv21,
+          bytesPerRow: up.width,
+        ),
+      );
+    } else {
+      final dir = await getTemporaryDirectory();
+      tmp = File(p.join(dir.path,
+          'photoid_check_${DateTime.now().millisecondsSinceEpoch}.jpg'));
+      await tmp.writeAsBytes(img.encodeJpg(up, quality: 90));
+      input = InputImage.fromFile(tmp);
+    }
     final detector = FaceDetector(
         options: FaceDetectorOptions(
             performanceMode: FaceDetectorMode.accurate,
             enableClassification: true));
     try {
-      final faces = await detector.processImage(InputImage.fromFile(f));
+      final faces = await detector.processImage(input);
       if (faces.isEmpty) {
         return [
           const CheckItem('faceDetected', false,
@@ -196,7 +236,7 @@ class ComplianceService {
       ];
     } finally {
       detector.close();
-      f.delete().ignore();
+      tmp?.delete().ignore();
     }
   }
 }

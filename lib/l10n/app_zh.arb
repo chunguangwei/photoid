@@ -142,7 +142,7 @@
   "customMinKb": "最小文件（KB）",
   "customMaxKb": "最大文件（KB）",
   "customCreate": "创建并使用",
-  "customInvalid": "请填写合法数值（宽/高 50–2000，KB 5–2048，且最小≤最大）",
+  "customInvalid": "请填写合法数值（宽/高 50–2000，宽高比 0.5–2，KB 5–2048，且最小≤最大）",
   "editSwitchBg": "切换底色（重新生成）",
   "editRegenerating": "正在按新底色重新生成…",
   "updateLatest": "已是最新版本",
@@ -164,5 +164,25 @@
   "settingsLicense": "个人使用免费，商业使用需获得作者授权",
   "settingsContact": "联系作者：chunguangwee@gmail.com",
   "cameraSwitch": "切换摄像头",
-  "cameraGuidePerson": "请正对镜头，露出双耳，身体对齐人像框"
+  "cameraGuidePerson": "请正对镜头，露出双耳，身体对齐人像框",
+  "tabHome": "首页",
+  "tabMine": "我的",
+  "privacySlogan": "照片不出机 · 全部本地处理",
+  "hotNow": "近期热门",
+  "checkBgColor": "底色为{bg}",
+  "@checkBgColor": {
+    "placeholders": {
+      "bg": {
+        "type": "String"
+      }
+    }
+  },
+  "fixBgMismatch": "检测到底色不是{bg}，请使用换底功能重新生成",
+  "@fixBgMismatch": {
+    "placeholders": {
+      "bg": {
+        "type": "String"
+      }
+    }
+  }
 }

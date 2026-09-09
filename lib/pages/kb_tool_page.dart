@@ -36,7 +36,7 @@ class _KbToolPageState extends State<KbToolPage> {
 
   Future<void> _pick() async {
     final picked = await ImagePicker()
-        .pickImage(source: ImageSource.gallery, imageQuality: 100);
+        .pickImage(source: ImageSource.gallery, imageQuality: 99);
     if (picked == null || !mounted) return;
     final size = await File(picked.path).length();
     setState(() {

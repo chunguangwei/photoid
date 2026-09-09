@@ -201,7 +201,10 @@ class _EditPageState extends State<EditPage> {
                           ),
                           label: Text(_bgLabel(bg)),
                           selected: bg.name == _spec.background.name,
-                          onSelected: (_) => _switchBackground(bg),
+                          // 处理中禁用，避免多条流水线竞态（last-finisher-wins）
+                          onSelected: (_result == null && _error == null)
+                              ? null
+                              : (_) => _switchBackground(bg),
                         ),
                       ),
                   ],

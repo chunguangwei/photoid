@@ -174,18 +174,25 @@ class ImagePipeline {
     final top = face.top - cropH * 0.10;
     final left = cx - cropW / 2;
 
-    // 先向四周扩边（底色填充），再正坐标裁剪，避免越界
-    final pad = cropHi;
-    final canvas = img.Image(width: source.width + pad * 2, height: source.height + pad * 2);
+    // 仅向越界方向扩边（底色填充），避免全向 cropH 扩边的百 MB 级内存峰值
+    final padL = math.max(0, -left).ceil();
+    final padT = math.max(0, -top).ceil();
+    final padR = math.max(0, (left + cropW) - source.width).ceil();
+    final padB = math.max(0, (top + cropH) - source.height).ceil();
+    final canvas = img.Image(
+        width: source.width + padL + padR,
+        height: source.height + padT + padB);
     img.fill(canvas, color: bg);
-    img.compositeImage(canvas, source, dstX: pad, dstY: pad);
-    final cropX = (pad + left).round().clamp(0, canvas.width - cropWi).toInt();
-    final cropY = (pad + top).round().clamp(0, canvas.height - cropHi).toInt();
+    img.compositeImage(canvas, source, dstX: padL, dstY: padT);
+    final cropX = (padL + left).round().clamp(0, canvas.width - cropWi).toInt();
+    final cropY = (padT + top).round().clamp(0, canvas.height - cropHi).toInt();
     return img.copyCrop(canvas,
         x: cropX, y: cropY, width: cropWi, height: cropHi);
   }
 
-  /// 二分 JPEG 质量，输出落在 [minKb, maxKb] 内（优先接近上限以下的最高质量）。
+  /// 二分 JPEG 质量压到 maxKb 以下（优先接近上限的最高质量）。
+  /// 契约：minKb 仅尽力而为——极小像素图（如 144×192）即使 q98 也可能
+  /// 达不到下限，此时输出最高可用质量；规格数据的下限须符合可达性。
   static Uint8List encodeToKbRange(img.Image image, int minKb, int maxKb) {
     Uint8List best = img.encodeJpg(image, quality: 85);
     var lo = 20, hi = 98;
@@ -220,7 +227,7 @@ class ImagePipeline {
   /// iOS：fromFile 工作正常，保持原路径。
   Future<InputImage> _inputImage(File file, img.Image work) async {
     if (!Platform.isAndroid) return InputImage.fromFile(file);
-    final nv21 = await compute(_rgbaToNv21, <String, Object>{
+    final nv21 = await compute(rgbaToNv21, <String, Object>{
       'rgba': work.getBytes(order: img.ChannelOrder.rgba),
       'width': work.width,
       'height': work.height,
@@ -238,12 +245,13 @@ class ImagePipeline {
 }
 
 /// RGBA → NV21（BT.601 全幅转换，2×2 色度子采样）。顶层函数，供 compute 调用。
-Uint8List _rgbaToNv21(Map<String, Object> args) {
+Uint8List rgbaToNv21(Map<String, Object> args) {
   final rgba = args['rgba'] as Uint8List;
   final w = args['width'] as int;
   final h = args['height'] as int;
   final ySize = w * h;
-  final out = Uint8List(ySize + ySize ~/ 2);
+  // 色度 2×2 子采样：奇数宽/高按 ceil 分配，否则 RangeError
+  final out = Uint8List(ySize + ((w + 1) ~/ 2) * ((h + 1) ~/ 2) * 2);
   for (var i = 0; i < ySize; i++) {
     final o = i * 4;
     out[i] =
