@@ -279,5 +279,6 @@
         "type": "String"
       }
     }
-  }
+  },
+  "updateBgStarted": "Downloading in background — progress in the notification bar. Tap it to install when done."
 }

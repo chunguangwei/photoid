@@ -459,4 +459,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String fixBgMismatch(String bg) {
     return 'Background is not $bg. Regenerate with background replacement.';
   }
+
+  @override
+  String get updateBgStarted =>
+      'Downloading in background — progress in the notification bar. Tap it to install when done.';
 }

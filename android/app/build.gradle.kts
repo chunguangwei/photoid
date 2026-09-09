@@ -16,7 +16,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "cn.wcg.photoid"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37 // permission_handler 要求 37+
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

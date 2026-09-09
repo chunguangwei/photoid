@@ -443,4 +443,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String fixBgMismatch(String bg) {
     return '检测到底色不是$bg，请使用换底功能重新生成';
   }
+
+  @override
+  String get updateBgStarted => '已开始后台下载，进度见通知栏；完成后点击通知安装';
 }

@@ -901,6 +901,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Background is not {bg}. Regenerate with background replacement.'**
   String fixBgMismatch(String bg);
+
+  /// No description provided for @updateBgStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading in background — progress in the notification bar. Tap it to install when done.'**
+  String get updateBgStarted;
 }
 
 class _AppLocalizationsDelegate

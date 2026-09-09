@@ -1,14 +1,16 @@
-import 'dart:io';
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:open_filex/open_filex.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/update_service.dart';
 
-/// 弹出「发现新版本」对话框；用户选择「立即更新」后开始下载并安装 APK。
+/// 弹出「发现新版本」对话框；用户选择「立即更新」后由系统 DownloadManager
+/// 在后台下载（通知栏显示进度，切后台/杀进程不中断）。
+/// 完成监听在 main.dart（App 生命周期）；通知点击亦可直接拉起安装。
 Future<void> showUpdateDialog(BuildContext context, UpdateInfo info) {
   return showDialog<void>(
     context: context,
@@ -27,60 +29,38 @@ class _UpdateDialog extends StatefulWidget {
 }
 
 class _UpdateDialogState extends State<_UpdateDialog> {
-  bool _downloading = false;
-  double _progress = 0;
+  static const _apkName = 'photoid-update.apk';
+
+  bool _started = false;
   String? _error;
 
-  Future<void> _downloadAndInstall() async {
-    setState(() {
-      _downloading = true;
-      _progress = 0;
-      _error = null;
-    });
+  Future<void> _startBackgroundDownload() async {
+    setState(() => _error = null);
     try {
-      final tempDir = await getTemporaryDirectory();
-      final apkFile = File('${tempDir.path}/photoid-update.apk');
+      // Android 13+ 通知权限（用于在任务栏显示下载进度）。
+      // 限定 Android：其它平台（含测试宿主 macOS）该请求会挂起不返回。
+      if (Platform.isAndroid) await Permission.notification.request();
 
-      final request = http.Request('GET', Uri.parse(widget.info.downloadUrl));
-      final response = await request.send();
-      if (response.statusCode != 200) {
-        throw HttpException('下载失败（HTTP ${response.statusCode}）');
-      }
-
-      final sink = apkFile.openWrite();
-      final totalBytes = response.contentLength ?? 0;
-      var receivedBytes = 0;
-      try {
-        // addStream 提供背压，避免大 APK 一次性占满内存。
-        await sink.addStream(response.stream.map((chunk) {
-          receivedBytes += chunk.length;
-          if (totalBytes > 0 && mounted) {
-            setState(() => _progress = receivedBytes / totalBytes);
-          }
-          return chunk;
-        }));
-      } catch (_) {
-        try {
-          await sink.close();
-        } catch (_) {
-          // 关闭失败由下面的删除与上层错误提示兜底。
-        }
-        await apkFile.delete().catchError((_) => apkFile);
-        rethrow;
-      }
-      await sink.close();
+      final dir =
+          await getExternalStorageDirectory() ?? await getTemporaryDirectory();
+      await FlutterDownloader.enqueue(
+        url: widget.info.downloadUrl,
+        savedDir: dir.path,
+        fileName: _apkName,
+        showNotification: true,
+        openFileFromNotification: true,
+      );
       if (!mounted) return;
-
-      // 触发系统 PackageInstaller 安装流程。
-      await OpenFilex.open(apkFile.path);
-      if (mounted) Navigator.of(context).pop();
+      setState(() => _started = true);
+      final l = AppLocalizations.of(context);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l.updateBgStarted)));
+      Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _downloading = false;
-        _error = AppLocalizations.of(context).updateDownloadFailed;
-      });
-      debugPrint('Update download failed: $e');
+      setState(
+          () => _error = AppLocalizations.of(context).updateDownloadFailed);
+      debugPrint('Enqueue update download failed: $e');
     }
   }
 
@@ -90,7 +70,7 @@ class _UpdateDialogState extends State<_UpdateDialog> {
     final l = AppLocalizations.of(context);
     final info = widget.info;
     return PopScope(
-      canPop: !info.isForceUpdate && !_downloading,
+      canPop: !info.isForceUpdate,
       child: AlertDialog(
         title: Text(l.updateTitle),
         content: Column(
@@ -102,22 +82,9 @@ class _UpdateDialogState extends State<_UpdateDialog> {
               const SizedBox(height: 8),
               Flexible(
                 child: SingleChildScrollView(
-                  child: Text(info.releaseNotes, style: theme.textTheme.bodySmall),
+                  child:
+                      Text(info.releaseNotes, style: theme.textTheme.bodySmall),
                 ),
-              ),
-            ],
-            if (_downloading) ...[
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2.5),
-                  ),
-                  const SizedBox(width: 12),
-                  Text('${(_progress * 100).toStringAsFixed(0)}%'),
-                ],
               ),
             ],
             if (_error != null) ...[
@@ -127,15 +94,13 @@ class _UpdateDialogState extends State<_UpdateDialog> {
           ],
         ),
         actions: [
-          if (!_downloading)
-            TextButton(
-              onPressed: info.isForceUpdate
-                  ? null
-                  : () => Navigator.of(context).pop(),
-              child: Text(l.updateLater),
-            ),
+          TextButton(
+            onPressed:
+                info.isForceUpdate ? null : () => Navigator.of(context).pop(),
+            child: Text(l.updateLater),
+          ),
           FilledButton(
-            onPressed: _downloading ? null : _downloadAndInstall,
+            onPressed: _started ? null : _startBackgroundDownload,
             child: Text(l.updateNow),
           ),
         ],

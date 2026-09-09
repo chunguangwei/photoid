@@ -75,22 +75,17 @@ void main() {
     expect(find.text(l.updateTitle), findsNothing);
   });
 
-  testWidgets('立即更新 switches to downloading state', (tester) async {
-    // 测试环境没有 path_provider 插件，下载不会完成；只验证进入下载态：
-    // 进度指示出现、「立即更新」禁用、「稍后」隐藏。
+  testWidgets('立即更新：测试环境无下载插件，显示失败提示且可重试', (tester) async {
+    // 测试环境没有 flutter_downloader/permission_handler 插件，enqueue 必失败；
+    // 验证错误提示出现、对话框未关闭（用户可读错误后重试或放弃）。
     final l = await _show(tester, _optional);
 
     await tester.tap(find.text(l.updateNow));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(
-      tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, l.updateNow))
-          .onPressed,
-      isNull,
-    );
-    expect(find.text(l.updateLater), findsNothing);
+
+    expect(find.text(l.updateDownloadFailed), findsOneWidget);
+    expect(find.text(l.updateTitle), findsOneWidget);
   });
 
   testWidgets('force update disables 稍后 and hides empty notes', (tester) async {
