@@ -2,10 +2,11 @@ import 'package:flutter/widgets.dart';
 
 import '../models/photo_spec.dart';
 import '../services/compliance_service.dart';
+import '../services/image_pipeline.dart';
 import 'app_localizations.dart';
 
-/// 服务层（image_pipeline / compliance_service）与规格模型输出的中文
-/// 固定文案 → l10n 键的翻译层。服务层保持纯逻辑、不依赖 BuildContext。
+/// 服务层（image_pipeline / compliance_service）与规格模型输出的语义标识
+/// → l10n 键的翻译层。服务层保持纯逻辑、不依赖 BuildContext。
 class Tr {
   Tr.of(BuildContext context) : _l = AppLocalizations.of(context);
 
@@ -34,109 +35,102 @@ class Tr {
     ];
   }
 
-  // ── ImagePipeline 进度步骤 / 异常消息 ────────────────────────────
+  // ── ImagePipeline 进度步骤 / 异常 ────────────────────────────────
 
-  /// 流水线 onProgress 回调的中文步骤 → 本地化步骤。
-  String step(String raw) {
-    switch (raw) {
-      case '准备中…':
+  String step(PipelineStep step) {
+    switch (step) {
+      case PipelineStep.preparing:
         return _l.stepPreparing;
-      case '正在读取照片…':
+      case PipelineStep.reading:
         return _l.stepReading;
-      case '正在智能抠图…':
+      case PipelineStep.segmenting:
         return _l.stepSegmenting;
-      case '正在检测人脸并构图…':
+      case PipelineStep.compositing:
+        return _l.stepCompositing(_l.bgBlue);
+      case PipelineStep.framing:
         return _l.stepDetectingFace;
-      case '正在压缩导出…':
+      case PipelineStep.compressing:
         return _l.stepCompressing;
     }
-    // 「正在合成<底色名>…」
-    if (raw.startsWith('正在合成') && raw.endsWith('…')) {
-      final bg = raw.substring(4, raw.length - 1);
-      return _l.stepCompositing(bgNameNamed(bg));
-    }
-    return raw;
   }
 
-  /// PipelineException.message → 本地化错误。
-  String pipelineError(String raw) {
-    switch (raw) {
-      case '无法读取该照片，请换一张 JPG/PNG 图片':
+  String pipelineError(PipelineException e) {
+    switch (e.code) {
+      case 'readPhoto':
         return _l.errReadPhoto;
-      case '抠图失败，未识别到人物，请使用单人正脸照片':
+      case 'noPerson':
         return _l.errNoPerson;
-      case '未检测到正脸，请重新拍摄：正对镜头、面部无遮挡':
+      case 'noFace':
         return _l.errNoFace;
     }
-    return raw;
+    return e.code;
   }
-
-  String bgNameNamed(String name) => name == '蓝底' ? _l.bgBlue : name;
 
   // ── ComplianceService 检测项 ────────────────────────────────────
 
-  /// CheckItem.label → 本地化标签（按服务层生成的固定前缀匹配）。
   String checkLabel(CheckItem item, PhotoSpec spec) {
-    final label = item.label;
-    if (label == '文件格式为 JPG') return _l.checkJpgFormat;
-    if (label == '图片可解码') return _l.checkDecodable;
-    if (label == '底色为蓝底') return _l.checkBlueBg;
-    if (label == '检测到正脸') return _l.checkFaceDetected;
-    if (label == '头部水平居中') return _l.checkHeadCentered;
-    if (label == '双眼睁开') return _l.checkEyesOpen;
-    if (label == '头部占比 45%–85%') return _l.checkHeadRatio;
-    if (label.startsWith('文件大小 ')) {
-      return _l.checkFileSizeRange(spec.minFileKb, spec.maxFileKb);
+    switch (item.id) {
+      case 'format':
+        return _l.checkJpgFormat;
+      case 'fileSize':
+        return _l.checkFileSizeRange(spec.minFileKb, spec.maxFileKb);
+      case 'decodable':
+        return _l.checkDecodable;
+      case 'pixelSize':
+        return _l.checkPixelSize(
+            spec.minWidth, spec.maxWidth, spec.minHeight, spec.maxHeight);
+      case 'bestSize':
+        return _l.checkBestSize(spec.pixelWidth, spec.pixelHeight);
+      case 'ratio':
+        return _l.checkRatio(
+            _num(spec.minRatio.toString()), _num(spec.maxRatio.toString()));
+      case 'blueBg':
+        return _l.checkBlueBg;
+      case 'faceDetected':
+        return _l.checkFaceDetected;
+      case 'headRatio':
+        return _l.checkHeadRatio;
+      case 'headCentered':
+        return _l.checkHeadCentered;
+      case 'eyesOpen':
+        return _l.checkEyesOpen;
     }
-    if (label.startsWith('像素尺寸 ')) {
-      return _l.checkPixelSize(
-          spec.minWidth, spec.maxWidth, spec.minHeight, spec.maxHeight);
-    }
-    if (label.startsWith('最佳尺寸 ')) {
-      return _l.checkBestSize(spec.pixelWidth, spec.pixelHeight);
-    }
-    if (label.startsWith('比例（高/宽）')) {
-      return _l.checkRatio(
-          _num(spec.minRatio.toString()), _num(spec.maxRatio.toString()));
-    }
-    return label;
+    return item.id;
   }
 
-  /// CheckItem.fix → 本地化修复建议。
-  String? fix(String? raw) {
-    if (raw == null) return null;
-    switch (raw) {
-      case '文件过大，请重新生成压缩':
+  String? fix(CheckItem item) {
+    if (item.fixId == null) return null;
+    switch (item.fixId!) {
+      case 'fileTooLarge':
         return _l.fixFileTooLarge;
-      case '文件过小，请提高导出质量':
+      case 'fileTooSmall':
         return _l.fixFileTooSmall;
-      case '文件损坏，请重新生成':
+      case 'fileCorrupt':
         return _l.fixFileCorrupt;
-      case '尺寸越界，请重新生成':
+      case 'sizeOutOfRange':
         return _l.fixSizeOutOfRange;
-      case '比例不符，请重新裁剪':
+      case 'ratioMismatch':
         return _l.fixRatioMismatch;
-      case '检测到底色不是蓝色，请使用换底功能重新生成':
+      case 'notBlue':
         return _l.fixNotBlue;
-      case '未检测到人脸，建议使用正脸免冠照片重新拍摄':
+      case 'noFace':
         return _l.fixNoFace;
-      case '头部占比不合适，请调整拍摄距离':
+      case 'headRatio':
         return _l.fixHeadRatio;
-      case '人物未居中，请重新构图':
+      case 'notCentered':
         return _l.fixNotCentered;
-      case '检测到闭眼，请重新拍摄':
+      case 'eyesClosed':
         return _l.fixEyesClosed;
     }
-    return raw;
+    return item.fixId;
   }
 
-  /// CheckItem.detail → 本地化实测值（仅「偏差 x%」含文案，数字类原样）。
-  String? detail(String? raw) {
-    if (raw == null) return null;
-    if (raw.startsWith('偏差 ')) {
-      return _l.deviationPercent(raw.substring(3));
+  String? detail(CheckItem item) {
+    if (item.detail == null) return null;
+    if (item.id == 'headCentered') {
+      return _l.deviationPercent(item.detail!);
     }
-    return raw;
+    return item.detail;
   }
 
   /// 1.2 → "1.2"，1.0 → "1"（与 ARB 中文原文格式一致）

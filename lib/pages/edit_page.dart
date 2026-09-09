@@ -20,7 +20,7 @@ class EditPage extends StatefulWidget {
 
 class _EditPageState extends State<EditPage> {
   late PhotoSpec _spec;
-  String _step = '准备中…';
+  PipelineStep _step = PipelineStep.preparing;
   PipelineResult? _result;
   String? _error;
   bool _showOriginal = false;
@@ -48,7 +48,7 @@ class _EditPageState extends State<EditPage> {
     setState(() {
       _error = null;
       _result = null;
-      _step = '准备中…';
+      _step = PipelineStep.preparing;
     });
     try {
       final result = await ImagePipeline(
@@ -63,7 +63,7 @@ class _EditPageState extends State<EditPage> {
       if (!mounted) return;
       setState(() => _result = result);
     } on PipelineException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) setState(() => _error = Tr.of(context).pipelineError(e));
     } catch (e) {
       if (mounted) setState(() => _error = AppLocalizations.of(context).processFailed('$e'));
     }
@@ -128,8 +128,7 @@ class _EditPageState extends State<EditPage> {
             children: [
               const Icon(Icons.error_outline, size: 48),
               const SizedBox(height: 12),
-              Text(Tr.of(context).pipelineError(_error!),
-                  textAlign: TextAlign.center),
+              Text(_error!, textAlign: TextAlign.center),
               const SizedBox(height: 24),
               FilledButton.tonal(
                 onPressed: () => Navigator.of(context).pop(),

@@ -11,11 +11,14 @@ import 'package:path_provider/path_provider.dart';
 
 import '../models/photo_spec.dart';
 
+/// 流水线处理步骤（UI 层据此映射 l10n 键，文案改动不影响翻译）。
+enum PipelineStep { preparing, reading, segmenting, compositing, framing, compressing }
+
 class PipelineException implements Exception {
-  PipelineException(this.message);
-  final String message;
+  PipelineException(this.code);
+  final String code;
   @override
-  String toString() => message;
+  String toString() => code;
 }
 
 class PipelineResult {
@@ -44,18 +47,18 @@ class PipelineResult {
 class ImagePipeline {
   ImagePipeline({this.onProgress});
 
-  final void Function(String step)? onProgress;
+  final void Function(PipelineStep step)? onProgress;
 
   /// 工作图最长边。输出只有几百像素，1440 足够且保证合成速度。
   static const _maxWorkSide = 1440;
 
   Future<PipelineResult> run(String sourcePath, PhotoSpec spec) async {
     // 1. 解码 + 按 EXIF 旋转归一化（image 包不保证自动应用方向）
-    _report('正在读取照片…');
+    _report(PipelineStep.reading);
     final rawBytes = await File(sourcePath).readAsBytes();
     var work = img.decodeImage(rawBytes);
     if (work == null) {
-      throw PipelineException('无法读取该照片，请换一张 JPG/PNG 图片');
+      throw PipelineException('readPhoto');
     }
     work = img.bakeOrientation(work);
     if (work.width > _maxWorkSide || work.height > _maxWorkSide) {
@@ -71,14 +74,14 @@ class ImagePipeline {
     await mlFile.writeAsBytes(img.encodeJpg(work, quality: 92));
 
     // 2. 人像分割
-    _report('正在智能抠图…');
+    _report(PipelineStep.segmenting);
     final segmenter = SelfieSegmenter(
         mode: SegmenterMode.single, enableRawSizeMask: false);
     final segMask =
         await segmenter.processImage(InputImage.fromFile(mlFile));
     segmenter.close();
     if (segMask == null) {
-      throw PipelineException('抠图失败，未识别到人物，请使用单人正脸照片');
+      throw PipelineException('noPerson');
     }
 
     // 掩码 → 灰度字节，缩放到工作图尺寸并羽化边缘
@@ -102,7 +105,7 @@ class ImagePipeline {
     final maskW = maskImg.getBytes();
 
     // 3. 底色合成（isolate 内做逐像素混合）
-    _report('正在合成${spec.background.name}…');
+    _report(PipelineStep.compositing);
     final outBytes = await compute(_composite, <String, Object>{
       'rgba': work.getBytes(order: img.ChannelOrder.rgba),
       'width': work.width,
@@ -118,14 +121,14 @@ class ImagePipeline {
         numChannels: 4);
 
     // 4. 人脸检测 + 自动构图裁剪
-    _report('正在检测人脸并构图…');
+    _report(PipelineStep.framing);
     final detector = FaceDetector(
         options:
             FaceDetectorOptions(performanceMode: FaceDetectorMode.accurate));
     final faces = await detector.processImage(InputImage.fromFile(mlFile));
     detector.close();
     if (faces.isEmpty) {
-      throw PipelineException('未检测到正脸，请重新拍摄：正对镜头、面部无遮挡');
+      throw PipelineException('noFace');
     }
     final face = faces.reduce((a, b) =>
         a.boundingBox.width * a.boundingBox.height >=
@@ -135,7 +138,7 @@ class ImagePipeline {
     final framed = _frame(composited, face.boundingBox, spec);
 
     // 5. 缩放到目标像素并二分压缩到 KB 区间
-    _report('正在压缩导出…');
+    _report(PipelineStep.compressing);
     final output = img.copyResize(framed,
         width: spec.pixelWidth,
         height: spec.pixelHeight,
@@ -209,7 +212,7 @@ class ImagePipeline {
     return best;
   }
 
-  void _report(String step) => onProgress?.call(step);
+  void _report(PipelineStep step) => onProgress?.call(step);
 }
 
 /// 逐像素 alpha 混合：out = fg·a + bg·(1-a)。顶层函数，供 compute 调用。

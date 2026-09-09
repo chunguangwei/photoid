@@ -4,6 +4,11 @@ Thanks for your interest in contributing! This project is a Flutter app for
 on-device ID photo creation. Keep changes focused, local-first, and free of
 new paid/watermark/account features unless discussed in an issue first.
 
+Maintainer contact: **chunguangwee@gmail.com** (issues/PRs via GitHub are
+preferred; email is for licensing and private reports).
+
+Architecture, build, test and release details: [docs/development.md](docs/development.md).
+
 ## Reporting Issues
 
 - Search existing issues before opening a new one.

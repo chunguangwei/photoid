@@ -215,8 +215,8 @@ class _ResultPageState extends State<ResultPage> {
       title: Text(tr.checkLabel(item, widget.spec) +
           (item.soft ? l.referenceSuffix : '')),
       subtitle: item.pass
-          ? (item.detail != null ? Text(tr.detail(item.detail)!) : null)
-          : Text([tr.detail(item.detail), tr.fix(item.fix)]
+          ? (item.detail != null ? Text(tr.detail(item)!) : null)
+          : Text([tr.detail(item), tr.fix(item)]
               .whereType<String>()
               .join(l.referenceJoiner)),
       trailing: item.detail != null && item.pass ? null : null,

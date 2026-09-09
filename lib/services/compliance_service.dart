@@ -9,16 +9,20 @@ import 'package:path_provider/path_provider.dart';
 import '../models/photo_spec.dart';
 
 class CheckItem {
-  const CheckItem(this.label, this.pass, {this.detail, this.fix, this.soft = false});
+  const CheckItem(this.id, this.pass, {this.detail, this.fixId, this.soft = false});
 
-  final String label;
+  /// 稳定语义标识（UI 层据此映射 l10n 键，service 文案改动不影响翻译）。
+  /// 取值：format/fileSize/decodable/pixelSize/bestSize/ratio/blueBg/
+  /// faceDetected/headRatio/headCentered/eyesOpen
+  final String id;
   final bool pass;
 
-  /// 实测值，如「486KB」「480×640」
+  /// 实测值，如「486KB」「480×640」「3%」
   final String? detail;
 
-  /// 不通过时的修复建议
-  final String? fix;
+  /// 不通过时的修复建议标识：fileTooLarge/fileTooSmall/fileCorrupt/
+  /// sizeOutOfRange/ratioMismatch/notBlue/noFace/headRatio/notCentered/eyesClosed
+  final String? fixId;
 
   /// 软指标（通知未明确要求，仅供参考）：不通过不阻断保存
   final bool soft;
@@ -37,34 +41,34 @@ class ComplianceService {
     final items = <CheckItem>[];
 
     // 1. 文件格式（流水线恒定输出 jpg）
-    items.add(const CheckItem('文件格式为 JPG', true));
+    items.add(const CheckItem('format', true));
 
     // 2. 文件大小
     final kb = jpgBytes.lengthInBytes / 1024;
     final kbOk = kb >= spec.minFileKb && kb <= spec.maxFileKb;
     items.add(CheckItem(
-      '文件大小 ${spec.minFileKb}–${spec.maxFileKb}KB',
+      'fileSize',
       kbOk,
       detail: '${kb.toStringAsFixed(0)}KB',
-      fix: kb > spec.maxFileKb ? '文件过大，请重新生成压缩' : '文件过小，请提高导出质量',
+      fixId: kb > spec.maxFileKb ? 'fileTooLarge' : 'fileTooSmall',
     ));
 
     // 3. 像素尺寸
     final image = img.decodeJpg(jpgBytes);
     if (image == null) {
-      items.add(const CheckItem('图片可解码', false, fix: '文件损坏，请重新生成'));
+      items.add(const CheckItem('decodable', false, fixId: 'fileCorrupt'));
       return ComplianceReport(items);
     }
     final wOk = image.width >= spec.minWidth && image.width <= spec.maxWidth;
     final hOk = image.height >= spec.minHeight && image.height <= spec.maxHeight;
     items.add(CheckItem(
-      '像素尺寸 宽${spec.minWidth}–${spec.maxWidth} 高${spec.minHeight}–${spec.maxHeight}',
+      'pixelSize',
       wOk && hOk,
       detail: '${image.width}×${image.height}',
-      fix: '尺寸越界，请重新生成',
+      fixId: 'sizeOutOfRange',
     ));
     items.add(CheckItem(
-      '最佳尺寸 ${spec.pixelWidth}×${spec.pixelHeight}',
+      'bestSize',
       image.width == spec.pixelWidth && image.height == spec.pixelHeight,
       detail: '${image.width}×${image.height}',
       soft: true,
@@ -74,10 +78,10 @@ class ComplianceService {
     final ratio = image.height / image.width;
     final ratioOk = ratio >= spec.minRatio && ratio <= spec.maxRatio;
     items.add(CheckItem(
-      '比例（高/宽）${spec.minRatio}–${spec.maxRatio}',
+      'ratio',
       ratioOk,
       detail: ratio.toStringAsFixed(2),
-      fix: '比例不符，请重新裁剪',
+      fixId: 'ratioMismatch',
     ));
 
     // 5. 背景色：四角采样判蓝
@@ -85,12 +89,11 @@ class ComplianceService {
     final hsv = _rgbToHsv(bg.$1, bg.$2, bg.$3);
     final isBlue = hsv.$1 >= 190 && hsv.$1 <= 260 && hsv.$2 > 0.25;
     items.add(CheckItem(
-      '底色为蓝底',
+      'blueBg',
       isBlue,
       detail: 'RGB(${bg.$1},${bg.$2},${bg.$3})',
-      fix: '检测到底色不是蓝色，请使用换底功能重新生成',
+      fixId: 'notBlue',
     ));
-
     // 6. 人脸与头部占比（软指标：通知未明确要求）
     items.addAll(await _faceChecks(image));
 
@@ -157,8 +160,8 @@ class ComplianceService {
       final faces = await detector.processImage(InputImage.fromFile(f));
       if (faces.isEmpty) {
         return [
-          const CheckItem('检测到正脸', false,
-              fix: '未检测到人脸，建议使用正脸免冠照片重新拍摄', soft: true),
+          const CheckItem('faceDetected', false,
+              fixId: 'noFace', soft: true),
         ];
       }
       final face = faces.reduce((a, b) =>
@@ -181,15 +184,15 @@ class ComplianceService {
           rightEye == null ||
           (leftEye > 0.4 && rightEye > 0.4);
       return [
-        CheckItem('头部占比 45%–85%', ratioOk,
+        CheckItem('headRatio', ratioOk,
             detail: '${(headRatio * 100).toStringAsFixed(0)}%',
-            fix: '头部占比不合适，请调整拍摄距离',
+            fixId: 'headRatio',
             soft: true),
-        CheckItem('头部水平居中', centerOk,
-            detail: '偏差 ${(centerDev * 100).toStringAsFixed(0)}%',
-            fix: '人物未居中，请重新构图',
+        CheckItem('headCentered', centerOk,
+            detail: '${(centerDev * 100).toStringAsFixed(0)}%',
+            fixId: 'notCentered',
             soft: true),
-        CheckItem('双眼睁开', eyesOk, fix: '检测到闭眼，请重新拍摄', soft: true),
+        CheckItem('eyesOpen', eyesOk, fixId: 'eyesClosed', soft: true),
       ];
     } finally {
       detector.close();
