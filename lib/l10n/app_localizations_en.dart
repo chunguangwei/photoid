@@ -495,4 +495,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editCropReset => 'Reset';
+
+  @override
+  String get editTitle => 'Edit';
+
+  @override
+  String get saveAction => 'Save';
+
+  @override
+  String get editHd => 'HD Enhanced';
+
+  @override
+  String get editNormal => 'Standard';
+
+  @override
+  String get processingTitle => 'Creating your photo with AI';
+
+  @override
+  String get processingDesc =>
+      'We use AI portrait recognition to scan and optimize your photo. This may take a moment, please wait.';
+
+  @override
+  String get processingBusy => 'Processing…';
+
+  @override
+  String cameraSelected(String name) {
+    return 'Selected: $name';
+  }
+
+  @override
+  String get retake => 'Retake';
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
+  String get pickGalleryShort => 'Gallery';
+
+  @override
+  String get specBgColorPick => 'Background';
+
+  @override
+  String updateProgress(Object percent, Object received, Object total) {
+    return 'Downloading $percent% ($received / $total MB)';
+  }
+
+  @override
+  String updateProgressUnknown(Object received) {
+    return 'Downloading… $received MB';
+  }
+
+  @override
+  String get updateDone =>
+      'Download complete. Confirm in the system installer.';
+
+  @override
+  String get updateCancel => 'Cancel';
+
+  @override
+  String get updateRetry => 'Retry';
+
+  @override
+  String get updateInstall => 'Done';
 }

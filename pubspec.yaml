@@ -1,7 +1,7 @@
 name: photoid
 description: 智能证件照 - 本地处理的合规证件照
 publish_to: 'none'
-version: 0.2.8+10
+version: 0.2.9+11
 
 environment:
   sdk: ^3.5.0
@@ -10,7 +10,6 @@ dependencies:
   camera: ^0.12.1
   flutter:
     sdk: flutter
-  flutter_downloader: ^1.12.1
   flutter_launcher_icons: ^0.14.4
   flutter_localizations:
     sdk: flutter
@@ -21,6 +20,7 @@ dependencies:
   image: ^4.9.2
   image_picker: ^1.2.3
   intl: ^0.20.3
+  onnxruntime: ^1.4.1
   open_filex: ^4.7.0
   package_info_plus: ^10.2.1
   path: ^1.9.1
@@ -37,6 +37,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/photo_specs.json
+    - assets/models/hivision_modnet.onnx
 
 flutter_launcher_icons:
   android: true

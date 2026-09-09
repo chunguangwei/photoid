@@ -75,17 +75,26 @@ void main() {
     expect(find.text(l.updateTitle), findsNothing);
   });
 
-  testWidgets('立即更新：测试环境无下载插件，显示失败提示且可重试', (tester) async {
-    // 测试环境没有 flutter_downloader/permission_handler 插件，enqueue 必失败；
-    // 验证错误提示出现、对话框未关闭（用户可读错误后重试或放弃）。
+  testWidgets('立即更新：测试环境无网络，显示失败提示且可重试', (tester) async {
+    // 测试环境无网络，下载必失败；验证错误提示出现、对话框未关闭
+    // （用户可读错误后重试或放弃），且重试按钮可用。
     final l = await _show(tester, _optional);
 
-    await tester.tap(find.text(l.updateNow));
-    await tester.pumpAndSettle();
-
+    // runAsync：下载失败路径含真实超时（探测 4s×2 候选），fake clock 不适用
+    await tester.runAsync(() async {
+      await tester.tap(find.text(l.updateNow));
+      await Future.delayed(const Duration(seconds: 12));
+    });
+    await tester.pump();
 
     expect(find.text(l.updateDownloadFailed), findsOneWidget);
     expect(find.text(l.updateTitle), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, l.updateRetry))
+          .onPressed,
+      isNotNull,
+    );
   });
 
   testWidgets('force update disables 稍后 and hides empty notes', (tester) async {
@@ -93,12 +102,7 @@ void main() {
 
     // releaseNotes 为空：不渲染可滚动的说明区块
     expect(find.byType(SingleChildScrollView), findsNothing);
-    expect(
-      tester
-          .widget<TextButton>(find.widgetWithText(TextButton, l.updateLater))
-          .onPressed,
-      isNull,
-    );
+    expect(find.text(l.updateLater), findsNothing);
     expect(
       tester
           .widget<FilledButton>(find.widgetWithText(FilledButton, l.updateNow))

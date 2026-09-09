@@ -195,5 +195,42 @@
   "updateCopyLink": "复制下载链接",
   "updateLinkCopied": "链接已复制，请用浏览器打开下载",
   "editZoomHint": "双指缩放、拖动调整构图",
-  "editCropReset": "还原"
+  "editCropReset": "还原",
+  "editTitle": "编辑",
+  "saveAction": "保存",
+  "editHd": "高清精修版",
+  "editNormal": "原图普通版",
+  "processingTitle": "正在智能调整制作您的照片",
+  "processingDesc": "我们将使用AI人像识别技术扫描您的照片，并将它调整至最佳状态，这可能需要一些时间，请耐心等待。",
+  "processingBusy": "制作中…",
+  "cameraSelected": "已选：{name}",
+  "@cameraSelected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "retake": "重拍",
+  "confirm": "确认",
+  "pickGalleryShort": "相册",
+  "specBgColorPick": "选择背景色",
+  "updateProgress": "正在下载 {percent}%（{received} / {total} MB）",
+  "@updateProgress": {
+    "placeholders": {
+      "percent": {},
+      "received": {},
+      "total": {}
+    }
+  },
+  "updateProgressUnknown": "正在下载…已下载 {received} MB",
+  "@updateProgressUnknown": {
+    "placeholders": {
+      "received": {}
+    }
+  },
+  "updateDone": "下载完成，请在系统弹窗中确认安装",
+  "updateCancel": "取消下载",
+  "updateRetry": "重试",
+  "updateInstall": "完成"
 }

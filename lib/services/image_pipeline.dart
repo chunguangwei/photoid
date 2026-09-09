@@ -10,11 +10,15 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../models/photo_spec.dart';
+import 'modnet_segmenter.dart';
+
+/// 抠图引擎：mlkit=快速普通版；modnet=高精修发丝级（失败自动回退 mlkit）。
+enum MattingEngine { mlkit, modnet }
 
 /// 流水线处理步骤（UI 层据此映射 l10n 键，文案改动不影响翻译）。
 enum PipelineStep { preparing, reading, segmenting, compositing, framing, compressing }
-
 class PipelineException implements Exception {
+
   PipelineException(this.code);
   final String code;
   @override
@@ -30,6 +34,7 @@ class PipelineResult {
     required this.composited,
     required this.compositedJpg,
     required this.autoCrop,
+    required this.faceRect,
   });
 
   /// 最终交付的 jpg 字节（已按规格压缩，自动构图）
@@ -52,6 +57,9 @@ class PipelineResult {
 
   /// 自动构图裁剪框（composited 坐标系），编辑器的初始变换
   final Rect autoCrop;
+
+  /// 人脸框（composited 坐标系），精修磨皮区域定位
+  final Rect faceRect;
 }
 
 /// 处理流水线：EXIF 归一化 → 抠图 → 底色合成 → 人脸构图裁剪 → 二分压缩。
@@ -65,7 +73,8 @@ class ImagePipeline {
   static const _maxWorkSide = 1440;
 
   Future<PipelineResult> run(String sourcePath, PhotoSpec spec,
-      {bool flipHorizontal = false}) async {
+      {bool flipHorizontal = false,
+      MattingEngine engine = MattingEngine.mlkit}) async {
     // 1. 解码 + 按 EXIF 旋转归一化（image 包不保证自动应用方向）
     _report(PipelineStep.reading);
     final rawBytes = await File(sourcePath).readAsBytes();
@@ -87,26 +96,22 @@ class ImagePipeline {
     final mlFile = File(p.join(
         dir.path, 'photoid_ml_${DateTime.now().millisecondsSinceEpoch}.jpg'));
     await mlFile.writeAsBytes(img.encodeJpg(work, quality: 92));
-
-    // 2. 人像分割
+    // 2. 人像分割（双引擎：高精修=MODNet 发丝级；普通=ML Kit 快速）
     _report(PipelineStep.segmenting);
-    final segmenter = SelfieSegmenter(
-        mode: SegmenterMode.single, enableRawSizeMask: false);
-    final segMask = await _withMlKitFallback(segmenter.processImage, mlFile, work);
-    segmenter.close();
-    if (segMask == null) {
-      throw PipelineException('noPerson');
-    }
-
-    // 掩码 → 灰度字节，缩放到工作图尺寸并羽化边缘
-    final conf = segMask.confidences;
-    var maskBytes = Uint8List(segMask.width * segMask.height);
-    for (var i = 0; i < maskBytes.length; i++) {
-      maskBytes[i] = (conf[i].clamp(0.0, 1.0) * 255).round();
+    Uint8List maskBytes;
+    if (engine == MattingEngine.modnet) {
+      try {
+        maskBytes = await ModnetSegmenter.segment(work);
+      } catch (_) {
+        // MODNet 不可用（模型缺失/设备不兼容）→ 回退 ML Kit
+        maskBytes = await _segmentMlKit(mlFile, work);
+      }
+    } else {
+      maskBytes = await _segmentMlKit(mlFile, work);
     }
     var maskImg = img.Image.fromBytes(
-        width: segMask.width,
-        height: segMask.height,
+        width: work.width,
+        height: work.height,
         bytes: maskBytes.buffer,
         numChannels: 1);
     if (maskImg.width != work.width || maskImg.height != work.height) {
@@ -165,10 +170,12 @@ class ImagePipeline {
 
     // 5. 缩放到目标像素并二分压缩到 KB 区间
     _report(PipelineStep.compressing);
-    final output = img.copyResize(framed,
-        width: spec.pixelWidth,
-        height: spec.pixelHeight,
-        interpolation: img.Interpolation.cubic);
+    final output = resizeToSpecUniform(
+        framed,
+        spec.pixelWidth,
+        spec.pixelHeight,
+        img.ColorRgb8(
+            spec.background.r, spec.background.g, spec.background.b));
     final jpg = encodeToKbRange(output, spec.minFileKb, spec.maxFileKb);
 
     mlFile.delete().ignore();
@@ -180,6 +187,7 @@ class ImagePipeline {
       composited: composited,
       compositedJpg: img.encodeJpg(composited, quality: 90),
       autoCrop: autoCrop,
+      faceRect: face.boundingBox,
     );
   }
 
@@ -204,8 +212,11 @@ class ImagePipeline {
       cropW *= fit;
       cropH *= fit;
     }
-    final cropWi = cropW.round().clamp(1, srcW);
-    final cropHi = cropH.round().clamp(1, srcH);
+    // 高由宽 ÷ 比例推导（比例锁定，杜绝拉伸）；钳制后回推宽
+    var cropWi = cropW.round().clamp(1, srcW);
+    var cropHi = (cropWi / aspect).round().clamp(1, srcH);
+    cropWi = (cropHi * aspect).round().clamp(1, srcW);
+    cropHi = (cropWi / aspect).round().clamp(1, srcH);
     final cx = face.left + face.width / 2;
     // 先补偿头顶（face.height×0.5）再留 10% 白边
     final top = face.top - face.height * 0.5 - cropH * 0.10;
@@ -217,6 +228,59 @@ class ImagePipeline {
 
   Rect _cropRect(img.Image source, Rect face, PhotoSpec spec) =>
       cropRectFor(source.width, source.height, face, spec.aspect);
+
+  /// 高清精修（保守参数，避免审核失真）：
+  /// 面部椭圆区域 45% 磨皮 + 全图微提亮/微饱和。
+  /// [face] 为输出图坐标系人脸框（编辑器按裁剪比例换算后传入）。
+  static img.Image beautify(img.Image src, Rect face) {
+    final blurred = img.gaussianBlur(src.clone(), radius: 4);
+    final cx = face.left + face.width / 2;
+    final cy = face.top + face.height / 2;
+    final rx = face.width * 0.62;
+    final ry = face.height * 0.72;
+    final x0 = math.max(0, (cx - rx).floor());
+    final x1 = math.min(src.width - 1, (cx + rx).ceil());
+    final y0 = math.max(0, (cy - ry).floor());
+    final y1 = math.min(src.height - 1, (cy + ry).ceil());
+    for (var y = y0; y <= y1; y++) {
+      for (var x = x0; x <= x1; x++) {
+        final dx = (x - cx) / rx;
+        final dy = (y - cy) / ry;
+        if (dx * dx + dy * dy > 1) continue;
+        final sp = src.getPixel(x, y);
+        final bp = blurred.getPixel(x, y);
+        // 45% 混合磨皮
+        src.setPixelRgb(
+            x,
+            y,
+            (sp.r * 0.55 + bp.r * 0.45).round(),
+            (sp.g * 0.55 + bp.g * 0.45).round(),
+            (sp.b * 0.55 + bp.b * 0.45).round());
+      }
+    }
+    // 微提亮 + 微饱和（保守）
+    return img.adjustColor(src, brightness: 1.04, saturation: 1.05);
+  }
+
+  /// 等比缩放到规格像素：只用单一缩放因子（宽向对齐），杜绝拉伸。
+  /// 源图比例已由裁剪框锁定，高度与目标的舍入差 ≤1px：
+  /// 多出则从底部裁掉，不足用底色补齐。
+  static img.Image resizeToSpecUniform(
+      img.Image src, int targetW, int targetH, img.Color bg) {
+    final f = targetW / src.width;
+    var out = img.copyResize(src,
+        width: targetW,
+        height: (src.height * f).round(),
+        interpolation: img.Interpolation.cubic);
+    if (out.height == targetH) return out;
+    if (out.height > targetH) {
+      return img.copyCrop(out, x: 0, y: 0, width: targetW, height: targetH);
+    }
+    final canvas =
+        img.Image(width: targetW, height: targetH, backgroundColor: bg);
+    img.compositeImage(canvas, out, dstX: 0, dstY: 0);
+    return canvas;
+  }
 
   /// 二分 JPEG 质量压到 maxKb 以下（优先接近上限的最高质量）。
   /// 契约：minKb 仅尽力而为——极小像素图（如 144×192）即使 q98 也可能
@@ -248,6 +312,37 @@ class ImagePipeline {
   }
 
   void _report(PipelineStep step) => onProgress?.call(step);
+
+  /// ML Kit 分割（普通版路径）：返回 work 尺寸 0-255 灰度掩码。
+  Future<Uint8List> _segmentMlKit(File mlFile, img.Image work) async {
+    final segmenter = SelfieSegmenter(
+        mode: SegmenterMode.single, enableRawSizeMask: false);
+    final segMask =
+        await _withMlKitFallback(segmenter.processImage, mlFile, work);
+    segmenter.close();
+    if (segMask == null) {
+      throw PipelineException('noPerson');
+    }
+    final conf = segMask.confidences;
+    final bytes = Uint8List(segMask.width * segMask.height);
+    for (var i = 0; i < bytes.length; i++) {
+      bytes[i] = (conf[i].clamp(0.0, 1.0) * 255).round();
+    }
+    if (segMask.width != work.width || segMask.height != work.height) {
+      final m = img.Image.fromBytes(
+          width: segMask.width,
+          height: segMask.height,
+          bytes: bytes.buffer,
+          numChannels: 1);
+      return img
+          .copyResize(m,
+              width: work.width,
+              height: work.height,
+              interpolation: img.Interpolation.linear)
+          .getBytes();
+    }
+    return bytes;
+  }
 
   /// 双通路执行 ML Kit 任务：NV21 为主，PlatformException 时回退 fromFile。
   /// 背景：fromFilePath 在部分机型 NPE（不挂 MediaImage）；NV21 在华为等

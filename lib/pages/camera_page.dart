@@ -1,13 +1,16 @@
+import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 import '../models/photo_spec.dart';
 import 'edit_page.dart';
 
-/// 拍摄页：实时预览 + 3:4 参考框 + 人像轮廓框，支持前置/后置切换。
-/// 默认后置（家长替孩子拍摄场景）。
+/// 拍摄页（对标行业参考）：人形轮廓实线 + 横向虚线参考 + 顶栏已选规格 +
+/// 大圆环快门 + 拍后「重拍/确认」。支持前置/后置切换。
 class CameraPage extends StatefulWidget {
   const CameraPage({super.key, required this.spec});
 
@@ -24,6 +27,9 @@ class _CameraPageState extends State<CameraPage> {
   String? _error;
   bool _capturing = false;
   bool _switching = false;
+
+  /// 拍后确认态：已拍照片路径（显示重拍/确认）
+  String? _capturedPath;
 
   @override
   void initState() {
@@ -65,7 +71,6 @@ class _CameraPageState extends State<CameraPage> {
     setState(() => _controller = controller);
   }
 
-  /// 前置/后置切换：释放旧控制器后按新镜头方向重建。
   Future<void> _switchCamera() async {
     if (_cameras.length < 2 || _switching) return;
     _switching = true;
@@ -94,18 +99,13 @@ class _CameraPageState extends State<CameraPage> {
     try {
       final file = await controller.takePicture();
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(MaterialPageRoute(
-        builder: (_) => EditPage(
-            sourcePath: file.path,
-            spec: widget.spec,
-            flipHorizontal: _lens == CameraLensDirection.front),
-      ));
+      // 拍后进入确认态（重拍/确认），而非直接跳转
+      setState(() => _capturedPath = file.path);
     } on CameraException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(AppLocalizations.of(context)
               .captureFailed(e.description ?? e.code))));
     } catch (e) {
-      // 部分机型（华为/HarmonyOS）会抛非 CameraException 的插件错误
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content:
@@ -114,6 +114,24 @@ class _CameraPageState extends State<CameraPage> {
     } finally {
       if (mounted) setState(() => _capturing = false);
     }
+  }
+
+  Future<void> _pickGallery() async {
+    final picked = await ImagePicker()
+        .pickImage(source: ImageSource.gallery, imageQuality: 99);
+    if (picked == null || !mounted) return;
+    setState(() => _capturedPath = picked.path);
+  }
+
+  void _confirm() {
+    final path = _capturedPath;
+    if (path == null) return;
+    Navigator.of(context).pushReplacement(MaterialPageRoute(
+      builder: (_) => EditPage(
+          sourcePath: path,
+          spec: widget.spec,
+          flipHorizontal: _lens == CameraLensDirection.front),
+    ));
   }
 
   @override
@@ -126,66 +144,166 @@ class _CameraPageState extends State<CameraPage> {
   Widget build(BuildContext context) {
     final controller = _controller;
     final l = AppLocalizations.of(context);
+    final captured = _capturedPath;
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: Text(Tr.of(context).specName(widget.spec)),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        actions: [
-          if (_cameras.length > 1)
-            IconButton(
-              icon: const Icon(Icons.flip_camera_ios_outlined),
-              tooltip: l.cameraSwitch,
-              onPressed: _controller == null ? null : _switchCamera,
-            ),
-        ],
-      ),
-      body: _error != null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(_error!,
-                    style: const TextStyle(color: Colors.white),
-                    textAlign: TextAlign.center),
-              ),
-            )
-          : controller == null
-              ? const Center(child: CircularProgressIndicator())
-              : Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Center(child: CameraPreview(controller)),
-                    CustomPaint(
-                      painter: _GuidePainter(aspect: widget.spec.aspect),
-                    ),
-                    Positioned(
-                      left: 16,
-                      right: 16,
-                      bottom: 110,
-                      child: Text(
-                        l.cameraGuidePerson,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            color: Colors.white70, fontSize: 13),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _topBar(l),
+            Expanded(
+              child: _error != null
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(_error!,
+                            style: const TextStyle(color: Colors.white),
+                            textAlign: TextAlign.center),
                       ),
-                    ),
-                  ],
-                ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: controller == null
-          ? null
-          : FloatingActionButton.large(
-              onPressed: _capture,
-              child: _capturing
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Icon(Icons.photo_camera, size: 36),
+                    )
+                  : captured != null
+                      ? _buildFrozenPreview(captured, l)
+                      : controller == null
+                          ? const Center(child: CircularProgressIndicator())
+                          : Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Center(child: CameraPreview(controller)),
+                                CustomPaint(
+                                  painter: _GuidePainter(
+                                      aspect: widget.spec.aspect),
+                                ),
+                              ],
+                            ),
             ),
+            captured != null
+                ? _buildConfirmBar(l)
+                : _buildCaptureBar(l, controller),
+          ],
+        ),
+      ),
     );
   }
+
+  /// 顶栏：✕ 关闭｜人形图标｜已选：规格名
+  Widget _topBar(AppLocalizations l) => Container(
+        color: Colors.black,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            const Icon(Icons.person_outline, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                l.cameraSelected(Tr.of(context).specName(widget.spec)),
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  /// 底部快门栏：相册｜大圆环快门｜翻转镜头
+  Widget _buildCaptureBar(AppLocalizations l, CameraController? controller) =>
+      Container(
+        color: Colors.black,
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _roundSideButton(
+              icon: Icons.photo_library_outlined,
+              tooltip: l.pickGalleryShort,
+              onTap: _pickGallery,
+            ),
+            GestureDetector(
+              onTap: _capture,
+              child: Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      color: Theme.of(context).colorScheme.primary, width: 4),
+                ),
+                child: _capturing
+                    ? const Padding(
+                        padding: EdgeInsets.all(18),
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.5),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ),
+            _roundSideButton(
+              icon: Icons.flip_camera_ios_outlined,
+              tooltip: l.cameraSwitch,
+              onTap: controller == null ? null : _switchCamera,
+            ),
+          ],
+        ),
+      );
+
+  Widget _roundSideButton(
+          {required IconData icon,
+          required String tooltip,
+          required VoidCallback? onTap}) =>
+      IconButton(
+        icon: Icon(icon, color: Colors.white70, size: 26),
+        tooltip: tooltip,
+        onPressed: onTap,
+      );
+
+  /// 拍后冻结预览（中间压暗，照片居中）
+  Widget _buildFrozenPreview(String path, AppLocalizations l) => Stack(
+        fit: StackFit.expand,
+        children: [
+          Container(color: Colors.black87),
+          Center(
+            child: Image.file(File(path), fit: BoxFit.contain),
+          ),
+        ],
+      );
+
+  /// 拍后底栏：重拍｜确认
+  Widget _buildConfirmBar(AppLocalizations l) => Container(
+        color: Colors.black87,
+        padding: const EdgeInsets.fromLTRB(24, 14, 24, 22),
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white54),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                onPressed: () => setState(() => _capturedPath = null),
+                child: Text(l.retake),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 2,
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                onPressed: _confirm,
+                child: Text(l.confirm, style: const TextStyle(fontSize: 16)),
+              ),
+            ),
+          ],
+        ),
+      );
 }
 
-/// 半透明遮罩 + 3:4 取景框 + 人像轮廓参考框（头 + 肩剪影虚线）
+/// 人形轮廓实线参考框（头 + 颈 + 肩）+ 横向虚线（眼线/肩线）+ 取景框遮罩
 class _GuidePainter extends CustomPainter {
   _GuidePainter({required this.aspect});
 
@@ -193,7 +311,6 @@ class _GuidePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // 取景框：宽占屏 78%，按规格比例
     final frameW = size.width * 0.78;
     final frameH = frameW / aspect;
     final left = (size.width - frameW) / 2;
@@ -207,60 +324,73 @@ class _GuidePainter extends CustomPainter {
       ..fillType = PathFillType.evenOdd;
     canvas.drawPath(overlay, Paint()..color = Colors.black54);
 
-    // 框边
+    final linePaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    // 框边（四角轻描即可，参考图为弱框线）
     canvas.drawRect(
         frame,
         Paint()
-          ..color = Colors.white
+          ..color = Colors.white38
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5);
+          ..strokeWidth = 1);
 
-    // 人像轮廓：头部占框高约 40%（对应成片头部占比 62% 的视觉引导），
-    // 肩部展开至框宽约 62%，底部在框高 82% 处截止
     final cx = size.width / 2;
-    final headR = frameH * 0.20;
-    final headCY = top + frameH * 0.08 + headR;
-    final shoulderW = frameW * 0.62;
-    final shoulderY = headCY + headR * 0.85; // 颈部
-    final bottomY = top + frameH * 0.82;
+    // 头部轮廓：头顶在框高 8%，头高约 34%，下颌内收
+    final headTop = top + frameH * 0.08;
+    final headH = frameH * 0.34;
+    final headW = headH * 0.78;
+    final jawY = headTop + headH * 0.92;
+    final neckY = headTop + headH * 1.08;
+    final shoulderY = top + frameH * 0.82;
+    final shoulderW = frameW * 0.86;
 
     final person = Path()
-      // 头部圆
-      ..addOval(Rect.fromCircle(center: Offset(cx, headCY), radius: headR))
-      // 肩部轮廓（颈 → 肩 → 底部）
-      ..moveTo(cx - headR * 0.55, shoulderY)
+      // 左下颌 → 头顶 → 右下颌
+      ..moveTo(cx - headW * 0.30, jawY)
       ..cubicTo(
-        cx - shoulderW * 0.48, shoulderY + headR * 0.25,
-        cx - shoulderW * 0.52, bottomY - headR * 0.5,
-        cx - shoulderW / 2, bottomY,
-      )
-      ..lineTo(cx + shoulderW / 2, bottomY)
+          cx - headW * 0.52, headTop + headH * 0.62,
+          cx - headW * 0.50, headTop + headH * 0.18,
+          cx, headTop)
       ..cubicTo(
-        cx + shoulderW * 0.52, bottomY - headR * 0.5,
-        cx + shoulderW * 0.48, shoulderY + headR * 0.25,
-        cx + headR * 0.55, shoulderY,
-      );
+          cx + headW * 0.50, headTop + headH * 0.18,
+          cx + headW * 0.52, headTop + headH * 0.62,
+          cx + headW * 0.30, jawY)
+      // 右颈
+      ..cubicTo(cx + headW * 0.22, neckY - 6, cx + headW * 0.20, neckY,
+          cx + headW * 0.20, neckY)
+      // 右肩弧线至框底
+      ..cubicTo(cx + shoulderW * 0.34, neckY + headH * 0.22,
+          cx + shoulderW * 0.46, shoulderY - headH * 0.28,
+          cx + shoulderW / 2, shoulderY)
+      ..moveTo(cx - headW * 0.30, jawY)
+      // 左颈
+      ..cubicTo(cx - headW * 0.22, neckY - 6, cx - headW * 0.20, neckY,
+          cx - headW * 0.20, neckY)
+      // 左肩弧线至框底
+      ..cubicTo(cx - shoulderW * 0.34, neckY + headH * 0.22,
+          cx - shoulderW * 0.46, shoulderY - headH * 0.28,
+          cx - shoulderW / 2, shoulderY);
+    canvas.drawPath(person, linePaint);
 
+    // 横向虚线：眼线（头中部）与肩线
     final dashPaint = Paint()
-      ..color = Colors.white70
+      ..color = Colors.white60
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
-    _dashed(canvas, person, dashPaint);
+      ..strokeWidth = 1;
+    _dashedH(canvas, top + headH * 0.62, frame, dashPaint);
+    _dashedH(canvas, shoulderY, frame, dashPaint);
   }
 
-  void _dashed(Canvas canvas, Path path, Paint paint) {
-    const dashLen = 10.0;
-    const gapLen = 6.0;
-    for (final metric in path.computeMetrics()) {
-      var dist = 0.0;
-      while (dist < metric.length) {
-        final next = dist + dashLen;
-        canvas.drawPath(
-            metric.extractPath(
-                dist, next.clamp(0.0, metric.length).toDouble()),
-            paint);
-        dist = next + gapLen;
-      }
+  void _dashedH(Canvas canvas, double y, Rect frame, Paint paint) {
+    const dash = 10.0, gap = 7.0;
+    var x = frame.left;
+    while (x < frame.right) {
+      canvas.drawLine(
+          Offset(x, y), Offset((x + dash).clamp(x, frame.right), y), paint);
+      x += dash + gap;
     }
   }
 

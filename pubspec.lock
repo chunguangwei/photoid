@@ -206,14 +206,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_downloader:
-    dependency: "direct main"
-    description:
-      name: flutter_downloader
-      sha256: "84e2dddc0f9f1f63f76dda9757736970d924106680b00f06ad3b216b563de916"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.12.1"
   flutter_launcher_icons:
     dependency: "direct main"
     description:
@@ -501,6 +493,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "9.5.0"
+  onnxruntime:
+    dependency: "direct main"
+    description:
+      name: onnxruntime
+      sha256: e77ec05acafc135cc5fe7bcdf11b101b39f06513c9d5e9fa02cb1929f6bac72a
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.1"
   open_filex:
     dependency: "direct main"
     description:

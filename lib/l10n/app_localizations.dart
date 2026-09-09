@@ -967,6 +967,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reset'**
   String get editCropReset;
+
+  /// No description provided for @editTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get editTitle;
+
+  /// No description provided for @saveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveAction;
+
+  /// No description provided for @editHd.
+  ///
+  /// In en, this message translates to:
+  /// **'HD Enhanced'**
+  String get editHd;
+
+  /// No description provided for @editNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get editNormal;
+
+  /// No description provided for @processingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating your photo with AI'**
+  String get processingTitle;
+
+  /// No description provided for @processingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'We use AI portrait recognition to scan and optimize your photo. This may take a moment, please wait.'**
+  String get processingDesc;
+
+  /// No description provided for @processingBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing…'**
+  String get processingBusy;
+
+  /// No description provided for @cameraSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected: {name}'**
+  String cameraSelected(String name);
+
+  /// No description provided for @retake.
+  ///
+  /// In en, this message translates to:
+  /// **'Retake'**
+  String get retake;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
+
+  /// No description provided for @pickGalleryShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get pickGalleryShort;
+
+  /// No description provided for @specBgColorPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Background'**
+  String get specBgColorPick;
+
+  /// No description provided for @updateProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading {percent}% ({received} / {total} MB)'**
+  String updateProgress(Object percent, Object received, Object total);
+
+  /// No description provided for @updateProgressUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading… {received} MB'**
+  String updateProgressUnknown(Object received);
+
+  /// No description provided for @updateDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Download complete. Confirm in the system installer.'**
+  String get updateDone;
+
+  /// No description provided for @updateCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get updateCancel;
+
+  /// No description provided for @updateRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get updateRetry;
+
+  /// No description provided for @updateInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get updateInstall;
 }
 
 class _AppLocalizationsDelegate

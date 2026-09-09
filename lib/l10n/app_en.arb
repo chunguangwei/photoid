@@ -290,5 +290,42 @@
   "updateCopyLink": "Copy download link",
   "updateLinkCopied": "Link copied. Open it in your browser to download.",
   "editZoomHint": "Pinch & drag to adjust",
-  "editCropReset": "Reset"
+  "editCropReset": "Reset",
+  "editTitle": "Edit",
+  "saveAction": "Save",
+  "editHd": "HD Enhanced",
+  "editNormal": "Standard",
+  "processingTitle": "Creating your photo with AI",
+  "processingDesc": "We use AI portrait recognition to scan and optimize your photo. This may take a moment, please wait.",
+  "processingBusy": "Processing…",
+  "cameraSelected": "Selected: {name}",
+  "@cameraSelected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "retake": "Retake",
+  "confirm": "Confirm",
+  "pickGalleryShort": "Gallery",
+  "specBgColorPick": "Background",
+  "updateProgress": "Downloading {percent}% ({received} / {total} MB)",
+  "@updateProgress": {
+    "placeholders": {
+      "percent": {},
+      "received": {},
+      "total": {}
+    }
+  },
+  "updateProgressUnknown": "Downloading… {received} MB",
+  "@updateProgressUnknown": {
+    "placeholders": {
+      "received": {}
+    }
+  },
+  "updateDone": "Download complete. Confirm in the system installer.",
+  "updateCancel": "Cancel",
+  "updateRetry": "Retry",
+  "updateInstall": "Done"
 }

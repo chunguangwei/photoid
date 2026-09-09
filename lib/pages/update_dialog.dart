@@ -1,16 +1,17 @@
-import 'dart:io' show Platform;
+import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:http/http.dart' as http;
+import 'package:open_filex/open_filex.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/update_service.dart';
 
-/// 弹出「发现新版本」对话框；用户选择「立即更新」后由系统 DownloadManager
-/// 在后台下载（通知栏显示进度，切后台/杀进程不中断）。
-/// 完成监听在 main.dart（App 生命周期）；通知点击亦可直接拉起安装。
+/// 「发现新版本」对话框：应用内流式下载 APK 并显示进度条，
+/// 完成后拉起系统安装器。不依赖系统 DownloadManager（其通知为英文且
+/// 国产 ROM 常静默失败），与微信/支付宝等行业实践一致。
 Future<void> showUpdateDialog(BuildContext context, UpdateInfo info) {
   return showDialog<void>(
     context: context,
@@ -18,6 +19,8 @@ Future<void> showUpdateDialog(BuildContext context, UpdateInfo info) {
     builder: (context) => _UpdateDialog(info: info),
   );
 }
+
+enum _DlState { idle, downloading, done, error }
 
 class _UpdateDialog extends StatefulWidget {
   const _UpdateDialog({required this.info});
@@ -31,54 +34,81 @@ class _UpdateDialog extends StatefulWidget {
 class _UpdateDialogState extends State<_UpdateDialog> {
   static const _apkName = 'photoid-update.apk';
 
-  bool _started = false;
-  String? _error;
+  _DlState _state = _DlState.idle;
+  int _received = 0;
+  int _total = 0;
+  http.Client? _client;
 
-  Future<void> _startBackgroundDownload() async {
-    if (_started) return;
-    // 立即占位：权限弹窗等待期间防止重复点击重复 enqueue 同一 APK
+  @override
+  void dispose() {
+    _client?.close();
+    super.dispose();
+  }
+
+  Future<void> _startDownload() async {
     setState(() {
-      _started = true;
-      _error = null;
+      _state = _DlState.downloading;
+      _received = 0;
+      _total = 0;
     });
+    final client = http.Client();
+    _client = client;
     try {
-      // Android 13+ 通知权限（用于在任务栏显示下载进度）。
-      // 限定 Android：其它平台（含测试宿主 macOS）该请求会挂起不返回。
-      if (Platform.isAndroid) await Permission.notification.request();
-
-      final dir =
-          await getExternalStorageDirectory() ?? await getTemporaryDirectory();
       // 直链优先、镜像回退探测（国内直连 GitHub 资产常超时）
-      final url = await UpdateService().resolveDownloadUrl(widget.info.downloadUrl);
-      await FlutterDownloader.enqueue(
-        url: url,
-        savedDir: dir.path,
-        fileName: _apkName,
-        showNotification: true,
-        openFileFromNotification: true,
-      );
+      final url =
+          await UpdateService().resolveDownloadUrl(widget.info.downloadUrl);
+      final dir = await getApplicationSupportDirectory();
+      final file = File(p.join(dir.path, _apkName));
+      if (await file.exists()) await file.delete();
+
+      final response =
+          await client.send(http.Request('GET', Uri.parse(url)));
+      if (response.statusCode != 200) {
+        throw HttpException('HTTP ${response.statusCode}');
+      }
+      _total = response.contentLength ?? 0;
+      final sink = file.openWrite();
+      await for (final chunk in response.stream) {
+        sink.add(chunk);
+        _received += chunk.length;
+        if (mounted) setState(() {});
+      }
+      await sink.flush();
+      await sink.close();
+      // 完整性校验：长度不符视为失败，防止装到半截包
+      if (_total > 0 && _received != _total) {
+        throw const HttpException('incomplete');
+      }
       if (!mounted) return;
-      final l = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l.updateBgStarted)));
-      Navigator.of(context).pop();
+      setState(() => _state = _DlState.done);
+      await OpenFilex.open(file.path,
+          type: 'application/vnd.android.package-archive');
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _started = false;
-        _error = AppLocalizations.of(context).updateDownloadFailed;
-      });
-      debugPrint('Enqueue update download failed: $e');
+      // 取消时 _state 已被 _cancel 置回 idle，此处不再覆盖
+      if (_state == _DlState.downloading) {
+        setState(() => _state = _DlState.error);
+      }
+      debugPrint('Update download failed: $e');
     }
+  }
+
+  void _cancel() {
+    _client?.close();
+    _client = null;
+    if (mounted) setState(() => _state = _DlState.idle);
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
     final info = widget.info;
+    final percent =
+        _total > 0 ? (_received / _total * 100).clamp(0, 100).round() : null;
+
     return PopScope(
-      canPop: !info.isForceUpdate,
+      canPop: !info.isForceUpdate && _state != _DlState.downloading,
       child: AlertDialog(
         title: Text(l.updateTitle),
         content: Column(
@@ -90,29 +120,75 @@ class _UpdateDialogState extends State<_UpdateDialog> {
               const SizedBox(height: 8),
               Flexible(
                 child: SingleChildScrollView(
-                  child:
-                      Text(info.releaseNotes, style: theme.textTheme.bodySmall),
+                  child: Text(info.releaseNotes,
+                      style: theme.textTheme.bodySmall),
                 ),
               ),
             ],
-            if (_error != null) ...[
+            if (_state == _DlState.downloading) ...[
+              const SizedBox(height: 16),
+              LinearProgressIndicator(
+                  value: percent != null ? _received / _total : null),
               const SizedBox(height: 8),
-              Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
+              Text(
+                percent != null
+                    ? l.updateProgress(percent, _mb(_received), _mb(_total))
+                    : l.updateProgressUnknown(_mb(_received)),
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
+            if (_state == _DlState.error) ...[
+              const SizedBox(height: 12),
+              Text(l.updateDownloadFailed,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: theme.colorScheme.error)),
+            ],
+            if (_state == _DlState.done) ...[
+              const SizedBox(height: 12),
+              Text(l.updateDone, style: theme.textTheme.bodySmall),
             ],
           ],
         ),
         actions: [
-          TextButton(
-            onPressed:
-                info.isForceUpdate ? null : () => Navigator.of(context).pop(),
-            child: Text(l.updateLater),
-          ),
-          FilledButton(
-            onPressed: _started ? null : _startBackgroundDownload,
-            child: Text(l.updateNow),
-          ),
+          ...switch (_state) {
+            _DlState.idle => [
+                if (!info.isForceUpdate)
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(l.updateLater),
+                  ),
+                FilledButton(
+                  onPressed: _startDownload,
+                  child: Text(l.updateNow),
+                ),
+              ],
+            _DlState.downloading => [
+                TextButton(
+                  onPressed: _cancel,
+                  child: Text(l.updateCancel),
+                ),
+              ],
+            _DlState.error => [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(l.updateLater),
+                ),
+                FilledButton(
+                  onPressed: _startDownload,
+                  child: Text(l.updateRetry),
+                ),
+              ],
+            _DlState.done => [
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(l.updateInstall),
+                ),
+              ],
+          },
         ],
       ),
     );
   }
+
+  String _mb(int bytes) => (bytes / 1024 / 1024).toStringAsFixed(1);
 }

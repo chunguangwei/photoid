@@ -476,4 +476,65 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get editCropReset => '还原';
+
+  @override
+  String get editTitle => '编辑';
+
+  @override
+  String get saveAction => '保存';
+
+  @override
+  String get editHd => '高清精修版';
+
+  @override
+  String get editNormal => '原图普通版';
+
+  @override
+  String get processingTitle => '正在智能调整制作您的照片';
+
+  @override
+  String get processingDesc =>
+      '我们将使用AI人像识别技术扫描您的照片，并将它调整至最佳状态，这可能需要一些时间，请耐心等待。';
+
+  @override
+  String get processingBusy => '制作中…';
+
+  @override
+  String cameraSelected(String name) {
+    return '已选：$name';
+  }
+
+  @override
+  String get retake => '重拍';
+
+  @override
+  String get confirm => '确认';
+
+  @override
+  String get pickGalleryShort => '相册';
+
+  @override
+  String get specBgColorPick => '选择背景色';
+
+  @override
+  String updateProgress(Object percent, Object received, Object total) {
+    return '正在下载 $percent%（$received / $total MB）';
+  }
+
+  @override
+  String updateProgressUnknown(Object received) {
+    return '正在下载…已下载 $received MB';
+  }
+
+  @override
+  String get updateDone => '下载完成，请在系统弹窗中确认安装';
+
+  @override
+  String get updateCancel => '取消下载';
+
+  @override
+  String get updateRetry => '重试';
+
+  @override
+  String get updateInstall => '完成';
 }

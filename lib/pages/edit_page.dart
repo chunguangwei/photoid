@@ -1,9 +1,10 @@
 
-import 'dart:math' as math;
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
@@ -38,6 +39,12 @@ class _EditPageState extends State<EditPage> {
   bool _showOriginal = false;
   bool _regenerating = false;
 
+  static const _hdPrefKey = 'hd_mode_enabled';
+
+  /// 高精修版（MODNet 发丝级抠图+磨皮）开关；false=普通版（ML Kit 快速）。
+  /// 持久化到 SharedPreferences，下次进编辑页保持上次选择。
+  bool _hd = true;
+
   /// 交互裁剪编辑器状态与用户调整后的裁剪框（null=未调整，用自动构图）
   final GlobalKey<CropEditorState> _editorKey = GlobalKey<CropEditorState>();
   Rect? _currentCrop;
@@ -46,7 +53,13 @@ class _EditPageState extends State<EditPage> {
   void initState() {
     super.initState();
     _spec = widget.spec;
-    _run();
+    _loadHdPref().then((_) => _run());
+  }
+
+  Future<void> _loadHdPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = prefs.getBool(_hdPrefKey);
+    if (v != null && mounted) setState(() => _hd = v);
   }
 
   /// 换底色：更新规格后重跑流水线，预览与 KB 随之刷新。
@@ -60,11 +73,21 @@ class _EditPageState extends State<EditPage> {
     if (mounted) setState(() => _regenerating = false);
   }
 
+  /// 高精修/普通版切换：按引擎重跑流水线
+  void _switchHd(bool hd) {
+    if (hd == _hd || _result == null) return;
+    setState(() => _hd = hd);
+    SharedPreferences.getInstance()
+        .then((p) => p.setBool(_hdPrefKey, hd));
+    _run();
+  }
+
   Future<void> _run() async {
     setState(() {
       _error = null;
       _result = null;
       _step = PipelineStep.preparing;
+      _currentCrop = null;
     });
     try {
       final result = await ImagePipeline(
@@ -76,7 +99,8 @@ class _EditPageState extends State<EditPage> {
           });
         },
       ).run(widget.sourcePath, _spec,
-          flipHorizontal: widget.flipHorizontal);
+          flipHorizontal: widget.flipHorizontal,
+          engine: _hd ? MattingEngine.modnet : MattingEngine.mlkit);
       if (!mounted) return;
       setState(() => _result = result);
     } on PipelineException catch (e) {
@@ -93,10 +117,19 @@ class _EditPageState extends State<EditPage> {
 
   @override
   Widget build(BuildContext context) {
-    final spec = _spec;
     final result = _result;
     return Scaffold(
-      appBar: AppBar(title: Text(Tr.of(context).specName(spec))),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context).editTitle),
+        actions: [
+          TextButton(
+            onPressed: result == null ? null : _goResult,
+            child: Text(AppLocalizations.of(context).saveAction,
+                style: const TextStyle(fontSize: 16)),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: SafeArea(
         child: _error != null
             ? _buildError()
@@ -104,32 +137,16 @@ class _EditPageState extends State<EditPage> {
                 ? _buildProgress()
                 : _buildPreview(result),
       ),
-      bottomNavigationBar: result == null
-          ? null
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: FilledButton.icon(
-                  onPressed: () {
-                    final r = _result!;
-                    // 用户调整过构图则按当前裁剪框重算交付字节，否则用自动构图
-                    final jpg = _currentCrop != null
-                        ? _finalizeCrop(r, _currentCrop!)
-                        : r.jpgBytes;
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => ResultPage(jpgBytes: jpg, spec: spec),
-                    ));
-                  },
-                  icon: const Icon(Icons.fact_check_outlined),
-                  label: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    child: Text(AppLocalizations.of(context).complianceCheckSave,
-                        style: const TextStyle(fontSize: 16)),
-                  ),
-                ),
-              ),
-            ),
     );
+  }
+
+  /// 生成最终交付 jpg（按当前裁剪框与精修开关）并进入检测/保存页
+  void _goResult() {
+    final r = _result!;
+    final jpg = _finalizeCrop(r, _currentCrop ?? r.autoCrop);
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => ResultPage(jpgBytes: jpg, spec: _spec),
+    ));
   }
 
   /// 按用户调整的裁剪框（图像坐标系）生成最终交付 jpg：
@@ -137,35 +154,80 @@ class _EditPageState extends State<EditPage> {
   Uint8List _finalizeCrop(PipelineResult r, Rect crop) {
     final cw = r.composited.width;
     final ch = r.composited.height;
+    // 高由宽 ÷ 比例推导（比例锁定）；钳制后回推，杜绝非等比
     var w = crop.width.round().clamp(1, cw);
-    var h = crop.height.round().clamp(1, ch);
-    final fit = math.min(cw / w, ch / h);
-    if (fit < 1) {
-      w = (w * fit).round().clamp(1, cw);
-      h = (h * fit).round().clamp(1, ch);
-    }
+    var h = (w / _spec.aspect).round().clamp(1, ch);
+    w = (h * _spec.aspect).round().clamp(1, cw);
+    h = (w / _spec.aspect).round().clamp(1, ch);
     final x = crop.left.round().clamp(0, cw - w);
     final y = crop.top.round().clamp(0, ch - h);
     final c = img.copyCrop(r.composited, x: x, y: y, width: w, height: h);
-    final out = img.copyResize(c,
-        width: _spec.pixelWidth,
-        height: _spec.pixelHeight,
-        interpolation: img.Interpolation.cubic);
+    var out = ImagePipeline.resizeToSpecUniform(
+        c,
+        _spec.pixelWidth,
+        _spec.pixelHeight,
+        img.ColorRgb8(
+            _spec.background.r, _spec.background.g, _spec.background.b));
+    if (_hd) {
+      // 人脸框：composited 坐标 → 裁剪后输出坐标（保守参数磨皮/提亮）
+      final sx = _spec.pixelWidth / w;
+      final sy = _spec.pixelHeight / h;
+      final face = Rect.fromLTRB(
+          (r.faceRect.left - x) * sx,
+          (r.faceRect.top - y) * sy,
+          (r.faceRect.right - x) * sx,
+          (r.faceRect.bottom - y) * sy);
+      out = ImagePipeline.beautify(out, face);
+    }
     return ImagePipeline.encodeToKbRange(out, _spec.minFileKb, _spec.maxFileKb);
   }
 
-  Widget _buildProgress() => Center(
+  /// 处理中页（照片卡 + 智能制作文案 + 进度 + 取消）
+  Widget _buildProgress() {
+    final l = AppLocalizations.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
+            Card(
+              clipBehavior: Clip.antiAlias,
+              child: Image.file(
+                File(widget.sourcePath),
+                width: 160,
+                height: 213,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    const SizedBox(width: 160, height: 213),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(l.processingTitle,
+                style: Theme.of(context).textTheme.titleMedium,
+                textAlign: TextAlign.center),
+            const SizedBox(height: 8),
+            Text(l.processingDesc,
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.center),
+            const SizedBox(height: 20),
+            const SizedBox(
+                width: 180, child: LinearProgressIndicator()),
+            const SizedBox(height: 12),
             Text(_regenerating
-                ? AppLocalizations.of(context).editRegenerating
-                : Tr.of(context).step(_step)),
+                ? l.editRegenerating
+                : '${l.processingBusy} · ${Tr.of(context).step(_step)}'),
+            const SizedBox(height: 8),
+            IconButton(
+              icon: const Icon(Icons.close),
+              tooltip: l.retakeOrPick,
+              onPressed: () => Navigator.of(context).pop(),
+            ),
           ],
         ),
-      );
+      ),
+    );
+  }
 
   Widget _buildError() => Center(
         child: Padding(
@@ -196,6 +258,18 @@ class _EditPageState extends State<EditPage> {
     final kb = result.jpgBytes.lengthInBytes / 1024;
     return Column(
       children: [
+        // 版本切换：高精修版（MODNet 发丝级）/ 原图普通版（ML Kit 快速）
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: SegmentedButton<bool>(
+            segments: [
+              ButtonSegment(value: true, label: Text(l.editHd)),
+              ButtonSegment(value: false, label: Text(l.editNormal)),
+            ],
+            selected: {_hd},
+            onSelectionChanged: (s) => _switchHd(s.first),
+          ),
+        ),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -270,20 +344,8 @@ class _EditPageState extends State<EditPage> {
                   children: [
                     for (final bg in idPhotoBackgrounds)
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: ChoiceChip(
-                          avatar: CircleAvatar(
-                            radius: 8,
-                            backgroundColor:
-                                Color.fromARGB(255, bg.r, bg.g, bg.b),
-                          ),
-                          label: Text(_bgLabel(bg)),
-                          selected: bg.name == _spec.background.name,
-                          // 处理中禁用，避免多条流水线竞态（last-finisher-wins）
-                          onSelected: (_result == null && _error == null)
-                              ? null
-                              : (_) => _switchBackground(bg),
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                        child: _bgSwatch(bg),
                       ),
                   ],
                 ),
@@ -301,6 +363,44 @@ class _EditPageState extends State<EditPage> {
           ),
         ),
       ],
+    );
+  }
+
+  /// 色块选底（对标行业交互：圆角色块 + 选中描边✓ + 名称）
+  Widget _bgSwatch(SpecBackground bg) {
+    final selected = bg.name == _spec.background.name;
+    return GestureDetector(
+      onTap: (_result == null && _error == null)
+          ? null
+          : () => _switchBackground(bg),
+      child: Column(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Color.fromARGB(255, bg.r, bg.g, bg.b),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: selected
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.black26,
+                width: selected ? 2.5 : 1,
+              ),
+            ),
+            child: selected
+                ? Icon(Icons.check,
+                    size: 20,
+                    color: bg.r > 200 && bg.g > 200
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.white)
+                : null,
+          ),
+          const SizedBox(height: 4),
+          Text(_bgLabel(bg),
+              style: Theme.of(context).textTheme.labelSmall),
+        ],
+      ),
     );
   }
 
