@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 import '../models/photo_spec.dart';
+import '../services/album_service.dart';
 import '../services/compliance_service.dart';
 
 /// 检测与保存页：合规报告 + 教育ID命名 + 保存到相册。
@@ -60,6 +61,10 @@ class _ResultPageState extends State<ResultPage> {
       await file.writeAsBytes(widget.jpgBytes, flush: true);
       await Gal.putImage(file.path);
       file.delete().ignore();
+      // 同步双写 App 相册；失败仅记录，不影响主保存流程
+      AlbumService.save(widget.jpgBytes, eduId).then((_) {}, onError: (e) {
+        debugPrint('AlbumService.save failed: $e');
+      });
       if (!mounted) return;
       setState(() => _saved = true);
       ScaffoldMessenger.of(context)

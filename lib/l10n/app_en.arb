@@ -1,8 +1,6 @@
 {
   "@@locale": "en",
-
   "appTitle": "Smart ID Photo",
-
   "privacyNote": "All processing happens on this device. Photos are never uploaded to a server.",
   "specStudentName": "Student application photo (Edu ID)",
   "bgBlue": "Blue background",
@@ -15,24 +13,34 @@
   "reqClothing": "Wear the autumn school uniform jacket over a white short-sleeve shirt",
   "takePhoto": "Take ID photo",
   "pickFromGallery": "Choose from gallery",
-
   "cameraNotFound": "No available camera found",
   "cameraInitFailed": "Camera initialization failed: {detail}",
   "@cameraInitFailed": {
-    "placeholders": { "detail": { "type": "String" } }
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
   },
   "captureFailed": "Capture failed: {detail}",
   "@captureFailed": {
-    "placeholders": { "detail": { "type": "String" } }
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
   },
   "cameraGuide": "Face the camera, show both ears, align your head with the oval frame",
-
   "stepPreparing": "Preparing…",
   "stepReading": "Reading photo…",
   "stepSegmenting": "Cutting out portrait…",
   "stepCompositing": "Compositing {bg}…",
   "@stepCompositing": {
-    "placeholders": { "bg": { "type": "String" } }
+    "placeholders": {
+      "bg": {
+        "type": "String"
+      }
+    }
   },
   "stepDetectingFace": "Detecting face and composing…",
   "stepCompressing": "Compressing and exporting…",
@@ -41,14 +49,17 @@
   "errNoFace": "No front-facing face detected. Please retake: face the camera, keep your face unobstructed.",
   "processFailed": "Processing failed: {detail}",
   "@processFailed": {
-    "placeholders": { "detail": { "type": "String" } }
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
   },
   "retakeOrPick": "Retake / choose again",
   "retry": "Retry",
   "chipPreview": "Result",
   "chipOriginal": "Original",
   "complianceCheckSave": "Run compliance check & save",
-
   "resultTitle": "Compliance check",
   "checkItemsTitle": "Checks",
   "verdictPass": "Meets school requirements",
@@ -59,47 +70,74 @@
   "galleryPermissionDenied": "Photo library write permission not granted",
   "savedToGallery": "Saved to gallery: {fileName}",
   "@savedToGallery": {
-    "placeholders": { "fileName": { "type": "String" } }
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
   },
   "saveFailed": "Save failed: {detail}",
   "@saveFailed": {
-    "placeholders": { "detail": { "type": "String" } }
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
   },
   "saveToGallery": "Save to gallery",
   "doneRetake": "Done, take another",
   "referenceSuffix": " (reference)",
   "referenceJoiner": "; ",
-
   "checkJpgFormat": "File format is JPG",
   "checkFileSizeRange": "File size {min}–{max}KB",
   "@checkFileSizeRange": {
     "placeholders": {
-      "min": { "type": "int" },
-      "max": { "type": "int" }
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
     }
   },
   "checkDecodable": "Image decodable",
   "checkPixelSize": "Pixel size width {minW}–{maxW}, height {minH}–{maxH}",
   "@checkPixelSize": {
     "placeholders": {
-      "minW": { "type": "int" },
-      "maxW": { "type": "int" },
-      "minH": { "type": "int" },
-      "maxH": { "type": "int" }
+      "minW": {
+        "type": "int"
+      },
+      "maxW": {
+        "type": "int"
+      },
+      "minH": {
+        "type": "int"
+      },
+      "maxH": {
+        "type": "int"
+      }
     }
   },
   "checkBestSize": "Best size {w}×{h}",
   "@checkBestSize": {
     "placeholders": {
-      "w": { "type": "int" },
-      "h": { "type": "int" }
+      "w": {
+        "type": "int"
+      },
+      "h": {
+        "type": "int"
+      }
     }
   },
   "checkRatio": "Ratio (height/width) {min}–{max}",
   "@checkRatio": {
     "placeholders": {
-      "min": { "type": "String" },
-      "max": { "type": "String" }
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
     }
   },
   "checkBlueBg": "Background is blue",
@@ -119,11 +157,87 @@
   "fixEyesClosed": "Eyes closed detected. Please retake.",
   "deviationPercent": "Deviation {n}",
   "@deviationPercent": {
-    "placeholders": { "n": { "type": "String" } }
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
   },
-
   "updateTitle": "New version available",
   "updateLater": "Later",
   "updateNow": "Update now",
-  "updateDownloadFailed": "Download failed. Please try again later."
+  "updateDownloadFailed": "Download failed. Please try again later.",
+  "homeTakePhoto": "ID Photo",
+  "homeChangeBg": "Background",
+  "homeChangeKb": "Resize KB",
+  "homeMyAlbum": "My Photos",
+  "homeCustomSpec": "Custom",
+  "homeHotSpecs": "Popular specs",
+  "homeSearchHint": "Search scenes or specs",
+  "homeAllSpecs": "All specs",
+  "specPixelSize": "Pixels",
+  "specDpi": "DPI",
+  "specFileSize": "File size",
+  "specBgColor": "Background",
+  "specNoLimit": "No requirement",
+  "specKbRange": "{min}–{max}KB",
+  "@specKbRange": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "specUpload": "Upload photo",
+  "specShoot": "Take photo",
+  "bgWhite": "White",
+  "bgRed": "Red",
+  "bgGray": "Gray",
+  "bgDarkBlue": "Dark blue",
+  "kbToolTitle": "Resize file (KB)",
+  "kbToolPick": "Choose photo",
+  "kbToolTargetKb": "Target size (KB)",
+  "kbToolCompress": "Compress",
+  "kbToolResult": "Result: {kb}KB ({w}×{h})",
+  "@kbToolResult": {
+    "placeholders": {
+      "kb": {
+        "type": "String"
+      },
+      "w": {
+        "type": "String"
+      },
+      "h": {
+        "type": "String"
+      }
+    }
+  },
+  "kbToolSave": "Save to gallery",
+  "kbToolSaved": "Saved to gallery",
+  "kbToolInvalidKb": "Enter a number between 5 and 2048",
+  "kbToolFailed": "Compression failed: {detail}",
+  "@kbToolFailed": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "albumTitle": "My Photos",
+  "albumEmpty": "No photos yet. Take one!",
+  "albumDelete": "Delete",
+  "albumDeleted": "Deleted",
+  "customTitle": "Custom spec",
+  "customName": "Spec name",
+  "customWidth": "Width (px)",
+  "customHeight": "Height (px)",
+  "customMinKb": "Min file (KB)",
+  "customMaxKb": "Max file (KB)",
+  "customCreate": "Create & use",
+  "customInvalid": "Enter valid values (W/H 50–2000, KB 5–2048, min ≤ max)",
+  "editSwitchBg": "Switch background (regenerate)",
+  "editRegenerating": "Regenerating with new background…"
 }

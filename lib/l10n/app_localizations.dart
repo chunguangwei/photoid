@@ -529,6 +529,264 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Download failed. Please try again later.'**
   String get updateDownloadFailed;
+
+  /// No description provided for @homeTakePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'ID Photo'**
+  String get homeTakePhoto;
+
+  /// No description provided for @homeChangeBg.
+  ///
+  /// In en, this message translates to:
+  /// **'Background'**
+  String get homeChangeBg;
+
+  /// No description provided for @homeChangeKb.
+  ///
+  /// In en, this message translates to:
+  /// **'Resize KB'**
+  String get homeChangeKb;
+
+  /// No description provided for @homeMyAlbum.
+  ///
+  /// In en, this message translates to:
+  /// **'My Photos'**
+  String get homeMyAlbum;
+
+  /// No description provided for @homeCustomSpec.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get homeCustomSpec;
+
+  /// No description provided for @homeHotSpecs.
+  ///
+  /// In en, this message translates to:
+  /// **'Popular specs'**
+  String get homeHotSpecs;
+
+  /// No description provided for @homeSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search scenes or specs'**
+  String get homeSearchHint;
+
+  /// No description provided for @homeAllSpecs.
+  ///
+  /// In en, this message translates to:
+  /// **'All specs'**
+  String get homeAllSpecs;
+
+  /// No description provided for @specPixelSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Pixels'**
+  String get specPixelSize;
+
+  /// No description provided for @specDpi.
+  ///
+  /// In en, this message translates to:
+  /// **'DPI'**
+  String get specDpi;
+
+  /// No description provided for @specFileSize.
+  ///
+  /// In en, this message translates to:
+  /// **'File size'**
+  String get specFileSize;
+
+  /// No description provided for @specBgColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Background'**
+  String get specBgColor;
+
+  /// No description provided for @specNoLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'No requirement'**
+  String get specNoLimit;
+
+  /// No description provided for @specKbRange.
+  ///
+  /// In en, this message translates to:
+  /// **'{min}–{max}KB'**
+  String specKbRange(String min, String max);
+
+  /// No description provided for @specUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload photo'**
+  String get specUpload;
+
+  /// No description provided for @specShoot.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get specShoot;
+
+  /// No description provided for @bgWhite.
+  ///
+  /// In en, this message translates to:
+  /// **'White'**
+  String get bgWhite;
+
+  /// No description provided for @bgRed.
+  ///
+  /// In en, this message translates to:
+  /// **'Red'**
+  String get bgRed;
+
+  /// No description provided for @bgGray.
+  ///
+  /// In en, this message translates to:
+  /// **'Gray'**
+  String get bgGray;
+
+  /// No description provided for @bgDarkBlue.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark blue'**
+  String get bgDarkBlue;
+
+  /// No description provided for @kbToolTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Resize file (KB)'**
+  String get kbToolTitle;
+
+  /// No description provided for @kbToolPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose photo'**
+  String get kbToolPick;
+
+  /// No description provided for @kbToolTargetKb.
+  ///
+  /// In en, this message translates to:
+  /// **'Target size (KB)'**
+  String get kbToolTargetKb;
+
+  /// No description provided for @kbToolCompress.
+  ///
+  /// In en, this message translates to:
+  /// **'Compress'**
+  String get kbToolCompress;
+
+  /// No description provided for @kbToolResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Result: {kb}KB ({w}×{h})'**
+  String kbToolResult(String kb, String w, String h);
+
+  /// No description provided for @kbToolSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to gallery'**
+  String get kbToolSave;
+
+  /// No description provided for @kbToolSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to gallery'**
+  String get kbToolSaved;
+
+  /// No description provided for @kbToolInvalidKb.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a number between 5 and 2048'**
+  String get kbToolInvalidKb;
+
+  /// No description provided for @kbToolFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Compression failed: {detail}'**
+  String kbToolFailed(String detail);
+
+  /// No description provided for @albumTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My Photos'**
+  String get albumTitle;
+
+  /// No description provided for @albumEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos yet. Take one!'**
+  String get albumEmpty;
+
+  /// No description provided for @albumDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get albumDelete;
+
+  /// No description provided for @albumDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get albumDeleted;
+
+  /// No description provided for @customTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom spec'**
+  String get customTitle;
+
+  /// No description provided for @customName.
+  ///
+  /// In en, this message translates to:
+  /// **'Spec name'**
+  String get customName;
+
+  /// No description provided for @customWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Width (px)'**
+  String get customWidth;
+
+  /// No description provided for @customHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Height (px)'**
+  String get customHeight;
+
+  /// No description provided for @customMinKb.
+  ///
+  /// In en, this message translates to:
+  /// **'Min file (KB)'**
+  String get customMinKb;
+
+  /// No description provided for @customMaxKb.
+  ///
+  /// In en, this message translates to:
+  /// **'Max file (KB)'**
+  String get customMaxKb;
+
+  /// No description provided for @customCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create & use'**
+  String get customCreate;
+
+  /// No description provided for @customInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter valid values (W/H 50–2000, KB 5–2048, min ≤ max)'**
+  String get customInvalid;
+
+  /// No description provided for @editSwitchBg.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch background (regenerate)'**
+  String get editSwitchBg;
+
+  /// No description provided for @editRegenerating.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerating with new background…'**
+  String get editRegenerating;
 }
 
 class _AppLocalizationsDelegate

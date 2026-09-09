@@ -245,4 +245,139 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get updateDownloadFailed => '下载失败，请稍后重试';
+
+  @override
+  String get homeTakePhoto => '拍证件照';
+
+  @override
+  String get homeChangeBg => '换底色';
+
+  @override
+  String get homeChangeKb => '改KB';
+
+  @override
+  String get homeMyAlbum => '我的相册';
+
+  @override
+  String get homeCustomSpec => '自定义规格';
+
+  @override
+  String get homeHotSpecs => '热门规格';
+
+  @override
+  String get homeSearchHint => '搜索场景或规格名';
+
+  @override
+  String get homeAllSpecs => '全部规格';
+
+  @override
+  String get specPixelSize => '像素大小';
+
+  @override
+  String get specDpi => '分辨率';
+
+  @override
+  String get specFileSize => '文件大小';
+
+  @override
+  String get specBgColor => '背景色';
+
+  @override
+  String get specNoLimit => '无要求';
+
+  @override
+  String specKbRange(String min, String max) {
+    return '$min–${max}KB';
+  }
+
+  @override
+  String get specUpload => '上传照片';
+
+  @override
+  String get specShoot => '直接拍摄';
+
+  @override
+  String get bgWhite => '白底';
+
+  @override
+  String get bgRed => '红底';
+
+  @override
+  String get bgGray => '灰底';
+
+  @override
+  String get bgDarkBlue => '深蓝底';
+
+  @override
+  String get kbToolTitle => '修改文件大小';
+
+  @override
+  String get kbToolPick => '选择照片';
+
+  @override
+  String get kbToolTargetKb => '目标大小（KB）';
+
+  @override
+  String get kbToolCompress => '开始压缩';
+
+  @override
+  String kbToolResult(String kb, String w, String h) {
+    return '结果：${kb}KB（$w×$h）';
+  }
+
+  @override
+  String get kbToolSave => '保存到相册';
+
+  @override
+  String get kbToolSaved => '已保存到相册';
+
+  @override
+  String get kbToolInvalidKb => '请输入 5–2048 之间的数字';
+
+  @override
+  String kbToolFailed(String detail) {
+    return '压缩失败：$detail';
+  }
+
+  @override
+  String get albumTitle => '我的相册';
+
+  @override
+  String get albumEmpty => '暂无成片，去拍一张吧';
+
+  @override
+  String get albumDelete => '删除';
+
+  @override
+  String get albumDeleted => '已删除';
+
+  @override
+  String get customTitle => '自定义规格';
+
+  @override
+  String get customName => '规格名称';
+
+  @override
+  String get customWidth => '宽度（px）';
+
+  @override
+  String get customHeight => '高度（px）';
+
+  @override
+  String get customMinKb => '最小文件（KB）';
+
+  @override
+  String get customMaxKb => '最大文件（KB）';
+
+  @override
+  String get customCreate => '创建并使用';
+
+  @override
+  String get customInvalid => '请填写合法数值（宽/高 50–2000，KB 5–2048，且最小≤最大）';
+
+  @override
+  String get editSwitchBg => '切换底色（重新生成）';
+
+  @override
+  String get editRegenerating => '正在按新底色重新生成…';
 }

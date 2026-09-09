@@ -258,4 +258,140 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateDownloadFailed => 'Download failed. Please try again later.';
+
+  @override
+  String get homeTakePhoto => 'ID Photo';
+
+  @override
+  String get homeChangeBg => 'Background';
+
+  @override
+  String get homeChangeKb => 'Resize KB';
+
+  @override
+  String get homeMyAlbum => 'My Photos';
+
+  @override
+  String get homeCustomSpec => 'Custom';
+
+  @override
+  String get homeHotSpecs => 'Popular specs';
+
+  @override
+  String get homeSearchHint => 'Search scenes or specs';
+
+  @override
+  String get homeAllSpecs => 'All specs';
+
+  @override
+  String get specPixelSize => 'Pixels';
+
+  @override
+  String get specDpi => 'DPI';
+
+  @override
+  String get specFileSize => 'File size';
+
+  @override
+  String get specBgColor => 'Background';
+
+  @override
+  String get specNoLimit => 'No requirement';
+
+  @override
+  String specKbRange(String min, String max) {
+    return '$min–${max}KB';
+  }
+
+  @override
+  String get specUpload => 'Upload photo';
+
+  @override
+  String get specShoot => 'Take photo';
+
+  @override
+  String get bgWhite => 'White';
+
+  @override
+  String get bgRed => 'Red';
+
+  @override
+  String get bgGray => 'Gray';
+
+  @override
+  String get bgDarkBlue => 'Dark blue';
+
+  @override
+  String get kbToolTitle => 'Resize file (KB)';
+
+  @override
+  String get kbToolPick => 'Choose photo';
+
+  @override
+  String get kbToolTargetKb => 'Target size (KB)';
+
+  @override
+  String get kbToolCompress => 'Compress';
+
+  @override
+  String kbToolResult(String kb, String w, String h) {
+    return 'Result: ${kb}KB ($w×$h)';
+  }
+
+  @override
+  String get kbToolSave => 'Save to gallery';
+
+  @override
+  String get kbToolSaved => 'Saved to gallery';
+
+  @override
+  String get kbToolInvalidKb => 'Enter a number between 5 and 2048';
+
+  @override
+  String kbToolFailed(String detail) {
+    return 'Compression failed: $detail';
+  }
+
+  @override
+  String get albumTitle => 'My Photos';
+
+  @override
+  String get albumEmpty => 'No photos yet. Take one!';
+
+  @override
+  String get albumDelete => 'Delete';
+
+  @override
+  String get albumDeleted => 'Deleted';
+
+  @override
+  String get customTitle => 'Custom spec';
+
+  @override
+  String get customName => 'Spec name';
+
+  @override
+  String get customWidth => 'Width (px)';
+
+  @override
+  String get customHeight => 'Height (px)';
+
+  @override
+  String get customMinKb => 'Min file (KB)';
+
+  @override
+  String get customMaxKb => 'Max file (KB)';
+
+  @override
+  String get customCreate => 'Create & use';
+
+  @override
+  String get customInvalid =>
+      'Enter valid values (W/H 50–2000, KB 5–2048, min ≤ max)';
+
+  @override
+  String get editSwitchBg => 'Switch background (regenerate)';
+
+  @override
+  String get editRegenerating => 'Regenerating with new background…';
 }

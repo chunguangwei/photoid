@@ -19,15 +19,29 @@ class EditPage extends StatefulWidget {
 }
 
 class _EditPageState extends State<EditPage> {
+  late PhotoSpec _spec;
   String _step = '准备中…';
   PipelineResult? _result;
   String? _error;
   bool _showOriginal = false;
+  bool _regenerating = false;
 
   @override
   void initState() {
     super.initState();
+    _spec = widget.spec;
     _run();
+  }
+
+  /// 换底色：更新规格后重跑流水线，预览与 KB 随之刷新。
+  Future<void> _switchBackground(SpecBackground bg) async {
+    if (bg.name == _spec.background.name) return;
+    setState(() {
+      _spec = _spec.copyWith(background: bg);
+      _regenerating = true;
+    });
+    await _run();
+    if (mounted) setState(() => _regenerating = false);
   }
 
   Future<void> _run() async {
@@ -39,9 +53,13 @@ class _EditPageState extends State<EditPage> {
     try {
       final result = await ImagePipeline(
         onProgress: (s) {
-          if (mounted) setState(() => _step = s);
+          if (!mounted) return;
+          setState(() {
+            _step = s;
+            _regenerating = false;
+          });
         },
-      ).run(widget.sourcePath, widget.spec);
+      ).run(widget.sourcePath, _spec);
       if (!mounted) return;
       setState(() => _result = result);
     } on PipelineException catch (e) {
@@ -53,7 +71,7 @@ class _EditPageState extends State<EditPage> {
 
   @override
   Widget build(BuildContext context) {
-    final spec = widget.spec;
+    final spec = _spec;
     final result = _result;
     return Scaffold(
       appBar: AppBar(title: Text(Tr.of(context).specName(spec))),
@@ -95,7 +113,9 @@ class _EditPageState extends State<EditPage> {
           children: [
             const CircularProgressIndicator(),
             const SizedBox(height: 16),
-            Text(Tr.of(context).step(_step)),
+            Text(_regenerating
+                ? AppLocalizations.of(context).editRegenerating
+                : Tr.of(context).step(_step)),
           ],
         ),
       );
@@ -160,15 +180,66 @@ class _EditPageState extends State<EditPage> {
           ),
         ),
         Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              Text(AppLocalizations.of(context).editSwitchBg,
+                  style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    for (final bg in idPhotoBackgrounds)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: ChoiceChip(
+                          avatar: CircleAvatar(
+                            radius: 8,
+                            backgroundColor:
+                                Color.fromARGB(255, bg.r, bg.g, bg.b),
+                          ),
+                          label: Text(_bgLabel(bg)),
+                          selected: bg.name == _spec.background.name,
+                          onSelected: (_) => _switchBackground(bg),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
           padding: const EdgeInsets.all(12),
           child: Text(
-            '${widget.spec.pixelWidth}×${widget.spec.pixelHeight}px · '
-            '${Tr.of(context).bgName(widget.spec.background)} · '
+            '${_spec.pixelWidth}×${_spec.pixelHeight}px · '
+            '${_bgLabel(_spec.background)} · '
             '${kb.toStringAsFixed(0)}KB',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ),
       ],
     );
+  }
+
+  /// 底色名 → l10n（backgroundL10nKeys 映射，无键时原样展示）。
+  String _bgLabel(SpecBackground bg) {
+    final l = AppLocalizations.of(context);
+    switch (backgroundL10nKeys[bg.name]) {
+      case 'bgBlue':
+        return l.bgBlue;
+      case 'bgWhite':
+        return l.bgWhite;
+      case 'bgRed':
+        return l.bgRed;
+      case 'bgGray':
+        return l.bgGray;
+      case 'bgDarkBlue':
+        return l.bgDarkBlue;
+      default:
+        return bg.name;
+    }
   }
 }

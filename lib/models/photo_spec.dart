@@ -64,6 +64,31 @@ class PhotoSpec {
   /// 宽/高
   double get aspect => pixelWidth / pixelHeight;
 
+
+  PhotoSpec copyWith({
+    String? name,
+    int? pixelWidth,
+    int? pixelHeight,
+    int? minFileKb,
+    int? maxFileKb,
+    SpecBackground? background,
+  }) =>
+      PhotoSpec(
+        id: id,
+        name: name ?? this.name,
+        pixelWidth: pixelWidth ?? this.pixelWidth,
+        pixelHeight: pixelHeight ?? this.pixelHeight,
+        minFileKb: minFileKb ?? this.minFileKb,
+        maxFileKb: maxFileKb ?? this.maxFileKb,
+        minWidth: minWidth,
+        maxWidth: maxWidth,
+        minHeight: minHeight,
+        maxHeight: maxHeight,
+        minRatio: minRatio,
+        maxRatio: maxRatio,
+        background: background ?? this.background,
+        requirements: requirements,
+      );
   factory PhotoSpec.fromJson(Map<String, dynamic> json) => PhotoSpec(
         id: json['id'] as String,
         name: json['name'] as String,
@@ -87,6 +112,30 @@ class PhotoSpec {
 
 /// 标准证件照蓝底 RGB(67,142,219)
 const idPhotoBlue = SpecBackground('蓝底', 67, 142, 219);
+
+/// 常用证件照底色板（换底色功能使用）。
+const idPhotoWhite = SpecBackground('白底', 255, 255, 255);
+const idPhotoRed = SpecBackground('红底', 255, 0, 0);
+const idPhotoGray = SpecBackground('灰底', 178, 178, 178);
+const idPhotoDarkBlue = SpecBackground('深蓝底', 0, 64, 152);
+
+/// 全部可选底色（顺序即 UI 展示顺序）。
+const idPhotoBackgrounds = [
+  idPhotoBlue,
+  idPhotoWhite,
+  idPhotoRed,
+  idPhotoGray,
+  idPhotoDarkBlue,
+];
+
+/// 底色名 → l10n 键（pages 层据此本地化展示名）。
+const backgroundL10nKeys = {
+  '蓝底': 'bgBlue',
+  '白底': 'bgWhite',
+  '红底': 'bgRed',
+  '灰底': 'bgGray',
+  '深蓝底': 'bgDarkBlue',
+};
 
 /// 学校通知的学生报名照要求（教育ID命名）。
 const studentPhotoSpec = PhotoSpec(
