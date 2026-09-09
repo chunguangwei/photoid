@@ -53,6 +53,10 @@ android {
 
     buildTypes {
         release {
+            // 关闭 R8 混淆/压缩：WorkManager(Room) 在混淆后启动即崩
+            // （WorkDatabase 实例化失败）；本 App 体积由 ML Kit 模型主导，R8 收益可忽略
+            isMinifyEnabled = false
+            isShrinkResources = false
             signingConfig = if (keystorePropertiesFile.exists()) {
                 signingConfigs.getByName("release")
             } else {
