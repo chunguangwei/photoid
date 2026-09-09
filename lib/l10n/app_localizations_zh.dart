@@ -15,7 +15,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get privacyNote => '全部处理在本机完成，照片不上传服务器';
 
   @override
-  String get specStudentName => '学生报名照（教育ID）';
+  String get specStudentName => '学生报名照';
 
   @override
   String get bgBlue => '蓝底';
@@ -537,4 +537,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get updateInstall => '完成';
+
+  @override
+  String get updateNeedInstallPermission => '需要「安装未知应用」权限：已打开系统设置，请允许后返回点击重试';
+
+  @override
+  String get updateRetryInstall => '重试安装';
 }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -20,7 +21,9 @@ Future<void> showUpdateDialog(BuildContext context, UpdateInfo info) {
   );
 }
 
-enum _DlState { idle, downloading, done, error }
+enum _DlState { idle, downloading, done, error, needPermission }
+
+class _InstallBlocked implements Exception {}
 
 class _UpdateDialog extends StatefulWidget {
   const _UpdateDialog({required this.info});
@@ -57,7 +60,8 @@ class _UpdateDialogState extends State<_UpdateDialog> {
       // 直链优先、镜像回退探测（国内直连 GitHub 资产常超时）
       final url =
           await UpdateService().resolveDownloadUrl(widget.info.downloadUrl);
-      final dir = await getApplicationSupportDirectory();
+      // cache 目录：open_filex FileProvider 覆盖，且系统清理策略友好
+      final dir = await getTemporaryDirectory();
       final file = File(p.join(dir.path, _apkName));
       if (await file.exists()) await file.delete();
 
@@ -81,8 +85,10 @@ class _UpdateDialogState extends State<_UpdateDialog> {
       }
       if (!mounted) return;
       setState(() => _state = _DlState.done);
-      await OpenFilex.open(file.path,
-          type: 'application/vnd.android.package-archive');
+      await _install(file.path);
+    } on _InstallBlocked {
+      if (!mounted) return;
+      setState(() => _state = _DlState.needPermission);
     } catch (e) {
       if (!mounted) return;
       // 取消时 _state 已被 _cancel 置回 idle，此处不再覆盖
@@ -90,6 +96,42 @@ class _UpdateDialogState extends State<_UpdateDialog> {
         setState(() => _state = _DlState.error);
       }
       debugPrint('Update download failed: $e');
+    }
+  }
+
+  /// 拉起系统安装器。Android 8+ 需「安装未知应用」授权：
+  /// 未授权时先弹系统授权页，用户返回后再次点击安装。
+  Future<void> _install(String path) async {
+    var status = await Permission.requestInstallPackages.status;
+    if (!status.isGranted) {
+      status = await Permission.requestInstallPackages.request();
+      if (!status.isGranted) {
+        // 国产 ROM 常拦截运行时弹窗，直接跳「未知来源」系统设置页
+        await openAppSettings();
+        throw _InstallBlocked();
+      }
+    }
+    final result = await OpenFilex.open(path,
+        type: 'application/vnd.android.package-archive');
+    if (result.type != ResultType.done) {
+      throw Exception('open installer failed: ${result.message}');
+    }
+  }
+
+  Future<void> _retryInstall() async {
+    final dir = await getTemporaryDirectory();
+    final file = File(p.join(dir.path, _apkName));
+    if (!await file.exists()) {
+      setState(() => _state = _DlState.error);
+      return;
+    }
+    try {
+      await _install(file.path);
+      if (mounted) setState(() => _state = _DlState.done);
+    } on _InstallBlocked {
+      if (mounted) setState(() => _state = _DlState.needPermission);
+    } catch (_) {
+      if (mounted) setState(() => _state = _DlState.error);
     }
   }
 
@@ -143,6 +185,12 @@ class _UpdateDialogState extends State<_UpdateDialog> {
                   style: theme.textTheme.bodySmall
                       ?.copyWith(color: theme.colorScheme.error)),
             ],
+            if (_state == _DlState.needPermission) ...[
+              const SizedBox(height: 12),
+              Text(l.updateNeedInstallPermission,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: theme.colorScheme.error)),
+            ],
             if (_state == _DlState.done) ...[
               const SizedBox(height: 12),
               Text(l.updateDone, style: theme.textTheme.bodySmall),
@@ -182,6 +230,17 @@ class _UpdateDialogState extends State<_UpdateDialog> {
                 FilledButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(l.updateInstall),
+                ),
+              ],
+            _DlState.needPermission => [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(l.updateLater),
+                ),
+                FilledButton(
+                  // 授权后重试安装（APK 已下载，直接复用）
+                  onPressed: _retryInstall,
+                  child: Text(l.updateRetryInstall),
                 ),
               ],
           },

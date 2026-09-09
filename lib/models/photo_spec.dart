@@ -140,7 +140,7 @@ const backgroundL10nKeys = {
 /// 学校通知的学生报名照要求（教育ID命名）。
 const studentPhotoSpec = PhotoSpec(
   id: 'student_edu_id',
-  name: '学生报名照（教育ID）',
+  name: '学生报名照',
   pixelWidth: 480,
   pixelHeight: 640,
   minFileKb: 10,

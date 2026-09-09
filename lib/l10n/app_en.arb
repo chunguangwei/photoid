@@ -2,7 +2,7 @@
   "@@locale": "en",
   "appTitle": "Smart ID Photo",
   "privacyNote": "All processing happens on this device. Photos are never uploaded to a server.",
-  "specStudentName": "Student application photo (Edu ID)",
+  "specStudentName": "Student Enrollment Photo",
   "bgBlue": "Blue background",
   "requirementsTitle": "Photo requirements",
   "reqEduIdName": "Name the file with your Education ID (JPG format)",
@@ -327,5 +327,7 @@
   "updateDone": "Download complete. Confirm in the system installer.",
   "updateCancel": "Cancel",
   "updateRetry": "Retry",
-  "updateInstall": "Done"
+  "updateInstall": "Done",
+  "updateNeedInstallPermission": "Install permission required: system settings opened. Allow it, then come back and retry.",
+  "updateRetryInstall": "Retry install"
 }

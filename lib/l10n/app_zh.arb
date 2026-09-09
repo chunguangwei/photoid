@@ -2,7 +2,7 @@
   "@@locale": "zh",
   "appTitle": "智能证件照",
   "privacyNote": "全部处理在本机完成，照片不上传服务器",
-  "specStudentName": "学生报名照（教育ID）",
+  "specStudentName": "学生报名照",
   "bgBlue": "蓝底",
   "requirementsTitle": "照片要求",
   "reqEduIdName": "照片文件用教育ID命名（jpg 格式）",
@@ -232,5 +232,7 @@
   "updateDone": "下载完成，请在系统弹窗中确认安装",
   "updateCancel": "取消下载",
   "updateRetry": "重试",
-  "updateInstall": "完成"
+  "updateInstall": "完成",
+  "updateNeedInstallPermission": "需要「安装未知应用」权限：已打开系统设置，请允许后返回点击重试",
+  "updateRetryInstall": "重试安装"
 }

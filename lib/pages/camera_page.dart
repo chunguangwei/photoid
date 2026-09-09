@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'package:image_picker/image_picker.dart';
 
 import '../l10n/app_localizations.dart';
@@ -303,7 +304,8 @@ class _CameraPageState extends State<CameraPage> {
       );
 }
 
-/// 人形轮廓实线参考框（头 + 颈 + 肩）+ 横向虚线（眼线/肩线）+ 取景框遮罩
+/// 人形轮廓参考框（对标行业：光滑头型+耳廓+颈部+肩部 S 曲线）+
+/// 横向虚线（眼线/肩线）+ 弱取景框。
 class _GuidePainter extends CustomPainter {
   _GuidePainter({required this.aspect});
 
@@ -311,10 +313,10 @@ class _GuidePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final frameW = size.width * 0.78;
+    final frameW = size.width * 0.82;
     final frameH = frameW / aspect;
     final left = (size.width - frameW) / 2;
-    final top = (size.height - frameH) / 2 - size.height * 0.04;
+    final top = (size.height - frameH) / 2 - size.height * 0.02;
     final frame = Rect.fromLTWH(left, top, frameW, frameH);
 
     // 框外遮罩
@@ -322,74 +324,84 @@ class _GuidePainter extends CustomPainter {
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
       ..addRect(frame)
       ..fillType = PathFillType.evenOdd;
-    canvas.drawPath(overlay, Paint()..color = Colors.black54);
+    canvas.drawPath(overlay, Paint()..color = Colors.black45);
+
+    // 弱框线
+    canvas.drawRect(
+        frame,
+        Paint()
+          ..color = Colors.white30
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8);
+
+    final cx = size.width / 2;
+    // 头部：头顶在框高 6%，头高 36%，头宽≈头高 0.82
+    final headTop = top + frameH * 0.06;
+    final headH = frameH * 0.36;
+    final headW = headH * 0.82;
+    final chinY = headTop + headH;
+    final neckW = headW * 0.42;
+    final shoulderY = top + frameH * 0.88;
+    final shoulderEndX = frame.left + frameW * 0.06; // 肩部出框
 
     final linePaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
 
-    // 框边（四角轻描即可，参考图为弱框线）
-    canvas.drawRect(
-        frame,
-        Paint()
-          ..color = Colors.white38
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1);
+    final half = Path();
+    // 右半：头顶 → 太阳穴 → 耳廓微凸 → 下颌内收 → 下巴
+    half.moveTo(cx, headTop);
+    half.cubicTo(
+        cx + headW * 0.52, headTop + headH * 0.02,
+        cx + headW * 0.50, headTop + headH * 0.30,
+        cx + headW * 0.47, headTop + headH * 0.48);
+    // 耳廓（微凸后回收）
+    half.cubicTo(
+        cx + headW * 0.53, headTop + headH * 0.56,
+        cx + headW * 0.50, headTop + headH * 0.64,
+        cx + headW * 0.40, headTop + headH * 0.72);
+    // 下颌 → 下巴（圆润）
+    half.cubicTo(
+        cx + headW * 0.30, headTop + headH * 0.86,
+        cx + headW * 0.16, chinY - headH * 0.02,
+        cx, chinY);
+    // 颈部
+    half.moveTo(cx + neckW / 2, chinY - headH * 0.10);
+    half.lineTo(cx + neckW / 2, chinY + headH * 0.16);
+    // 肩部 S 曲线：颈根 → 斜方肌 → 肩峰 → 出框
+    half.moveTo(cx + neckW / 2, chinY + headH * 0.16);
+    half.cubicTo(
+        cx + headW * 0.62, chinY + headH * 0.28,
+        cx + headW * 0.98, chinY + headH * 0.42,
+        frame.right - shoulderEndX, shoulderY);
 
-    final cx = size.width / 2;
-    // 头部轮廓：头顶在框高 8%，头高约 34%，下颌内收
-    final headTop = top + frameH * 0.08;
-    final headH = frameH * 0.34;
-    final headW = headH * 0.78;
-    final jawY = headTop + headH * 0.92;
-    final neckY = headTop + headH * 1.08;
-    final shoulderY = top + frameH * 0.82;
-    final shoulderW = frameW * 0.86;
+    // 镜像左半（Matrix4.storage 为 Float64List）
+    final mirror = Matrix4.identity()
+      ..translateByDouble(cx, 0, 0, 1)
+      ..scaleByVector3(Vector3(-1.0, 1.0, 1.0))
+      ..translateByDouble(-cx, 0, 0, 1);
+    final full = Path()
+      ..addPath(half, Offset.zero)
+      ..addPath(half.transform(mirror.storage), Offset.zero);
+    canvas.drawPath(full, linePaint);
 
-    final person = Path()
-      // 左下颌 → 头顶 → 右下颌
-      ..moveTo(cx - headW * 0.30, jawY)
-      ..cubicTo(
-          cx - headW * 0.52, headTop + headH * 0.62,
-          cx - headW * 0.50, headTop + headH * 0.18,
-          cx, headTop)
-      ..cubicTo(
-          cx + headW * 0.50, headTop + headH * 0.18,
-          cx + headW * 0.52, headTop + headH * 0.62,
-          cx + headW * 0.30, jawY)
-      // 右颈
-      ..cubicTo(cx + headW * 0.22, neckY - 6, cx + headW * 0.20, neckY,
-          cx + headW * 0.20, neckY)
-      // 右肩弧线至框底
-      ..cubicTo(cx + shoulderW * 0.34, neckY + headH * 0.22,
-          cx + shoulderW * 0.46, shoulderY - headH * 0.28,
-          cx + shoulderW / 2, shoulderY)
-      ..moveTo(cx - headW * 0.30, jawY)
-      // 左颈
-      ..cubicTo(cx - headW * 0.22, neckY - 6, cx - headW * 0.20, neckY,
-          cx - headW * 0.20, neckY)
-      // 左肩弧线至框底
-      ..cubicTo(cx - shoulderW * 0.34, neckY + headH * 0.22,
-          cx - shoulderW * 0.46, shoulderY - headH * 0.28,
-          cx - shoulderW / 2, shoulderY);
-    canvas.drawPath(person, linePaint);
-
-    // 横向虚线：眼线（头中部）与肩线
+    // 横向虚线：眼线（头中部偏上）与肩线
     final dashPaint = Paint()
-      ..color = Colors.white60
+      ..color = Colors.white70
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
-    _dashedH(canvas, top + headH * 0.62, frame, dashPaint);
+    _dashedH(canvas, headTop + headH * 0.52, frame, dashPaint);
     _dashedH(canvas, shoulderY, frame, dashPaint);
   }
 
   void _dashedH(Canvas canvas, double y, Rect frame, Paint paint) {
-    const dash = 10.0, gap = 7.0;
-    var x = frame.left;
-    while (x < frame.right) {
+    const dash = 10.0, gap = 8.0;
+    var x = frame.left + 6;
+    while (x < frame.right - 6) {
       canvas.drawLine(
-          Offset(x, y), Offset((x + dash).clamp(x, frame.right), y), paint);
+          Offset(x, y), Offset((x + dash).clamp(x, frame.right - 6), y), paint);
       x += dash + gap;
     }
   }

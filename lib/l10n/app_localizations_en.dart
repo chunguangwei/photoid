@@ -16,7 +16,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'All processing happens on this device. Photos are never uploaded to a server.';
 
   @override
-  String get specStudentName => 'Student application photo (Edu ID)';
+  String get specStudentName => 'Student Enrollment Photo';
 
   @override
   String get bgBlue => 'Blue background';
@@ -557,4 +557,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateInstall => 'Done';
+
+  @override
+  String get updateNeedInstallPermission =>
+      'Install permission required: system settings opened. Allow it, then come back and retry.';
+
+  @override
+  String get updateRetryInstall => 'Retry install';
 }

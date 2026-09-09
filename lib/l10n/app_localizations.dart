@@ -113,7 +113,7 @@ abstract class AppLocalizations {
   /// No description provided for @specStudentName.
   ///
   /// In en, this message translates to:
-  /// **'Student application photo (Edu ID)'**
+  /// **'Student Enrollment Photo'**
   String get specStudentName;
 
   /// No description provided for @bgBlue.
@@ -1075,6 +1075,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Done'**
   String get updateInstall;
+
+  /// No description provided for @updateNeedInstallPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Install permission required: system settings opened. Allow it, then come back and retry.'**
+  String get updateNeedInstallPermission;
+
+  /// No description provided for @updateRetryInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry install'**
+  String get updateRetryInstall;
 }
 
 class _AppLocalizationsDelegate

@@ -37,7 +37,7 @@ void main() {
   group('PhotoSpec.fromJson', () {
     Map<String, Object?> studentJson() => {
           'id': 'student_edu_id',
-          'name': '学生报名照（教育ID）',
+          'name': '学生报名照',
           'pixelWidth': 480,
           'pixelHeight': 640,
           'minFileKb': 10,
@@ -56,7 +56,7 @@ void main() {
       final spec = PhotoSpec.fromJson(studentJson());
 
       expect(spec.id, 'student_edu_id');
-      expect(spec.name, '学生报名照（教育ID）');
+      expect(spec.name, '学生报名照');
       expect(spec.pixelWidth, 480);
       expect(spec.pixelHeight, 640);
       expect(spec.minFileKb, 10);

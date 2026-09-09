@@ -1,7 +1,7 @@
 name: photoid
 description: 智能证件照 - 本地处理的合规证件照
 publish_to: 'none'
-version: 0.2.9+11
+version: 0.3.0+12
 
 environment:
   sdk: ^3.5.0
@@ -27,6 +27,7 @@ dependencies:
   path_provider: ^2.1.6
   permission_handler: ^13.0.2
   shared_preferences: ^2.5.5
+  vector_math: ^2.4.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
