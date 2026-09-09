@@ -42,6 +42,28 @@ class UpdateService {
       'https://api.github.com/repos/$repoOwner/$repoName/releases/latest';
   static const Duration _timeout = Duration(seconds: 15);
 
+  /// GitHub 加速镜像（国内网络直连 objects.githubusercontent.com 常超时）。
+  /// APK 有正式签名，镜像篡改无法通过安装器签名校验，传输风险可控。
+  static const List<String> _mirrors = [
+    'https://gh-proxy.com/',
+    'https://ghfast.top/',
+  ];
+
+  /// 探测可下载地址：直链优先，依次回退镜像（Range 1 字节探测，4s 超时）。
+  Future<String> resolveDownloadUrl(String url) async {
+    final candidates = [url, ..._mirrors.map((m) => '$m$url')];
+    for (final candidate in candidates) {
+      try {
+        final req = http.Request('GET', Uri.parse(candidate));
+        req.headers['Range'] = 'bytes=0-0';
+        final resp = await req.send().timeout(const Duration(seconds: 4));
+        await resp.stream.drain();
+        if (resp.statusCode == 200 || resp.statusCode == 206) return candidate;
+      } catch (_) {}
+    }
+    return url; // 全部失败时返回直链，由 DownloadManager 自行重试
+  }
+
   /// 检查是否有新版本。无新版本或出错时返回 null。
   /// 仅 Android 支持 APK 自升级；iOS 走 App Store，直接返回 null。
   Future<UpdateInfo?> checkUpdate() async {

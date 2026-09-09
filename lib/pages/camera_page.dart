@@ -23,6 +23,7 @@ class _CameraPageState extends State<CameraPage> {
   CameraLensDirection _lens = CameraLensDirection.back;
   String? _error;
   bool _capturing = false;
+  bool _switching = false;
 
   @override
   void initState() {
@@ -66,7 +67,8 @@ class _CameraPageState extends State<CameraPage> {
 
   /// 前置/后置切换：释放旧控制器后按新镜头方向重建。
   Future<void> _switchCamera() async {
-    if (_cameras.length < 2) return;
+    if (_cameras.length < 2 || _switching) return;
+    _switching = true;
     final old = _controller;
     setState(() {
       _controller = null;
@@ -80,6 +82,8 @@ class _CameraPageState extends State<CameraPage> {
     } on CameraException catch (e) {
       setState(() => _error = AppLocalizations.of(context)
           .cameraInitFailed(e.description ?? e.code));
+    } finally {
+      _switching = false;
     }
   }
 
@@ -91,7 +95,10 @@ class _CameraPageState extends State<CameraPage> {
       final file = await controller.takePicture();
       if (!mounted) return;
       Navigator.of(context).pushReplacement(MaterialPageRoute(
-        builder: (_) => EditPage(sourcePath: file.path, spec: widget.spec),
+        builder: (_) => EditPage(
+            sourcePath: file.path,
+            spec: widget.spec,
+            flipHorizontal: _lens == CameraLensDirection.front),
       ));
     } on CameraException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -123,7 +130,7 @@ class _CameraPageState extends State<CameraPage> {
             IconButton(
               icon: const Icon(Icons.flip_camera_ios_outlined),
               tooltip: l.cameraSwitch,
-              onPressed: _switchCamera,
+              onPressed: _controller == null ? null : _switchCamera,
             ),
         ],
       ),

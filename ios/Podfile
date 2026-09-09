@@ -39,5 +39,15 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    # permission_handler 官方要求：只编译用到的权限模块，
+    # 避免蓝牙/定位/麦克风等无用权限代码链入（App Store 审核风险）
+    target.build_configurations.each do |config|
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+        '$(inherited)',
+        'PERMISSION_NOTIFICATIONS=1',
+        'PERMISSION_PHOTOS=1',
+        'PERMISSION_CAMERA=1',
+      ]
+    end
   end
 end

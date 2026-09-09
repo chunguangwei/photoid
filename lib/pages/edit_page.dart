@@ -9,10 +9,17 @@ import 'result_page.dart';
 
 /// 处理页：执行流水线（抠图→换底→裁剪→压缩），展示效果预览。
 class EditPage extends StatefulWidget {
-  const EditPage({super.key, required this.sourcePath, required this.spec});
+  const EditPage(
+      {super.key,
+      required this.sourcePath,
+      required this.spec,
+      this.flipHorizontal = false});
 
   final String sourcePath;
   final PhotoSpec spec;
+
+  /// 前置摄像头拍摄时为 true（补偿预览镜像）
+  final bool flipHorizontal;
 
   @override
   State<EditPage> createState() => _EditPageState();
@@ -59,7 +66,8 @@ class _EditPageState extends State<EditPage> {
             _regenerating = false;
           });
         },
-      ).run(widget.sourcePath, _spec);
+      ).run(widget.sourcePath, _spec,
+          flipHorizontal: widget.flipHorizontal);
       if (!mounted) return;
       setState(() => _result = result);
     } on PipelineException catch (e) {

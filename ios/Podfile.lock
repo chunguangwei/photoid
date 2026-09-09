@@ -1,5 +1,7 @@
 PODS:
   - Flutter (1.0.0)
+  - flutter_downloader (0.0.1):
+    - Flutter
   - google_mlkit_commons (0.13.0):
     - Flutter
     - MLKitVision (~> 10.0.0)
@@ -73,6 +75,7 @@ PODS:
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
+  - flutter_downloader (from `.symlinks/plugins/flutter_downloader/ios`)
   - google_mlkit_commons (from `.symlinks/plugins/google_mlkit_commons/ios`)
   - google_mlkit_face_detection (from `.symlinks/plugins/google_mlkit_face_detection/ios`)
   - google_mlkit_selfie_segmentation (from `.symlinks/plugins/google_mlkit_selfie_segmentation/ios`)
@@ -98,6 +101,8 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
+  flutter_downloader:
+    :path: ".symlinks/plugins/flutter_downloader/ios"
   google_mlkit_commons:
     :path: ".symlinks/plugins/google_mlkit_commons/ios"
   google_mlkit_face_detection:
@@ -109,6 +114,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
+  flutter_downloader: 78da0da1084e709cbfd3b723c7ea349c71681f09
   google_mlkit_commons: b2c0a76e7ef4ff555e70e5d71f21d66ce3d08a97
   google_mlkit_face_detection: 84144f185c47be63638e22fdd81bbb781875a35b
   google_mlkit_selfie_segmentation: 79f9cd556d3b7bb4536e2cf97f76ab2952146a63
@@ -128,6 +134,6 @@ SPEC CHECKSUMS:
   open_filex: 432f3cd11432da3e39f47fcc0df2b1603854eff1
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
 
-PODFILE CHECKSUM: 9580a49fa2c095d51100c20f258df867100b916b
+PODFILE CHECKSUM: 0df3df284ed0cf24bac732035a32a50714771372
 
 COCOAPODS: 1.16.2

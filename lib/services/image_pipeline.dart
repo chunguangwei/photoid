@@ -52,7 +52,8 @@ class ImagePipeline {
   /// 工作图最长边。输出只有几百像素，1440 足够且保证合成速度。
   static const _maxWorkSide = 1440;
 
-  Future<PipelineResult> run(String sourcePath, PhotoSpec spec) async {
+  Future<PipelineResult> run(String sourcePath, PhotoSpec spec,
+      {bool flipHorizontal = false}) async {
     // 1. 解码 + 按 EXIF 旋转归一化（image 包不保证自动应用方向）
     _report(PipelineStep.reading);
     final rawBytes = await File(sourcePath).readAsBytes();
@@ -61,6 +62,8 @@ class ImagePipeline {
       throw PipelineException('readPhoto');
     }
     work = img.bakeOrientation(work);
+    // 前置摄像头预览是镜像，takePicture 输出为传感器原始方向，需水平翻转对齐用户所见
+    if (flipHorizontal) work = img.flipHorizontal(work);
     if (work.width > _maxWorkSide || work.height > _maxWorkSide) {
       work = work.width >= work.height
           ? img.copyResize(work, width: _maxWorkSide)
@@ -171,7 +174,9 @@ class ImagePipeline {
     final cropWi = cropW.round();
     final cropHi = cropH.round();
     final cx = face.left + face.width / 2;
-    final top = face.top - cropH * 0.10;
+    // 先补偿头顶（face.height×0.5，与 headH×1.5 模型一致）再留 10% 白边；
+    // 原 face.top - cropH×0.10 会裁入头顶补偿区约 0.26×face.height
+    final top = face.top - face.height * 0.5 - cropH * 0.10;
     final left = cx - cropW / 2;
 
     // 仅向越界方向扩边（底色填充），避免全向 cropH 扩边的百 MB 级内存峰值

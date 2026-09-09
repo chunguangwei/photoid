@@ -35,7 +35,12 @@ class _UpdateDialogState extends State<_UpdateDialog> {
   String? _error;
 
   Future<void> _startBackgroundDownload() async {
-    setState(() => _error = null);
+    if (_started) return;
+    // 立即占位：权限弹窗等待期间防止重复点击重复 enqueue 同一 APK
+    setState(() {
+      _started = true;
+      _error = null;
+    });
     try {
       // Android 13+ 通知权限（用于在任务栏显示下载进度）。
       // 限定 Android：其它平台（含测试宿主 macOS）该请求会挂起不返回。
@@ -43,23 +48,26 @@ class _UpdateDialogState extends State<_UpdateDialog> {
 
       final dir =
           await getExternalStorageDirectory() ?? await getTemporaryDirectory();
+      // 直链优先、镜像回退探测（国内直连 GitHub 资产常超时）
+      final url = await UpdateService().resolveDownloadUrl(widget.info.downloadUrl);
       await FlutterDownloader.enqueue(
-        url: widget.info.downloadUrl,
+        url: url,
         savedDir: dir.path,
         fileName: _apkName,
         showNotification: true,
         openFileFromNotification: true,
       );
       if (!mounted) return;
-      setState(() => _started = true);
       final l = AppLocalizations.of(context);
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l.updateBgStarted)));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
-      setState(
-          () => _error = AppLocalizations.of(context).updateDownloadFailed);
+      setState(() {
+        _started = false;
+        _error = AppLocalizations.of(context).updateDownloadFailed;
+      });
       debugPrint('Enqueue update download failed: $e');
     }
   }

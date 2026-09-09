@@ -105,15 +105,17 @@ class ComplianceService {
     return ComplianceReport(items);
   }
 
-  /// 四角 8% 区域均值（边长取短边比例，避免横版/竖版越界采样到黑像素）
+  /// 背景采样：仅取上方两个角 + 两侧上 1/4 处边条。
+  /// 底部两角是被摄者衣服/身体，不是背景——四角全采会把衣服色混进去。
   (int, int, int) _sampleCorners(img.Image image) {
     final short = image.width < image.height ? image.width : image.height;
     final s = (short * 0.08).round().clamp(4, short ~/ 3).toInt();
+    final midY = (image.height * 0.22).round();
     final regions = [
-      (0, 0),
-      (image.width - s, 0),
-      (0, image.height - s),
-      (image.width - s, image.height - s),
+      (0, 0), // 左上
+      (image.width - s, 0), // 右上
+      (0, midY), // 左侧上部
+      (image.width - s, midY), // 右侧上部
     ];
     var r = 0, g = 0, b = 0, n = 0;
     for (final (ox, oy) in regions) {
