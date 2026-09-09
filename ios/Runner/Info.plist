@@ -72,5 +72,7 @@
 	<string>用于从相册选择照片制作证件照</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>用于将制作完成的证件照保存到相册</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
