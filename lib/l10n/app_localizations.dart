@@ -787,6 +787,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Regenerating with new background…'**
   String get editRegenerating;
+
+  /// No description provided for @updateLatest.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re up to date'**
+  String get updateLatest;
+
+  /// No description provided for @updateCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Check failed. Try again later.'**
+  String get updateCheckFailed;
+
+  /// No description provided for @updateCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates'**
+  String get updateCheck;
+
+  /// No description provided for @homeStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get homeStart;
+
+  /// No description provided for @bgRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get bgRecommended;
+
+  /// No description provided for @homeTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
+  String get homeTools;
 }
 
 class _AppLocalizationsDelegate

@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:ui' show Rect;
+import 'dart:ui' show Rect, Size;
 
 import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
@@ -78,7 +78,7 @@ class ImagePipeline {
     final segmenter = SelfieSegmenter(
         mode: SegmenterMode.single, enableRawSizeMask: false);
     final segMask =
-        await segmenter.processImage(InputImage.fromFile(mlFile));
+        await segmenter.processImage(await _inputImage(mlFile, work));
     segmenter.close();
     if (segMask == null) {
       throw PipelineException('noPerson');
@@ -125,7 +125,7 @@ class ImagePipeline {
     final detector = FaceDetector(
         options:
             FaceDetectorOptions(performanceMode: FaceDetectorMode.accurate));
-    final faces = await detector.processImage(InputImage.fromFile(mlFile));
+    final faces = await detector.processImage(await _inputImage(mlFile, work));
     detector.close();
     if (faces.isEmpty) {
       throw PipelineException('noFace');
@@ -213,6 +213,52 @@ class ImagePipeline {
   }
 
   void _report(PipelineStep step) => onProgress?.call(step);
+
+  /// 构造 ML Kit 输入图像。
+  /// Android：fromFilePath 不挂 MediaImage，ML Kit 原生层会 NPE（已知 bug），
+  /// 改走 fromBytes + NV21（与 camera 插件数据通路一致）；
+  /// iOS：fromFile 工作正常，保持原路径。
+  Future<InputImage> _inputImage(File file, img.Image work) async {
+    if (!Platform.isAndroid) return InputImage.fromFile(file);
+    final nv21 = await compute(_rgbaToNv21, <String, Object>{
+      'rgba': work.getBytes(order: img.ChannelOrder.rgba),
+      'width': work.width,
+      'height': work.height,
+    });
+    return InputImage.fromBytes(
+      bytes: nv21,
+      metadata: InputImageMetadata(
+        size: Size(work.width.toDouble(), work.height.toDouble()),
+        rotation: InputImageRotation.rotation0deg,
+        format: InputImageFormat.nv21,
+        bytesPerRow: work.width,
+      ),
+    );
+  }
+}
+
+/// RGBA → NV21（BT.601 全幅转换，2×2 色度子采样）。顶层函数，供 compute 调用。
+Uint8List _rgbaToNv21(Map<String, Object> args) {
+  final rgba = args['rgba'] as Uint8List;
+  final w = args['width'] as int;
+  final h = args['height'] as int;
+  final ySize = w * h;
+  final out = Uint8List(ySize + ySize ~/ 2);
+  for (var i = 0; i < ySize; i++) {
+    final o = i * 4;
+    out[i] =
+        ((66 * rgba[o] + 129 * rgba[o + 1] + 25 * rgba[o + 2] + 128) >> 8) + 16;
+  }
+  var uv = ySize;
+  for (var y = 0; y < h; y += 2) {
+    for (var x = 0; x < w; x += 2) {
+      final o = (y * w + x) * 4;
+      final r = rgba[o], g = rgba[o + 1], b = rgba[o + 2];
+      out[uv++] = ((112 * r - 94 * g - 18 * b + 128) >> 8) + 128; // V
+      out[uv++] = ((-38 * r - 74 * g + 112 * b + 128) >> 8) + 128; // U
+    }
+  }
+  return out;
 }
 
 /// 逐像素 alpha 混合：out = fg·a + bg·(1-a)。顶层函数，供 compute 调用。

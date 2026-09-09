@@ -239,5 +239,11 @@
   "customCreate": "Create & use",
   "customInvalid": "Enter valid values (W/H 50–2000, KB 5–2048, min ≤ max)",
   "editSwitchBg": "Switch background (regenerate)",
-  "editRegenerating": "Regenerating with new background…"
+  "editRegenerating": "Regenerating with new background…",
+  "updateLatest": "You're up to date",
+  "updateCheckFailed": "Check failed. Try again later.",
+  "updateCheck": "Check for updates",
+  "homeStart": "Start",
+  "bgRecommended": "Recommended",
+  "homeTools": "Tools"
 }

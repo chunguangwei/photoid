@@ -144,5 +144,11 @@
   "customCreate": "创建并使用",
   "customInvalid": "请填写合法数值（宽/高 50–2000，KB 5–2048，且最小≤最大）",
   "editSwitchBg": "切换底色（重新生成）",
-  "editRegenerating": "正在按新底色重新生成…"
+  "editRegenerating": "正在按新底色重新生成…",
+  "updateLatest": "已是最新版本",
+  "updateCheckFailed": "检查失败，请稍后重试",
+  "updateCheck": "检查更新",
+  "homeStart": "开始制作",
+  "bgRecommended": "推荐",
+  "homeTools": "常用工具"
 }

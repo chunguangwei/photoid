@@ -380,4 +380,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get editRegenerating => '正在按新底色重新生成…';
+
+  @override
+  String get updateLatest => '已是最新版本';
+
+  @override
+  String get updateCheckFailed => '检查失败，请稍后重试';
+
+  @override
+  String get updateCheck => '检查更新';
+
+  @override
+  String get homeStart => '开始制作';
+
+  @override
+  String get bgRecommended => '推荐';
+
+  @override
+  String get homeTools => '常用工具';
 }

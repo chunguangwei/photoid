@@ -26,11 +26,18 @@ String localizedBgName(BuildContext context, SpecBackground bg) {
   }
 }
 
-/// 规格详情页：三栏参数卡 + 底色 + 要求清单，底部上传/拍摄双按钮。
-class SpecDetailPage extends StatelessWidget {
+/// 规格详情页：三栏参数卡 + 底色选择（默认推荐）+ 要求清单，底部上传/拍摄双按钮。
+class SpecDetailPage extends StatefulWidget {
   const SpecDetailPage({super.key, required this.spec});
 
   final PhotoSpec spec;
+
+  @override
+  State<SpecDetailPage> createState() => _SpecDetailPageState();
+}
+
+class _SpecDetailPageState extends State<SpecDetailPage> {
+  late PhotoSpec _spec = widget.spec;
 
   Future<void> _upload(BuildContext context) async {
     // imageQuality 触发 image_picker 转码输出 JPG，规避 HEIC 解码问题
@@ -38,12 +45,12 @@ class SpecDetailPage extends StatelessWidget {
         .pickImage(source: ImageSource.gallery, imageQuality: 100);
     if (picked == null || !context.mounted) return;
     Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => EditPage(sourcePath: picked.path, spec: spec),
+      builder: (_) => EditPage(sourcePath: picked.path, spec: _spec),
     ));
   }
-
   @override
   Widget build(BuildContext context) {
+    final spec = _spec;
     final theme = Theme.of(context);
     final l = AppLocalizations.of(context);
     final tr = Tr.of(context);
@@ -75,22 +82,21 @@ class SpecDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Card(
-              child: ListTile(
-                title: Text(l.specBgColor),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: Color.fromARGB(
-                            255, spec.background.r, spec.background.g, spec.background.b),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+                    Text(l.specBgColor, style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final bg in idPhotoBackgrounds)
+                          _bgChip(context, l, spec, bg),
+                      ],
                     ),
-                    const SizedBox(width: 6),
-                    Text(localizedBgName(context, spec.background)),
                   ],
                 ),
               ),
@@ -164,4 +170,23 @@ class SpecDetailPage extends StatelessWidget {
           ],
         ),
       );
+
+  /// 底色选择 chip：选中态高亮；规格默认底色带「推荐」标记。
+  Widget _bgChip(BuildContext context, AppLocalizations l, PhotoSpec spec,
+      SpecBackground bg) {
+    final selected = bg.name == _spec.background.name;
+    final isDefault = bg.name == widget.spec.background.name;
+    return ChoiceChip(
+      selected: selected,
+      onSelected: (_) =>
+          setState(() => _spec = _spec.copyWith(background: bg)),
+      avatar: CircleAvatar(
+        radius: 8,
+        backgroundColor: Color.fromARGB(255, bg.r, bg.g, bg.b),
+      ),
+      label: Text(isDefault
+          ? '${localizedBgName(context, bg)} · ${l.bgRecommended}'
+          : localizedBgName(context, bg)),
+    );
+  }
 }

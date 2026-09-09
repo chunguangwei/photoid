@@ -394,4 +394,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editRegenerating => 'Regenerating with new background…';
+
+  @override
+  String get updateLatest => 'You\'re up to date';
+
+  @override
+  String get updateCheckFailed => 'Check failed. Try again later.';
+
+  @override
+  String get updateCheck => 'Check for updates';
+
+  @override
+  String get homeStart => 'Start';
+
+  @override
+  String get bgRecommended => 'Recommended';
+
+  @override
+  String get homeTools => 'Tools';
 }
