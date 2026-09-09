@@ -479,4 +479,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errMlkit =>
       'AI processing is unavailable on this device. Retry or use another photo.';
+
+  @override
+  String get updateRetryMirror => 'Retry via mirror';
+
+  @override
+  String get updateCopyLink => 'Copy download link';
+
+  @override
+  String get updateLinkCopied =>
+      'Link copied. Open it in your browser to download.';
 }

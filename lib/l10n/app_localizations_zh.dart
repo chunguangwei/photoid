@@ -461,4 +461,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get errMlkit => 'AI 处理在当前设备上不可用，请重试或更换照片';
+
+  @override
+  String get updateRetryMirror => '用镜像重试';
+
+  @override
+  String get updateCopyLink => '复制下载链接';
+
+  @override
+  String get updateLinkCopied => '链接已复制，请用浏览器打开下载';
 }

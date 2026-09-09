@@ -190,5 +190,8 @@
   "langSystem": "跟随系统",
   "langZh": "中文",
   "langEn": "English",
-  "errMlkit": "AI 处理在当前设备上不可用，请重试或更换照片"
+  "errMlkit": "AI 处理在当前设备上不可用，请重试或更换照片",
+  "updateRetryMirror": "用镜像重试",
+  "updateCopyLink": "复制下载链接",
+  "updateLinkCopied": "链接已复制，请用浏览器打开下载"
 }

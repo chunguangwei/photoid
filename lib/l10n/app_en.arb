@@ -285,5 +285,8 @@
   "langSystem": "System",
   "langZh": "中文",
   "langEn": "English",
-  "errMlkit": "AI processing is unavailable on this device. Retry or use another photo."
+  "errMlkit": "AI processing is unavailable on this device. Retry or use another photo.",
+  "updateRetryMirror": "Retry via mirror",
+  "updateCopyLink": "Copy download link",
+  "updateLinkCopied": "Link copied. Open it in your browser to download."
 }

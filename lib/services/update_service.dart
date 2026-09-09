@@ -49,6 +49,13 @@ class UpdateService {
     'https://ghfast.top/',
   ];
 
+  /// 最近一次检查到的 APK 地址（供失败后镜像重试/复制链接）。
+  static String? lastApkUrl;
+
+  /// 给定直链的全部镜像候选地址。
+  static List<String> mirrorUrlsOf(String url) =>
+      _mirrors.map((m) => '$m$url').toList();
+
   /// 探测可下载地址：直链优先，依次回退镜像（Range 1 字节探测，4s 超时）。
   Future<String> resolveDownloadUrl(String url) async {
     final candidates = [url, ..._mirrors.map((m) => '$m$url')];
@@ -132,6 +139,7 @@ class UpdateService {
     }
     if (apkUrl == null || apkUrl.isEmpty) return null;
 
+    lastApkUrl = apkUrl;
     return UpdateInfo(
       version: remoteVersion,
       downloadUrl: apkUrl,
@@ -139,7 +147,6 @@ class UpdateService {
       isForceUpdate: false,
     );
   }
-
   /// 去掉版本号前缀 v/V。
   static String stripVPrefix(String version) {
     if (version.startsWith('v') || version.startsWith('V')) {

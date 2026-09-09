@@ -937,6 +937,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'AI processing is unavailable on this device. Retry or use another photo.'**
   String get errMlkit;
+
+  /// No description provided for @updateRetryMirror.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry via mirror'**
+  String get updateRetryMirror;
+
+  /// No description provided for @updateCopyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy download link'**
+  String get updateCopyLink;
+
+  /// No description provided for @updateLinkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied. Open it in your browser to download.'**
+  String get updateLinkCopied;
 }
 
 class _AppLocalizationsDelegate

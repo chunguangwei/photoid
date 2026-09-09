@@ -4,6 +4,7 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
@@ -52,16 +53,77 @@ class _PhotoIdAppState extends State<PhotoIdApp> {
   void _registerDownloadListener() {
     if (!Platform.isAndroid) return;
     IsolateNameServer.registerPortWithName(_dlPort.sendPort, _dlPortName);
-    FlutterDownloader.registerCallback(_downloadCallback, step: 1);
     _dlPort.listen((dynamic msg) async {
       final status = msg[1];
       final complete = status == DownloadTaskStatus.complete ||
           status == DownloadTaskStatus.complete.index;
+      final failed = status == DownloadTaskStatus.failed ||
+          status == DownloadTaskStatus.failed.index;
       if (complete) {
         final dir = await getExternalStorageDirectory();
         if (dir != null) OpenFilex.open('${dir.path}/$_apkName');
+      } else if (failed) {
+        _onDownloadFailed();
       }
     });
+  }
+
+  /// 下载失败自愈：先给「镜像重试」，镜像也失败则给「复制链接」去浏览器。
+  void _onDownloadFailed() {
+    final ctx = _navigatorKey.currentContext;
+    final url = UpdateService.lastApkUrl;
+    if (ctx == null || !ctx.mounted || url == null) return;
+    final l = AppLocalizations.of(ctx);
+    if (!_mirrorRetried) {
+      ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+        content: Text(l.updateDownloadFailed),
+        action: SnackBarAction(
+          label: l.updateRetryMirror,
+          onPressed: () => _enqueueDownload(
+              UpdateService.mirrorUrlsOf(url).first),
+        ),
+      ));
+    } else {
+      ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+        content: Text(l.updateDownloadFailed),
+        action: SnackBarAction(
+          label: l.updateCopyLink,
+          onPressed: () {
+            Clipboard.setData(ClipboardData(
+                text: UpdateService.mirrorUrlsOf(url).first));
+            ScaffoldMessenger.of(ctx).showSnackBar(
+                SnackBar(content: Text(l.updateLinkCopied)));
+          },
+        ),
+      ));
+    }
+  }
+
+  bool _mirrorRetried = false;
+
+  /// 重新入队下载（清掉同名残留任务，避免任务叠加）。
+  Future<void> _enqueueDownload(String url) async {
+    _mirrorRetried = true;
+    try {
+      final tasks = await FlutterDownloader.loadTasks();
+      for (final t in tasks ?? <DownloadTask>[]) {
+        if (t.filename == _apkName &&
+            t.status != DownloadTaskStatus.complete) {
+          await FlutterDownloader.cancel(taskId: t.taskId);
+        }
+      }
+      final dir = await getExternalStorageDirectory();
+      if (dir == null) return;
+      await FlutterDownloader.enqueue(
+        url: url,
+        savedDir: dir.path,
+        fileName: _apkName,
+        showNotification: true,
+        openFileFromNotification: true,
+      );
+    } catch (e) {
+      debugPrint('Retry download failed: $e');
+    }
   }
 
   @pragma('vm:entry-point')
