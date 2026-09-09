@@ -489,4 +489,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get updateLinkCopied =>
       'Link copied. Open it in your browser to download.';
+
+  @override
+  String get editZoomHint => 'Pinch & drag to adjust';
+
+  @override
+  String get editCropReset => 'Reset';
 }

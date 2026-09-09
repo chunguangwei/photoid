@@ -193,5 +193,7 @@
   "errMlkit": "AI 处理在当前设备上不可用，请重试或更换照片",
   "updateRetryMirror": "用镜像重试",
   "updateCopyLink": "复制下载链接",
-  "updateLinkCopied": "链接已复制，请用浏览器打开下载"
+  "updateLinkCopied": "链接已复制，请用浏览器打开下载",
+  "editZoomHint": "双指缩放、拖动调整构图",
+  "editCropReset": "还原"
 }

@@ -955,6 +955,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Link copied. Open it in your browser to download.'**
   String get updateLinkCopied;
+
+  /// No description provided for @editZoomHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinch & drag to adjust'**
+  String get editZoomHint;
+
+  /// No description provided for @editCropReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get editCropReset;
 }
 
 class _AppLocalizationsDelegate

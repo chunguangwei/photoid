@@ -288,5 +288,7 @@
   "errMlkit": "AI processing is unavailable on this device. Retry or use another photo.",
   "updateRetryMirror": "Retry via mirror",
   "updateCopyLink": "Copy download link",
-  "updateLinkCopied": "Link copied. Open it in your browser to download."
+  "updateLinkCopied": "Link copied. Open it in your browser to download.",
+  "editZoomHint": "Pinch & drag to adjust",
+  "editCropReset": "Reset"
 }

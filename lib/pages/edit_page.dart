@@ -1,11 +1,15 @@
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image/image.dart' as img;
 
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 import '../models/photo_spec.dart';
 import '../services/image_pipeline.dart';
+import 'crop_editor.dart';
 import 'result_page.dart';
 
 /// 处理页：执行流水线（抠图→换底→裁剪→压缩），展示效果预览。
@@ -33,6 +37,10 @@ class _EditPageState extends State<EditPage> {
   String? _error;
   bool _showOriginal = false;
   bool _regenerating = false;
+
+  /// 交互裁剪编辑器状态与用户调整后的裁剪框（null=未调整，用自动构图）
+  final GlobalKey<CropEditorState> _editorKey = GlobalKey<CropEditorState>();
+  Rect? _currentCrop;
 
   @override
   void initState() {
@@ -102,13 +110,16 @@ class _EditPageState extends State<EditPage> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: FilledButton.icon(
-                  onPressed: () =>
-                      Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => ResultPage(
-                      jpgBytes: result.jpgBytes,
-                      spec: spec,
-                    ),
-                  )),
+                  onPressed: () {
+                    final r = _result!;
+                    // 用户调整过构图则按当前裁剪框重算交付字节，否则用自动构图
+                    final jpg = _currentCrop != null
+                        ? _finalizeCrop(r, _currentCrop!)
+                        : r.jpgBytes;
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => ResultPage(jpgBytes: jpg, spec: spec),
+                    ));
+                  },
                   icon: const Icon(Icons.fact_check_outlined),
                   label: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -119,6 +130,28 @@ class _EditPageState extends State<EditPage> {
               ),
             ),
     );
+  }
+
+  /// 按用户调整的裁剪框（图像坐标系）生成最终交付 jpg：
+  /// 框出界则平移回界内，框比图大则等比缩到能放下，再缩放+二分压缩。
+  Uint8List _finalizeCrop(PipelineResult r, Rect crop) {
+    final cw = r.composited.width;
+    final ch = r.composited.height;
+    var w = crop.width.round().clamp(1, cw);
+    var h = crop.height.round().clamp(1, ch);
+    final fit = math.min(cw / w, ch / h);
+    if (fit < 1) {
+      w = (w * fit).round().clamp(1, cw);
+      h = (h * fit).round().clamp(1, ch);
+    }
+    final x = crop.left.round().clamp(0, cw - w);
+    final y = crop.top.round().clamp(0, ch - h);
+    final c = img.copyCrop(r.composited, x: x, y: y, width: w, height: h);
+    final out = img.copyResize(c,
+        width: _spec.pixelWidth,
+        height: _spec.pixelHeight,
+        interpolation: img.Interpolation.cubic);
+    return ImagePipeline.encodeToKbRange(out, _spec.minFileKb, _spec.maxFileKb);
   }
 
   Widget _buildProgress() => Center(
@@ -159,6 +192,7 @@ class _EditPageState extends State<EditPage> {
       );
 
   Widget _buildPreview(PipelineResult result) {
+    final l = AppLocalizations.of(context);
     final kb = result.jpgBytes.lengthInBytes / 1024;
     return Column(
       children: [
@@ -166,13 +200,43 @@ class _EditPageState extends State<EditPage> {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Center(
-              child: Image.memory(
-                _showOriginal ? result.originalBytes : result.jpgBytes,
-                fit: BoxFit.contain,
-              ),
+              child: _showOriginal
+                  ? Image.memory(result.originalBytes, fit: BoxFit.contain)
+                  : CropEditor(
+                      key: _editorKey,
+                      imageBytes: result.compositedJpg,
+                      imageWidth: result.composited.width,
+                      imageHeight: result.composited.height,
+                      autoCrop: result.autoCrop,
+                      aspect: _spec.aspect,
+                      onChanged: (r) => _currentCrop = r,
+                    ),
             ),
           ),
         ),
+        if (!_showOriginal)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.crop_free,
+                    size: 14,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+                const SizedBox(width: 4),
+                Text(l.editZoomHint,
+                    style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () => _editorKey.currentState?.reset(),
+                  child: Text(l.editCropReset,
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.primary)),
+                ),
+              ],
+            ),
+          ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(

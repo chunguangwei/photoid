@@ -470,4 +470,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get updateLinkCopied => '链接已复制，请用浏览器打开下载';
+
+  @override
+  String get editZoomHint => '双指缩放、拖动调整构图';
+
+  @override
+  String get editCropReset => '还原';
 }

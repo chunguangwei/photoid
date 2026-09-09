@@ -27,19 +27,31 @@ class PipelineResult {
     required this.originalBytes,
     required this.processed,
     required this.original,
+    required this.composited,
+    required this.compositedJpg,
+    required this.autoCrop,
   });
 
-  /// 最终交付的 jpg 字节（已按规格压缩）
+  /// 最终交付的 jpg 字节（已按规格压缩，自动构图）
   final Uint8List jpgBytes;
 
   /// 原图预览字节（归一化后、工作分辨率）
   final Uint8List originalBytes;
 
-  /// 处理后的成片（规格像素）
+  /// 处理后的成片（规格像素，自动构图）
   final img.Image processed;
 
   /// 归一化后的原图（工作分辨率，用于原图/效果对比）
   final img.Image original;
+
+  /// 换底后的完整工作图（交互裁剪编辑器的底图）
+  final img.Image composited;
+
+  /// composited 的 JPEG 预览字节（编辑器显示用）
+  final Uint8List compositedJpg;
+
+  /// 自动构图裁剪框（composited 坐标系），编辑器的初始变换
+  final Rect autoCrop;
 }
 
 /// 处理流水线：EXIF 归一化 → 抠图 → 底色合成 → 人脸构图裁剪 → 二分压缩。
@@ -104,9 +116,16 @@ class ImagePipeline {
           interpolation: img.Interpolation.linear);
     }
     maskImg = img.gaussianBlur(maskImg, radius: 3);
-    final maskW = maskImg.getBytes();
-
-    // 3. 底色合成（isolate 内做逐像素混合）
+    // 掩码后处理（消白边三件套）：
+    // 1) 置信度锐化：低 alpha 截断——半透明环带混的是原背景色（白边来源）
+    // 2) 3×3 腐蚀 1px：再削一圈残留边缘
+    // 3) 轻度羽化：保证边缘过渡自然
+    maskImg = img.gaussianBlur(maskImg, radius: 3);
+    final maskW = await compute(_refineMask, <String, Object>{
+      'mask': maskImg.getBytes(),
+      'width': work.width,
+      'height': work.height,
+    });
     _report(PipelineStep.compositing);
     final outBytes = await compute(_composite, <String, Object>{
       'rgba': work.getBytes(order: img.ChannelOrder.rgba),
@@ -137,7 +156,12 @@ class ImagePipeline {
                 b.boundingBox.width * b.boundingBox.height
             ? a
             : b);
-    final framed = _frame(composited, face.boundingBox, spec);
+    final autoCrop = _cropRect(composited, face.boundingBox, spec);
+    final framed = img.copyCrop(composited,
+        x: autoCrop.left.round(),
+        y: autoCrop.top.round(),
+        width: autoCrop.width.round(),
+        height: autoCrop.height.round());
 
     // 5. 缩放到目标像素并二分压缩到 KB 区间
     _report(PipelineStep.compressing);
@@ -153,46 +177,46 @@ class ImagePipeline {
       originalBytes: img.encodeJpg(work, quality: 88),
       processed: output,
       original: work,
+      composited: composited,
+      compositedJpg: img.encodeJpg(composited, quality: 90),
+      autoCrop: autoCrop,
     );
   }
 
-  /// 以人脸框构图：头部（人脸框×1.5 补偿头顶）约占照片高 62%，
-  /// 水平居中，顶部留白约 10%。画幅不足处用底色补齐。
-  img.Image _frame(img.Image source, Rect face, PhotoSpec spec) {
-    final bg = img.ColorRgb8(
-        spec.background.r, spec.background.g, spec.background.b);
+  /// 以人脸框计算构图裁剪框（不扩边）：头部（人脸框×1.5 补偿头顶）约占
+  /// 照片高 62%，水平居中，顶部留白约 10%。
+  /// crop 超出图像时先等比缩到图内、再平移回界内——填充优先：
+  /// 已合规的照片不会被缩出一圈底色边。
+  static Rect cropRectFor(
+      int srcW, int srcH, Rect face, double aspect) {
     final headH = face.height * 1.5;
     var cropH = headH / 0.62;
-    var cropW = cropH * spec.aspect;
+    var cropW = cropH * aspect;
     // 画幅不能无限放大：限制在源图短边的 3 倍内，避免过度放大模糊
-    final maxCrop = math.max(source.width, source.height) * 3.0;
+    final maxCrop = math.max(srcW, srcH) * 3.0;
     if (cropH > maxCrop) {
       cropH = maxCrop.toDouble();
-      cropW = cropH * spec.aspect;
+      cropW = cropH * aspect;
     }
-    final cropWi = cropW.round();
-    final cropHi = cropH.round();
+    // 超出图像则等比缩到能放下
+    final fit = math.min(srcW / cropW, srcH / cropH);
+    if (fit < 1) {
+      cropW *= fit;
+      cropH *= fit;
+    }
+    final cropWi = cropW.round().clamp(1, srcW);
+    final cropHi = cropH.round().clamp(1, srcH);
     final cx = face.left + face.width / 2;
-    // 先补偿头顶（face.height×0.5，与 headH×1.5 模型一致）再留 10% 白边；
-    // 原 face.top - cropH×0.10 会裁入头顶补偿区约 0.26×face.height
+    // 先补偿头顶（face.height×0.5）再留 10% 白边
     final top = face.top - face.height * 0.5 - cropH * 0.10;
     final left = cx - cropW / 2;
-
-    // 仅向越界方向扩边（底色填充），避免全向 cropH 扩边的百 MB 级内存峰值
-    final padL = math.max(0, -left).ceil();
-    final padT = math.max(0, -top).ceil();
-    final padR = math.max(0, (left + cropW) - source.width).ceil();
-    final padB = math.max(0, (top + cropH) - source.height).ceil();
-    final canvas = img.Image(
-        width: source.width + padL + padR,
-        height: source.height + padT + padB);
-    img.fill(canvas, color: bg);
-    img.compositeImage(canvas, source, dstX: padL, dstY: padT);
-    final cropX = (padL + left).round().clamp(0, canvas.width - cropWi).toInt();
-    final cropY = (padT + top).round().clamp(0, canvas.height - cropHi).toInt();
-    return img.copyCrop(canvas,
-        x: cropX, y: cropY, width: cropWi, height: cropHi);
+    final x = left.round().clamp(0, srcW - cropWi).toDouble();
+    final y = top.round().clamp(0, srcH - cropHi).toDouble();
+    return Rect.fromLTWH(x, y, cropWi.toDouble(), cropHi.toDouble());
   }
+
+  Rect _cropRect(img.Image source, Rect face, PhotoSpec spec) =>
+      cropRectFor(source.width, source.height, face, spec.aspect);
 
   /// 二分 JPEG 质量压到 maxKb 以下（优先接近上限的最高质量）。
   /// 契约：minKb 仅尽力而为——极小像素图（如 144×192）即使 q98 也可能
@@ -299,6 +323,56 @@ Uint8List _composite(Map<String, Object> args) {
     out[i + 1] = (rgba[i + 1] * a + bgG * inv) ~/ 255;
     out[i + 2] = (rgba[i + 2] * a + bb * inv) ~/ 255;
     out[i + 3] = 255;
+  }
+  return out;
+}
+
+
+/// 掩码精修（消白边）：锐化 alpha 曲线 → 3×3 min-filter 腐蚀 1px → 边缘保留羽化。
+/// 顶层函数，供 compute 调用。
+Uint8List _refineMask(Map<String, Object> args) {
+  final mask = args['mask'] as Uint8List;
+  final w = args['width'] as int;
+  final h = args['height'] as int;
+  final n = w * h;
+
+  // 1) alpha 锐化：a' = clamp((a-0.35)/(1-0.5))，0.35 以下的半透明环归零
+  final sharpened = Uint8List(n);
+  for (var i = 0; i < n; i++) {
+    final a = mask[i] / 255.0;
+    final s = ((a - 0.35) / 0.5).clamp(0.0, 1.0);
+    sharpened[i] = (s * 255).round();
+  }
+
+  // 2) 3×3 min-filter 腐蚀一圈
+  final eroded = Uint8List.fromList(sharpened);
+  for (var y = 1; y < h - 1; y++) {
+    for (var x = 1; x < w - 1; x++) {
+      var m = 255;
+      for (var dy = -1; dy <= 1; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+          final v = sharpened[(y + dy) * w + (x + dx)];
+          if (v < m) m = v;
+        }
+      }
+      eroded[y * w + x] = m;
+    }
+  }
+
+  // 3) 羽化：仅对中间 alpha（非全 0 非全 255）做 3×3 均值，平滑边缘锯齿
+  final out = Uint8List.fromList(eroded);
+  for (var y = 1; y < h - 1; y++) {
+    for (var x = 1; x < w - 1; x++) {
+      final c = eroded[y * w + x];
+      if (c == 0 || c == 255) continue;
+      var sum = 0;
+      for (var dy = -1; dy <= 1; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+          sum += eroded[(y + dy) * w + (x + dx)];
+        }
+      }
+      out[y * w + x] = sum ~/ 9;
+    }
   }
   return out;
 }
