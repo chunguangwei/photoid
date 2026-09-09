@@ -27,15 +27,20 @@ lib/
 │   ├── album_service.dart    # 本地相册（保存/列表/删除）
 │   └── update_service.dart   # GitHub Release 自升级检查
 ├── pages/                    # UI 层（依赖 BuildContext 做 i18n）
-│   ├── home_page.dart        # 首页：规格列表/搜索
+│   ├── home_page.dart        # 首页（收缩结构）：隐私条→学生照英雄卡→
+│   │                         #   常用工具单行→搜索→热门 5 条→「全部规格(33)」
+│   │                         #   折叠区；AppBar 手动检查更新按钮
 │   ├── camera_page.dart      # 拍摄
-│   ├── edit_page.dart        # 编辑：换底/预览/触发流水线
+│   ├── edit_page.dart        # 编辑：流水线步骤进度 + 五色底色 chips
+│   │                         #   （切换即重跑）+ 原图/效果对比
 │   ├── result_page.dart      # 结果：合规检测报告 + 保存
-│   ├── spec_detail_page.dart # 规格详情与要求说明
+│   ├── spec_detail_page.dart # 规格详情：三栏参数卡 + 五色底色选择
+│   │                         #   （默认色带「· 推荐」标记）+ 要求清单
+│   │                         #   + 底部上传/拍摄双按钮
 │   ├── custom_spec_page.dart # 自定义规格
 │   ├── kb_tool_page.dart     # 改 KB 工具
 │   ├── my_album_page.dart    # 我的相册
-│   └── update_dialog.dart    # 升级对话框
+│   └── update_dialog.dart    # 升级对话框：下载 APK → FileProvider 安装
 ├── l10n/                     # 国际化
 │   ├── app_zh.arb / app_en.arb        # 翻译源（唯一真源）
 │   ├── app_localizations*.dart        # flutter gen-l10n 生成物（勿手改）
@@ -56,12 +61,13 @@ test/                         # 服务层单测（image_pipeline / compliance �
 拍摄(camera) / 相册上传(image_picker)
         │
         ▼
-ImagePipeline（edit_page 触发）
-  ① preparing   EXIF 归一化 → 工作分辨率原图
-  ② reading     解码为 image.Image
+ImagePipeline（edit_page 触发；步骤枚举 PipelineStep 共 6 项，UI 逐条映射 l10n 进度文案）
+  ① preparing   UI 初始态（run() 开始前由 EditPage 展示，流水线本身不回调）
+  ② reading     解码 + 按 EXIF 旋转归一化（img.bakeOrientation）→ 工作分辨率原图（最长边 1440）
   ③ segmenting  ML Kit Selfie Segmentation 人像分割（端侧）
-  ④ compositing 按所选五色底逐像素 alpha 混合（compute 隔离）
-  ⑤ framing     ML Kit Face Detection 定位人脸 → 自动构图 → 按规格像素精确裁剪
+  ④ compositing 按所选五色底逐像素 alpha 混合（compute 隔离），掩码羽化（高斯模糊 r=3）
+  ⑤ framing     ML Kit Face Detection 定位人脸 → 自动构图（头部约占 62%、顶部留白 10%，
+                画幅不足处以底色补齐）→ 按规格像素精确裁剪
   ⑥ compressing 二分压缩 jpg，落到规格的 [minFileKb, maxFileKb]
         │
         ▼
@@ -76,8 +82,19 @@ ComplianceService（result_page 触发）
   学生报名照按教育 ID 命名文件
 ```
 
-错误与进度同样以语义标识传递：`PipelineException.code`（noFace 等）和
-`PipelineStep` 枚举，由 UI 层翻译展示。
+错误与进度同样以语义标识传递：`PipelineException.code`（readPhoto / noPerson /
+noFace 等）和 `PipelineStep` 枚举，由 UI 层翻译展示。
+
+**ML Kit 输入双平台分路（`_inputImage`）**：流水线的分割与人脸检测共用同一份
+工作图写出的临时 jpg（无 EXIF，保证掩码/人脸框坐标对齐），但构造
+`InputImage` 时按平台分路——
+
+- **Android**：`InputImage.fromFilePath` 不挂 `MediaImage`，ML Kit 原生层处理
+  时 NPE（已知 bug），故改走 `InputImage.fromBytes`：工作图 RGBA 经
+  `_rgbaToNv21`（BT.601 全幅转换、2×2 色度子采样，在 `compute` isolate 内
+  执行）转为 NV21 字节流，附 `InputImageMetadata`（尺寸 / rotation0deg /
+  `InputImageFormat.nv21`）。
+- **iOS**：`InputImage.fromFile` 工作正常，保持原路径不转码。
 
 ## 3. 关键类说明
 
@@ -117,6 +134,35 @@ GitHub Release 自升级。`checkUpdate()` 请求
 `parseRelease()` 解析出版本号（去 v 前缀）、APK 下载地址、release notes、
 是否强制更新；`isNewer()` 做分段数字 semver 比较。**仅 Android**：
 iOS 直接返回 null（走 App Store）。静默失败——任何异常返回 null 不打扰用户。
+
+双触发：
+- **自动**：`main.dart` 启动 3 秒后 `Timer` 静默检查一次，有新版本弹
+  `showUpdateDialog`；
+- **手动**：`home_page.dart` AppBar 右上角更新按钮，无更新时 snackbar 提示
+  「已是最新」，有更新弹升级框。
+
+下载与安装在 `update_dialog.dart`：「立即更新」后流式下载 APK 到临时目录，
+经 `open_filex`（FileProvider）触发系统安装。
+
+### HomePage（lib/pages/home_page.dart）
+首页为收缩结构（替代旧版功能宫格）：隐私条 → 学生照英雄卡（`studentPhotoSpec`，
+单按钮「开始制作」→ 底部弹层选拍摄/相册）→ 常用工具紧凑单行四入口
+（换底色/改 KB/我的相册/自定义规格）→ 搜索框 → 热门规格 5 条
+（`_hotIdKeys` 锚定 one_inch / two_inch / cet_english / gaokao / student，
+无匹配则取列表前 5）→ 「全部规格(N)」ExpansionTile 默认折叠。搜索时整列表
+按名称过滤替换热门区。换底色工具直接以 `studentPhotoSpec` 进相册选图，
+复用同一流水线完成换底。
+
+### SpecDetailPage（lib/pages/spec_detail_page.dart）
+规格详情：三栏参数卡（像素尺寸 / DPI 300 / 文件大小区间）→ 五色底色选择
+`ChoiceChip` 区（`idPhotoBackgrounds` 顺序：蓝/白/红/灰/深蓝；规格默认色带
+「· 推荐」标记）→ 要求清单（经 `Tr.requirements` 翻译）。选中底色替换
+`_spec.background` 后贯穿拍摄与上传；底部「上传照片」/「立即拍摄」双按钮。
+
+### EditPage（lib/pages/edit_page.dart）
+处理页：按 `PipelineStep` 枚举逐步展示流水线进度；五色底色 chips 切换后
+携带新底色重跑流水线；`PipelineResult.original` / `processed` 支撑
+原图/效果对比。
 
 ## 4. i18n 架构
 
@@ -190,11 +236,17 @@ flutter analyze         # 静态检查
 
 ## 8. 发布流程（GitHub Release 自升级）
 
-Android 端应用内自升级完全依赖 GitHub Release，发布步骤：
+Android 端应用内自升级完全依赖 GitHub Release。⚠️ **铁律：`pubspec.yaml`
+的 `version`（应用内显示与比较基准）必须与 Release tag 严格对齐**——tag 是
+远程版本唯一来源，pubspec 是本地版本唯一来源，两者不一致会导致
+`isNewer()` 比较失准，已发版本被反复提示升级（v0.1.0 vs v0.2.0 教训：
+发布新版本前 pubspec 忘了同步抬版本，旧包用户收到的「最新版」比较基准错乱，
+形成升级循环）。发布步骤：
 
-1. **同步版本号**：`pubspec.yaml` 的 `version: X.Y.Z+N`（如 `0.2.0+2`）——
+1. **先改 `pubspec.yaml` 版本号**：`version: X.Y.Z+N`（如 `0.2.0+2`）——
    应用内显示的当前版本取自这里（`PackageInfo`），升级比较是
    `Release tag` 对该版本做分段数字比较，远程必须**严格大于**它。
+   发布 v0.2.0 前 pubspec 必须先写到 `0.2.0+2`，与 tag 对齐。
 2. 构建 APK：`flutter build apk --release`。
 3. 提交并打 tag：`git tag vX.Y.Z`（如 `v0.2.0`）并推送——**远程版本号取自
    tag 名**（自动去掉 `v` 前缀），故 tag 与 pubspec 版本保持一致。
@@ -214,5 +266,6 @@ Android 端应用内自升级完全依赖 GitHub Release，发布步骤：
 ## 相关文档
 
 - [README](../README.md) — 项目介绍与功能列表
+- [product.md](product.md) — 当前产品文档（定位/功能/规格体系/合规检测）
 - [CONTRIBUTING](../CONTRIBUTING.md) — 贡献指南
 - [LICENSE](../LICENSE) — 非商业许可证（个人免费，商用需书面授权）
