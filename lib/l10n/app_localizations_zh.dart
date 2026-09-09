@@ -398,4 +398,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get homeTools => '常用工具';
+
+  @override
+  String get settingsTitle => '设置';
+
+  @override
+  String get settingsAbout => '关于';
+
+  @override
+  String settingsVersion(String v) {
+    return '版本 $v';
+  }
+
+  @override
+  String get settingsLicense => '个人使用免费，商业使用需获得作者授权';
+
+  @override
+  String get settingsContact => '联系作者：chunguangwee@gmail.com';
+
+  @override
+  String get cameraSwitch => '切换摄像头';
+
+  @override
+  String get cameraGuidePerson => '请正对镜头，露出双耳，身体对齐人像框';
 }

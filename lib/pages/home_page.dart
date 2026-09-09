@@ -5,17 +5,14 @@ import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 import '../models/photo_spec.dart';
 import '../services/spec_library.dart';
-import '../services/update_service.dart';
-import 'update_dialog.dart';
-import 'camera_page.dart';
+import 'settings_page.dart';
 import 'custom_spec_page.dart';
 import 'edit_page.dart';
 import 'kb_tool_page.dart';
 import 'my_album_page.dart';
 import 'spec_detail_page.dart';
 
-/// 首页：隐私提示 + 功能宫格 + 搜索 + 学生照样例卡 + 热门/全部规格流。
-///
+/// 首页：搜索 + 常用工具行 + 热门/全部规格流（学生报名照置顶并入规格流）。
 /// 自身保持 StatelessWidget；带状态的交互部分在 [_HomeView] 中。
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -64,19 +61,6 @@ class _HomeViewState extends State<_HomeView> {
       builder: (_) => EditPage(sourcePath: picked.path, spec: spec),
     ));
   }
-
-
-  /// 手动检查更新：有新版本弹升级框，否则提示已是最新。
-  Future<void> _checkUpdate(BuildContext context, AppLocalizations l) async {
-    final info = await UpdateService().checkUpdate();
-    if (!context.mounted) return;
-    if (info != null) {
-      showUpdateDialog(context, info);
-    } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l.updateLatest)));
-    }
-  }
   /// 热门区：id 命中锚点关键字的前 5 条；无匹配则取列表前 5。
   List<PhotoSpec> _hotSpecs(List<PhotoSpec> all) {
     final matched = all
@@ -88,16 +72,17 @@ class _HomeViewState extends State<_HomeView> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(l.appTitle),
         actions: [
           IconButton(
-            icon: const Icon(Icons.system_update_alt),
-            tooltip: l.updateCheck,
-            onPressed: () => _checkUpdate(context, l),
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: l.settingsTitle,
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const SettingsPage(),
+            )),
           ),
         ],
       ),
@@ -105,18 +90,16 @@ class _HomeViewState extends State<_HomeView> {
         child: FutureBuilder<List<PhotoSpec>>(
           future: SpecLibrary.search(_query),
           builder: (context, snapshot) {
-            final specs = snapshot.data ?? const <PhotoSpec>[];
+            // 学生报名照置顶进入规格流（不单设英雄卡）
+            final specs = [
+              studentPhotoSpec,
+              ...?snapshot.data?.where((s) => s.id != studentPhotoSpec.id),
+            ];
             final searching = _query.trim().isNotEmpty;
             return ListView(
               controller: _scroll,
               padding: const EdgeInsets.all(16),
               children: [
-                _privacyCard(theme, l),
-                const SizedBox(height: 12),
-                _studentCard(context, theme, l),
-                const SizedBox(height: 12),
-                _toolsRow(context, l),
-                const SizedBox(height: 16),
                 TextField(
                   controller: _searchCtrl,
                   onChanged: (v) => setState(() => _query = v),
@@ -127,6 +110,8 @@ class _HomeViewState extends State<_HomeView> {
                     border: const OutlineInputBorder(),
                   ),
                 ),
+                const SizedBox(height: 12),
+                _toolsRow(context, l),
                 const SizedBox(height: 16),
                 if (!searching) ...[
                   _sectionHeader(context, l.homeHotSpecs, key: _specsKey),
@@ -144,19 +129,6 @@ class _HomeViewState extends State<_HomeView> {
 
   // ── 区块 ─────────────────────────────────────────────────────────
 
-  Widget _privacyCard(ThemeData theme, AppLocalizations l) => Card(
-        color: theme.colorScheme.primaryContainer,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              const Icon(Icons.lock_outline),
-              const SizedBox(width: 8),
-              Expanded(child: Text(l.privacyNote)),
-            ],
-          ),
-        ),
-      );
 
   /// 常用工具：紧凑单行四入口，弱化视觉层级（对比原 2×2 大卡宫格）。
   Widget _toolsRow(BuildContext context, AppLocalizations l) {
@@ -223,95 +195,6 @@ class _HomeViewState extends State<_HomeView> {
               specs.map((s) => _specTile(context, s)).toList(),
         ),
       );
-  /// 学生照样例卡：置顶列表项 + 拍摄/相册两个快捷入口。
-  Widget _studentCard(
-      BuildContext context, ThemeData theme, AppLocalizations l) {
-    const spec = studentPhotoSpec;
-    final tr = Tr.of(context);
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            InkWell(
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => const SpecDetailPage(spec: spec),
-              )),
-              child: Row(
-                children: [
-                  Expanded(
-                    child:
-                        Text(tr.specName(spec), style: theme.textTheme.titleLarge),
-                  ),
-                  const Icon(Icons.chevron_right),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _chip('${spec.pixelWidth}×${spec.pixelHeight}px'),
-                _chip(tr.bgName(spec.background)),
-                _chip('${spec.minFileKb}–${spec.maxFileKb}KB'),
-                _chip('JPG'),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: () => _showStartSheet(context, l),
-                icon: const Icon(Icons.photo_camera),
-                label: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Text(l.homeStart,
-                      style: const TextStyle(fontSize: 16)),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 开始制作：底部弹出拍摄/相册两个入口（替代双按钮常驻）。
-  void _showStartSheet(BuildContext context, AppLocalizations l) {
-    const spec = studentPhotoSpec;
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (sheetCtx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera),
-              title: Text(l.takePhoto),
-              onTap: () {
-                Navigator.of(sheetCtx).pop();
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => const CameraPage(spec: spec),
-                ));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: Text(l.pickFromGallery),
-              onTap: () {
-                Navigator.of(sheetCtx).pop();
-                _pickFromGallery(context, spec);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _sectionHeader(BuildContext context, String text, {Key? key}) =>
       Padding(
@@ -335,9 +218,4 @@ class _HomeViewState extends State<_HomeView> {
       )),
     );
   }
-
-  Widget _chip(String text) => Chip(
-        label: Text(text),
-        visualDensity: VisualDensity.compact,
-      );
 }

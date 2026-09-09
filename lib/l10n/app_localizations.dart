@@ -823,6 +823,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tools'**
   String get homeTools;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get settingsAbout;
+
+  /// No description provided for @settingsVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {v}'**
+  String settingsVersion(String v);
+
+  /// No description provided for @settingsLicense.
+  ///
+  /// In en, this message translates to:
+  /// **'Free for personal use. Commercial use requires the author\'s permission.'**
+  String get settingsLicense;
+
+  /// No description provided for @settingsContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact: chunguangwee@gmail.com'**
+  String get settingsContact;
+
+  /// No description provided for @cameraSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch camera'**
+  String get cameraSwitch;
+
+  /// No description provided for @cameraGuidePerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Face the camera, show both ears, align with the outline'**
+  String get cameraGuidePerson;
 }
 
 class _AppLocalizationsDelegate

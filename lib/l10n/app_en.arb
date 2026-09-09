@@ -245,5 +245,19 @@
   "updateCheck": "Check for updates",
   "homeStart": "Start",
   "bgRecommended": "Recommended",
-  "homeTools": "Tools"
+  "homeTools": "Tools",
+  "settingsTitle": "Settings",
+  "settingsAbout": "About",
+  "settingsVersion": "Version {v}",
+  "@settingsVersion": {
+    "placeholders": {
+      "v": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsLicense": "Free for personal use. Commercial use requires the author's permission.",
+  "settingsContact": "Contact: chunguangwee@gmail.com",
+  "cameraSwitch": "Switch camera",
+  "cameraGuidePerson": "Face the camera, show both ears, align with the outline"
 }

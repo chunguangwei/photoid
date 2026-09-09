@@ -412,4 +412,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeTools => 'Tools';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get settingsAbout => 'About';
+
+  @override
+  String settingsVersion(String v) {
+    return 'Version $v';
+  }
+
+  @override
+  String get settingsLicense =>
+      'Free for personal use. Commercial use requires the author\'s permission.';
+
+  @override
+  String get settingsContact => 'Contact: chunguangwee@gmail.com';
+
+  @override
+  String get cameraSwitch => 'Switch camera';
+
+  @override
+  String get cameraGuidePerson =>
+      'Face the camera, show both ears, align with the outline';
 }
