@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:image/image.dart' as img;
 import 'package:onnxruntime/onnxruntime.dart';
@@ -55,11 +57,22 @@ class ModnetSegmenter {
         OrtValueTensor.createTensorWithDataList(input, [1, 3, size, size]);
     // 输入名从 session 元数据取（模型构建差异可能是 input.1/x/img 等），
     // 硬编码 'input' 会触发 ORT_INVALID_ARGUMENT(code=2)。
-    // runAsync：推理放 isolate，不冻结 UI/动画
-    final outputs = await _session!
-        .runAsync(OrtRunOptions(), {_session!.inputNames.first: inputOrt});
+    // runAsync 在部分机型 isolate 启动挂死（卡在「正在智能抠图」）：
+    // 20s 超时回退同步 run（该路径在真机已验证可完成），同步路径 UI 短暂
+    // 冻结但必然出图，好于无限挂起。
+    debugPrint('MODNet inference start (${size}px, runAsync)');
+    List<OrtValue?> outputs;
+    try {
+      outputs = await _session!
+          .runAsync(OrtRunOptions(), {_session!.inputNames.first: inputOrt})!
+          .timeout(const Duration(seconds: 20));
+    } on TimeoutException {
+      debugPrint('MODNet runAsync timeout, fallback to sync run');
+      outputs = _session!
+          .run(OrtRunOptions(), {_session!.inputNames.first: inputOrt});
+    }
+    debugPrint('MODNet inference done');
     inputOrt.release();
-    if (outputs == null) throw StateError('MODNet inference failed');
     final outOrt = outputs.first as OrtValueTensor;
     // 输出 matte [1,1,512,512]（0-1 float），嵌套 list 扁平化
     final flat = Float32List(plane);
