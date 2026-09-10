@@ -49,7 +49,12 @@ class ModnetSegmenter {
   static Future<SendPort> _ensureWorker() {
     final existing = _worker;
     if (existing != null) return Future.value(existing);
-    return _starting ??= _spawnWorker();
+    // 失败即清（modelFile 异常/session 失败都不能缓存失败的 Future，
+    // 否则变成永久闭锁）
+    return _starting ??= _spawnWorker().catchError((Object e) {
+      _starting = null;
+      throw e;
+    });
   }
 
   static Future<SendPort> _spawnWorker() async {
@@ -61,7 +66,6 @@ class ModnetSegmenter {
     final first = await ready.first
         .timeout(const Duration(seconds: 30), onTimeout: () => ['err', 'worker init timeout']);
     if (first is List) {
-      _starting = null;
       throw StateError('MODNet worker init failed: ${first[1]}');
     }
     _worker = first as SendPort;
