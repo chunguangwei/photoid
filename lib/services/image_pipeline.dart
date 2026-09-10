@@ -111,12 +111,10 @@ class ImagePipeline {
     await mlFile.writeAsBytes(mlBytes);
     // 2. 人像分割（双引擎：高精修=MODNet 发丝级；普通=ML Kit 快速）
     _report(PipelineStep.segmenting);
-    // 分割统一走 MODNet（ML Kit 分割在部分机型原生崩溃杀进程）。
-    // 两档实质差异：普通=384px 推理（快），高精=512px 推理（发丝更细）
-    final maskBytes = await ModnetSegmenter.segment(work,
-        inputSize: engine == MattingEngine.modnet
-            ? ModnetSegmenter.inputSizeHd
-            : ModnetSegmenter.inputSizeFast);
+    // 分割统一走 MODNet（ML Kit 分割在部分机型原生崩溃杀进程；
+    // 模型固定 512 输入）。两档差异在掩码后处理：
+    // 普通=原掩码直出（快），高精=精修掩码（锐化截断+腐蚀去边+羽化）
+    final maskBytes = await ModnetSegmenter.segment(work);
     var maskImg = img.Image.fromBytes(
         width: work.width,
         height: work.height,
@@ -134,11 +132,14 @@ class ImagePipeline {
     // 2) 3×3 腐蚀 1px：再削一圈残留边缘
     // 3) 轻度羽化：保证边缘过渡自然
     maskImg = img.gaussianBlur(maskImg, radius: 3);
-    final maskW = await compute(_refineMask, <String, Object>{
-      'mask': maskImg.getBytes(),
-      'width': work.width,
-      'height': work.height,
-    });
+    // 高精版走精修掩码；普通版跳过重活直接合成
+    final maskW = engine == MattingEngine.modnet
+        ? await compute(_refineMask, <String, Object>{
+            'mask': maskImg.getBytes(),
+            'width': work.width,
+            'height': work.height,
+          })
+        : maskImg.getBytes();
     _report(PipelineStep.compositing);
     final outBytes = await compute(_composite, <String, Object>{
       'rgba': work.getBytes(order: img.ChannelOrder.rgba),

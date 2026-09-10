@@ -12,36 +12,30 @@ class ModnetSegmenter {
 
   static const _modelAsset = 'assets/models/hivision_modnet.onnx';
 
-  /// 普通版输入边长（快，~1s）
-  static const inputSizeFast = 384;
-
-  /// 高精修输入边长（细，~2-4s）
-  static const inputSizeHd = 512;
+  /// 模型固定输入 512×512（真机实证：非 512 报 invalid dimensions）
+  static const inputSize = 512;
 
   static OrtSession? _session;
-  static bool _initFailed = false;
 
-  /// 初始化（幂等）。失败置 _initFailed，后续调用直接抛异常。
+  /// 初始化（幂等）。失败不闭锁——下次调用允许重试（低内存首启抖动
+  /// 可自愈），错误打 logcat 面包屑。
   static Future<void> _ensureSession() async {
     if (_session != null) return;
-    if (_initFailed) throw StateError('MODNet unavailable');
     try {
       OrtEnv.instance.init();
       final model = await rootBundle.load(_modelAsset);
       _session = OrtSession.fromBuffer(
           model.buffer.asUint8List(), OrtSessionOptions());
-    } catch (_) {
-      _initFailed = true;
+    } catch (e) {
+      debugPrint('MODNet init failed: $e');
       rethrow;
     }
   }
 
   /// 对 [work] 图做人像分割，返回与 work 同尺寸的灰度掩码（0-255）。
-  /// [inputSize] 推理分辨率：384=普通版快速 / 512=高精修精细。
-  static Future<Uint8List> segment(img.Image work,
-      {int inputSize = inputSizeHd}) async {
+  static Future<Uint8List> segment(img.Image work) async {
     await _ensureSession();
-    final size = inputSize;
+    const size = inputSize;
     // 预处理：resize，RGB 归一化到 [-1,1]，NCHW float32
     final resized = img.copyResize(work, width: size, height: size);
     final px = resized.getBytes(order: img.ChannelOrder.rgb);
