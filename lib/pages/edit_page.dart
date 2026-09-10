@@ -48,9 +48,9 @@ class _EditPageState extends State<EditPage> {
   /// 预览用合成图缓存：应用美颜后的 compositedJpg
   Uint8List? _previewJpg;
 
-  /// 高精修版（MODNet 发丝级抠图+磨皮）开关；false=普通版（ML Kit 快速）。
-  /// 持久化到 SharedPreferences，下次进编辑页保持上次选择。
-  bool _hd = true;
+  /// 高精修版（MODNet 发丝级抠图）开关；默认 false=普通版（ML Kit 快速），
+  /// 用户主动选高精才走慢速精细模型。持久化到 SharedPreferences。
+  bool _hd = false;
 
   /// 交互裁剪编辑器状态与用户调整后的裁剪框（null=未调整，用自动构图）
   final GlobalKey<CropEditorState> _editorKey = GlobalKey<CropEditorState>();

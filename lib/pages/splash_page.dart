@@ -86,113 +86,108 @@ class _SplashPageState extends State<SplashPage>
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        // 全屏渐变（logo 蓝灰主调），无框无卡片
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              scheme.primaryContainer.withValues(alpha: 0.35),
-              scheme.surface,
-            ],
+            colors: [Color(0xFF93A8C4), Color(0xFF5E7BA0)],
           ),
         ),
         child: SafeArea(
-          child: Column(
-          children: [
-            // 跳过 + 倒计时
-            Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+          child: Stack(
+            children: [
+              // 中央剪影人物（摆头 + 浮动 + 眨眼）
+              Center(
+                child: AnimatedBuilder(
+                  animation: Listenable.merge([_floatOffset, _sway]),
+                  builder: (context, child) => Transform.translate(
+                    offset: Offset(_swayX.value, _floatOffset.value - 40),
+                    child: Transform.rotate(
+                      angle: _swayAngle.value,
+                      child: child,
+                    ),
+                  ),
+                  child: SizedBox(
+                    width: 260,
+                    height: 340,
+                    child: Stack(
+                      alignment: Alignment.topCenter,
+                      children: [
+                        // 白色剪影（logo 人形主调，柔和投影出质感）
+                        CustomPaint(
+                          size: const Size(260, 340),
+                          painter: _SilhouettePainter(),
+                        ),
+                        // 双眼（头部，眨眼）
+                        Positioned(
+                          top: 80,
+                          child: AnimatedBuilder(
+                            animation: _blink,
+                            builder: (context, _) {
+                              final sy = 1 - _blink.value * 0.9;
+                              return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _eye(sy),
+                                  const SizedBox(width: 30),
+                                  _eye(sy),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // 名称 + 隐私语（底部上方）
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 120,
+                child: Column(
+                  children: [
+                    Text(l.appTitle,
+                        style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white)),
+                    const SizedBox(height: 8),
+                    Text(l.privacyNote,
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white.withValues(alpha: 0.85))),
+                  ],
+                ),
+              ),
+              // 广告位槽（本版留空不展示，接 SDK 时填充）
+              const Positioned(
+                left: 16,
+                right: 16,
+                bottom: 24,
+                child: SizedBox(height: 60),
+              ),
+              // 跳过 + 倒计时
+              Positioned(
+                top: 12,
+                right: 16,
                 child: TextButton(
                   onPressed: _leave,
                   style: TextButton.styleFrom(
-                    backgroundColor: scheme.surfaceContainerHighest,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    backgroundColor: Colors.white.withValues(alpha: 0.25),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 6),
                   ),
                   child: Text(l.splashSkip(_remain),
-                      style: const TextStyle(fontSize: 13)),
+                      style: const TextStyle(
+                          fontSize: 13, color: Colors.white)),
                 ),
               ),
-            ),
-            const Spacer(flex: 2),
-            // logo 白卡 + 眨眼双眼 + 浮动
-            AnimatedBuilder(
-              animation: Listenable.merge([_floatOffset, _sway]),
-              builder: (context, child) => Transform.translate(
-                offset: Offset(_swayX.value, _floatOffset.value),
-                child: Transform.rotate(
-                  angle: _swayAngle.value,
-                  child: child,
-                ),
-              ),
-              child: Container(
-                width: 168,
-                height: 168,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(48),
-                  boxShadow: [
-                    // 双层阴影：近处柔边深色 + 远处环境光，出质感
-                    BoxShadow(
-                      color: scheme.primary.withValues(alpha: 0.22),
-                      blurRadius: 18,
-                      offset: const Offset(0, 10),
-                    ),
-                    BoxShadow(
-                      color: scheme.primary.withValues(alpha: 0.08),
-                      blurRadius: 48,
-                      offset: const Offset(0, 24),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Image.asset('assets/icon.png',
-                          width: 120, height: 120),
-                    ),
-                    // 双眼（logo 上半部，眨眼 scaleY）
-                    Positioned(
-                      top: 58,
-                      child: AnimatedBuilder(
-                        animation: _blink,
-                        builder: (context, _) {
-                          final sy = 1 - _blink.value * 0.9;
-                          return Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _eye(sy),
-                              const SizedBox(width: 22),
-                              _eye(sy),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(l.appTitle,
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
-            Text(l.privacyNote,
-                style: TextStyle(
-                    fontSize: 12, color: scheme.onSurfaceVariant)),
-            const Spacer(flex: 3),
-            // 广告位槽（本版留空不展示文案，接广告 SDK 时在此填充）
-            const SizedBox(height: 60),
-            const SizedBox(height: 24),
-          ],
+            ],
           ),
         ),
       ),
@@ -210,4 +205,65 @@ class _SplashPageState extends State<SplashPage>
           ),
         ),
       );
+}
+
+/// 白色剪影人物（logo 人形主调）：头身一体的圆润气球感造型，
+/// 径向渐变出软立体明暗（左上受光、右下微暗）+ 地面软阴影。
+class _SilhouettePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final cx = w / 2;
+    // 全身气球人：头 + 卵圆身 + 短臂 + 短腿（大重叠融成一体）
+    final path = Path()
+      ..addOval(Rect.fromCircle(center: Offset(cx, 88), radius: 56))
+      // 身体（卵圆，顶部宽、与头底深度融合）
+      ..addOval(Rect.fromCenter(
+          center: Offset(cx, 205), width: 190, height: 190))
+      // 左右短臂（微外张胶囊）
+      ..addRRect(RRect.fromRectAndRadius(
+          Rect.fromCenter(
+              center: Offset(cx - 98, 190), width: 38, height: 110),
+          const Radius.circular(19)))
+      ..addRRect(RRect.fromRectAndRadius(
+          Rect.fromCenter(
+              center: Offset(cx + 98, 190), width: 38, height: 110),
+          const Radius.circular(19)))
+      // 左右短腿
+      ..addRRect(RRect.fromRectAndRadius(
+          Rect.fromCenter(
+              center: Offset(cx - 34, 300), width: 42, height: 60),
+          const Radius.circular(18)))
+      ..addRRect(RRect.fromRectAndRadius(
+          Rect.fromCenter(
+              center: Offset(cx + 34, 300), width: 42, height: 60),
+          const Radius.circular(18)));
+
+    // 地面软阴影（椭圆 + 模糊）
+    canvas.drawOval(
+        Rect.fromCenter(
+            center: Offset(cx, 332), width: 175, height: 20),
+        Paint()
+          ..color = const Color(0xFF3A5578).withValues(alpha: 0.35)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10));
+
+    // 主体：径向渐变（左上受光白 → 右下微蓝灰），气球软立体
+    final bounds = Rect.fromLTWH(cx - 120, 28, 240, 320);
+    canvas.drawPath(
+        path,
+        Paint()
+          ..shader = RadialGradient(
+            center: const Alignment(-0.45, -0.55),
+            radius: 1.15,
+            colors: const [
+              Colors.white,
+              Color(0xFFF4F6FA),
+              Color(0xFFDDE4EE),
+            ],
+            stops: [0.0, 0.55, 1.0],
+          ).createShader(bounds));
+  }
+
+  @override
+  bool shouldRepaint(_SilhouettePainter old) => false;
 }

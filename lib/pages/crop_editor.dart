@@ -33,6 +33,7 @@ class CropEditor extends StatefulWidget {
 
 class CropEditorState extends State<CropEditor> {
   ui.Image? _image;
+  bool _decodeFailed = false;
 
   /// 用户缩放倍率（相对铺满窗口的基准），≥1
   double _scale = 1;
@@ -57,9 +58,17 @@ class CropEditorState extends State<CropEditor> {
   }
 
   Future<void> _decode() async {
-    final codec = await ui.instantiateImageCodec(widget.imageBytes);
-    final frame = await codec.getNextFrame();
-    if (mounted) setState(() => _image = frame.image);
+    try {
+      final codec = await ui.instantiateImageCodec(widget.imageBytes);
+      final frame = await codec.getNextFrame();
+      if (mounted) setState(() => _image = frame.image);
+    } catch (e) {
+      // 解码失败（OOM/数据损坏）：可观测日志 + 占位图标，不留白屏
+      debugPrint('CropEditor decode failed '
+          '(${widget.imageWidth}x${widget.imageHeight}, '
+          '${widget.imageBytes.lengthInBytes}B): $e');
+      if (mounted) setState(() => _decodeFailed = true);
+    }
   }
 
   /// 还原为自动构图
@@ -71,6 +80,7 @@ class CropEditorState extends State<CropEditor> {
   }
 
   void _layout(Size size) {
+    if (size.width <= 0 || size.height <= 0) return;
     _viewport = size;
     const pad = 24.0;
     final availW = size.width - pad * 2;
@@ -159,6 +169,12 @@ class CropEditorState extends State<CropEditor> {
       builder: (context, constraints) {
         _layout(Size(constraints.maxWidth, constraints.maxHeight));
         final image = _image;
+        if (_decodeFailed) {
+          return const Center(
+            child: Icon(Icons.broken_image_outlined,
+                size: 48, color: Colors.grey),
+          );
+        }
         return GestureDetector(
           onScaleStart: _onScaleStart,
           onScaleUpdate: _onScaleUpdate,
