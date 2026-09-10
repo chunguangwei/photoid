@@ -153,6 +153,59 @@ void main() {
     });
   });
 
+  group('matteRoiFor 抠图前的人像 ROI 粗裁', () {
+    test('全身照：裁出的 ROI 明显小于原图且包含人脸', () {
+      const w = 1000, h = 1500;
+      // 全身照里人脸很小，位于上部
+      const face = Rect.fromLTWH(440, 300, 120, 150);
+      final roi = ImagePipeline.matteRoiFor(w, h, face, 0.75);
+      expect(roi, isNotNull, reason: '人像占比小，必须粗裁以提升模型输入精度');
+      expect(roi!.width * roi.height, lessThan(w * h * 0.72));
+      expect(roi.contains(face.topLeft), isTrue);
+      expect(roi.contains(face.bottomRight), isTrue);
+    });
+
+    test('ROI 绝不越出源图（越界补边是构图阶段的事，不能提前混入）', () {
+      const w = 400, h = 600;
+      const face = Rect.fromLTWH(150, 20, 100, 120); // 人脸贴顶
+      final roi = ImagePipeline.matteRoiFor(w, h, face, 0.75);
+      if (roi != null) {
+        expect(roi.left, greaterThanOrEqualTo(0));
+        expect(roi.top, greaterThanOrEqualTo(0));
+        expect(roi.right, lessThanOrEqualTo(w.toDouble()));
+        expect(roi.bottom, lessThanOrEqualTo(h.toDouble()));
+      }
+    });
+
+    test('本就是半身构图：收益不足则不裁（返回 null）', () {
+      const w = 480, h = 640;
+      const face = Rect.fromLTWH(160, 140, 160, 200); // 人脸已占很大比例
+      expect(ImagePipeline.matteRoiFor(w, h, face, 0.75), isNull);
+    });
+  });
+
+  group('cropRgbaWorker 按框裁像素', () {
+    test('裁出的像素与源图对应位置一致', () {
+      const w = 20, h = 20;
+      final rgba = Uint8List(w * h * 4);
+      for (var i = 0; i < w * h; i++) {
+        rgba[i * 4] = i % 256;
+        rgba[i * 4 + 3] = 255;
+      }
+      final out = cropRgbaWorker(<String, Object>{
+        'rgba': rgba,
+        'width': w,
+        'height': h,
+        'rect': const Rect.fromLTWH(4, 5, 8, 6),
+      });
+      expect(out.length, 8 * 6 * 4);
+      // 裁剪图 (0,0) 应等于源图 (4,5)
+      expect(out[0], rgba[(5 * w + 4) * 4]);
+      // 裁剪图 (7,5) 应等于源图 (11,10)
+      expect(out[(5 * 8 + 7) * 4], rgba[(10 * w + 11) * 4]);
+    });
+  });
+
   group('decontaminate 消白边不改 alpha', () {
     test('边缘像素被拉向前景色，纯前景/纯背景像素不动', () {
       const w = 8, h = 8;

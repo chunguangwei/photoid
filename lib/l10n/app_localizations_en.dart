@@ -390,7 +390,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enter valid values (W/H 50–2000, aspect 0.5–2, KB 5–2048, min ≤ max)';
 
   @override
-  String get editSwitchBg => 'Switch background (regenerate)';
+  String get editSwitchBg => 'Switch background';
 
   @override
   String get editRegenerating => 'Regenerating with new background…';

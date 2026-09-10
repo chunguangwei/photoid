@@ -88,6 +88,39 @@ void main() {
       expect(decoded.height, 413);
     });
 
+    test('recolorWorker 跨 isolate 换底：只改背景像素，前景保持不变', () async {
+      const w = 40, h = 40;
+      // 前景：左半纯红实心；右半 alpha=0（背景）
+      final fg = Uint8List(w * h * 4);
+      final alpha = Uint8List(w * h);
+      for (var y = 0; y < h; y++) {
+        for (var x = 0; x < w; x++) {
+          final i = (y * w + x) * 4;
+          fg[i] = 200;
+          fg[i + 1] = 40;
+          fg[i + 2] = 40;
+          fg[i + 3] = 255;
+          alpha[y * w + x] = x < w ~/ 2 ? 255 : 0;
+        }
+      }
+      final out = await compute(
+        recolorWorker,
+        RecolorRequest(
+            foreground: fg,
+            alpha: alpha,
+            width: w,
+            height: h,
+            bg: Uint8List.fromList([10, 20, 240])),
+      );
+      final fgPx = (20 * w + 5) * 4;
+      expect(out.rgba[fgPx], 200, reason: '实心前景不受换底影响');
+      expect(out.rgba[fgPx + 1], 40);
+      final bgPx = (20 * w + 35) * 4;
+      expect(out.rgba[bgPx], 10, reason: '背景应为新底色');
+      expect(out.rgba[bgPx + 2], 240);
+      expect(img.decodeJpg(out.jpg)?.width, w);
+    });
+
     test('previewWorker 跨 isolate 产出可解码预览，尺寸等于工作图', () async {
       final jpg = await compute(
         previewWorker,

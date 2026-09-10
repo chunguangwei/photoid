@@ -779,7 +779,7 @@ abstract class AppLocalizations {
   /// No description provided for @editSwitchBg.
   ///
   /// In en, this message translates to:
-  /// **'Switch background (regenerate)'**
+  /// **'Switch background'**
   String get editSwitchBg;
 
   /// No description provided for @editRegenerating.

@@ -154,15 +154,46 @@ class _EditPageState extends State<EditPage> {
     });
   }
 
-  /// 换底色：更新规格后重跑流水线，预览与 KB 随之刷新。
+  /// 换底色：**不重跑流水线**。
+  ///
+  /// 抠图掩码、解混后的前景色、构图框都与底色无关，重跑等于白白再做一次
+  /// MODNet 推理（最贵的一步）。这里只在 isolate 里做一次 alpha 混合，
+  /// 几十毫秒返回；用户已调好的取景框与效果强度全部原样保留。
   Future<void> _switchBackground(SpecBackground bg) async {
-    if (bg.name == _spec.background.name) return;
+    final r = _result;
+    if (bg.name == _spec.background.name || r == null) return;
     setState(() {
       _spec = _spec.copyWith(background: bg);
-      _regenerating = true;
+      _effectsBusy = true;
     });
-    await _run();
-    if (mounted) setState(() => _regenerating = false);
+    try {
+      final recolored = await compute(
+        recolorWorker,
+        RecolorRequest(
+          foreground: r.foreground,
+          alpha: r.alpha,
+          width: r.compositedWidth,
+          height: r.compositedHeight,
+          bg: Uint8List.fromList([bg.r, bg.g, bg.b]),
+        ),
+      );
+      // 期间用户又换了色 / 重跑了流水线 → 丢弃
+      if (!mounted || _result != r) return;
+      setState(() {
+        _result = r.withBackground(recolored);
+        _previewJpg = null;
+      });
+      // 底图换了，效果预览需按新底色重算（两项为 0 时会立即短路返回）
+      await _refreshEffects();
+    } catch (_) {
+      // 换底失败（极端 OOM）：退回整条流水线重跑，保证界面不停在半路
+      if (!mounted) return;
+      setState(() => _regenerating = true);
+      await _run();
+      if (mounted) setState(() => _regenerating = false);
+    } finally {
+      if (mounted) setState(() => _effectsBusy = false);
+    }
   }
 
   /// 高精修/普通版切换：按引擎重跑流水线

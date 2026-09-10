@@ -238,7 +238,7 @@
   "customMaxKb": "Max file (KB)",
   "customCreate": "Create & use",
   "customInvalid": "Enter valid values (W/H 50–2000, aspect 0.5–2, KB 5–2048, min ≤ max)",
-  "editSwitchBg": "Switch background (regenerate)",
+  "editSwitchBg": "Switch background",
   "editRegenerating": "Regenerating with new background…",
   "updateLatest": "You're up to date",
   "updateCheckFailed": "Check failed. Try again later.",

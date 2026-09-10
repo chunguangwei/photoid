@@ -82,6 +82,8 @@ class PipelineResult {
     required this.compositedHeight,
     required this.autoCrop,
     required this.faceRect,
+    required this.foreground,
+    required this.alpha,
   });
 
   /// 最终交付的 jpg 字节（已按规格压缩，自动构图）
@@ -103,6 +105,24 @@ class PipelineResult {
 
   /// 人脸框（composited 坐标系）
   final Rect faceRect;
+
+  /// 解混后的前景 RGBA 与掩码（composited 坐标系），供换底色秒切（`recolorWorker`）
+  final Uint8List foreground;
+  final Uint8List alpha;
+
+  /// 换底色后的副本：只替换合成产物，构图框与掩码原样保留
+  PipelineResult withBackground(RecolorResult r) => PipelineResult(
+        jpgBytes: jpgBytes,
+        originalBytes: originalBytes,
+        compositedJpg: r.jpg,
+        compositedRgba: r.rgba,
+        compositedWidth: compositedWidth,
+        compositedHeight: compositedHeight,
+        autoCrop: autoCrop,
+        faceRect: faceRect,
+        foreground: foreground,
+        alpha: alpha,
+      );
 }
 
 /// 处理流水线：EXIF 归一化 → 抠图 → 底色合成 → 人脸构图裁剪 → 二分压缩。
@@ -145,24 +165,44 @@ class ImagePipeline {
     await mlFile.writeAsBytes(loaded.mlJpg);
 
     try {
-      // 2. 人像分割与人脸检测**并行**：前者跑常驻 worker isolate，
-      //    后者跑 ML Kit 原生线程，互不争抢，整体耗时 ≈ max 而非 sum。
+      // 2. 先做人脸检测，用它把工作图**粗裁到人像 ROI**，再送 MODNet。
+      //
+      //    MODNet 输入固定 512×512。整张全身照直接压过去，头肩区域在
+      //    512 图里可能只剩几十像素，模型分不清「黑裙子」和「草地阴影」
+      //    ——表现为换底后画面里残留成片的地面/背景色块，且这些块与人
+      //    连通，连通域过滤也清不掉。先按构图所需范围裁一刀，人像在
+      //    512 输入里的占比能提升数倍，边缘判别质量是量级差异。
+      //    代价是人脸检测与抠图由并行改串行（人脸检测通常仅百毫秒级）。
       _report(PipelineStep.segmenting);
-      final maskFuture =
-          ModnetSegmenter.segmentRgba(loaded.rgba, loaded.w, loaded.h);
-      final faceFuture = _detectFace(mlFile, loaded);
+      final rawFace = await _detectFace(mlFile, loaded);
+      final roi = matteRoiFor(loaded.w, loaded.h, rawFace, spec.aspect);
 
-      final maskBytes = await maskFuture;
-      final faceRect = await faceFuture;
+      Uint8List segRgba = loaded.rgba;
+      var segW = loaded.w, segH = loaded.h;
+      var faceRect = rawFace;
+      if (roi != null) {
+        final cut = await compute(cropRgbaWorker, <String, Object>{
+          'rgba': loaded.rgba,
+          'width': loaded.w,
+          'height': loaded.h,
+          'rect': roi,
+        });
+        segRgba = cut;
+        segW = roi.width.round();
+        segH = roi.height.round();
+        faceRect = rawFace.translate(-roi.left, -roi.top);
+      }
+
+      final maskBytes = await ModnetSegmenter.segmentRgba(segRgba, segW, segH);
 
       // 3. 掩码精修 + 前景色解混 + 换底合成 + 自动构图 + 底色补边（isolate）
       _report(PipelineStep.compositing);
       final bgRgb = Uint8List.fromList(
           [spec.background.r, spec.background.g, spec.background.b]);
       final comp = await compute(_compositeWork, <String, Object>{
-        'rgba': loaded.rgba,
-        'width': loaded.w,
-        'height': loaded.h,
+        'rgba': segRgba,
+        'width': segW,
+        'height': segH,
         'mask': maskBytes,
         'bg': bgRgb,
         'face': faceRect,
@@ -200,10 +240,45 @@ class ImagePipeline {
         compositedHeight: comp.height,
         autoCrop: comp.autoCrop,
         faceRect: comp.faceRect,
+        foreground: comp.foreground,
+        alpha: comp.alpha,
       );
     } finally {
       mlFile.delete().ignore();
     }
+  }
+
+  /// 计算送进抠图模型前的**人像 ROI 粗裁框**；不值得裁时返回 null。
+  ///
+  /// 动机见 [run] 第 2 步：MODNet 输入恒为 512×512，全身照直接压过去会让
+  /// 头肩只占几十像素。这里按「构图框 × [_roiMargin]」框出人像所在区域，
+  /// 使模型输入里的人像占比大幅提升。
+  ///
+  /// 两条保守约束：
+  /// - **只裁不补**：ROI 一定钳进源图内，绝不引入源图外的区域，
+  ///   避免与后续「构图允许越界 + 底色补边」的坐标语义混淆；
+  /// - **收益不足就不裁**：ROI 面积超过源图 72% 时说明本就是半身构图，
+  ///   裁了不改善精度，反而白白多一次全图拷贝。
+  static Rect? matteRoiFor(int srcW, int srcH, Rect face, double aspect) {
+    /// 构图框外扩系数：留足头顶发饰、肩膀与手臂，避免 ROI 切掉真实人体
+    /// 导致掩码在边界处被硬切（那会在成片里留下直线切痕）。
+    const roiMargin = 1.45;
+
+    final base = cropRectFor(srcW, srcH, face, aspect);
+    final cx = base.center.dx, cy = base.center.dy;
+    final halfW = base.width * roiMargin / 2;
+    final halfH = base.height * roiMargin / 2;
+
+    final left = math.max(0.0, cx - halfW);
+    final top = math.max(0.0, cy - halfH);
+    final right = math.min(srcW.toDouble(), cx + halfW);
+    final bottom = math.min(srcH.toDouble(), cy + halfH);
+    if (right - left < 32 || bottom - top < 32) return null;
+
+    final roi = Rect.fromLTRB(
+        left.roundToDouble(), top.roundToDouble(), right.roundToDouble(), bottom.roundToDouble());
+    if (roi.width * roi.height > srcW * srcH * 0.72) return null;
+    return roi;
   }
 
   /// 人脸检测（最大脸），返回 work 坐标系人脸框；未检出抛 `noFace`。
@@ -451,6 +526,8 @@ class _Composited {
     required this.originalJpg,
     required this.autoCrop,
     required this.faceRect,
+    required this.foreground,
+    required this.alpha,
   });
 
   final Uint8List rgba;
@@ -464,6 +541,27 @@ class _Composited {
 
   /// 人脸框（已补边坐标系）
   final Rect faceRect;
+
+  /// 解混后的前景 RGBA 与掩码（**均为已补边尺寸**），供换底色秒切复用
+  final Uint8List foreground;
+  final Uint8List alpha;
+}
+
+/// isolate 入口：按 [rect]（**必须已钳进源图内**）裁一块 RGBA 出来。
+/// 供抠图前的人像 ROI 粗裁使用，见 `ImagePipeline.matteRoiFor`。
+Uint8List cropRgbaWorker(Map<String, Object> args) {
+  final rgba = args['rgba'] as Uint8List;
+  final w = args['width'] as int;
+  final rect = args['rect'] as Rect;
+  final x = rect.left.round(), y = rect.top.round();
+  final cw = rect.width.round(), ch = rect.height.round();
+  final out = Uint8List(cw * ch * 4);
+  final rowBytes = cw * 4;
+  for (var row = 0; row < ch; row++) {
+    final src = ((y + row) * w + x) * 4;
+    out.setRange(row * rowBytes, (row + 1) * rowBytes, rgba, src);
+  }
+  return out;
 }
 
 /// isolate 入口：掩码精修 → 前景色解混 → 换底合成 → 自动构图 → 底色补边 → 预览编码。
@@ -524,6 +622,21 @@ _Composited _compositeWork(Map<String, Object> args) {
     }
   }
 
+  // 前景色与掩码也搬进补边坐标系：换底色时只需重新做一次 alpha 混合，
+  // 不必重跑解码/抠图/构图（见 recolorWorker）。补边区 alpha=0 即纯底色。
+  var outFg = fg;
+  var outAlpha = alpha;
+  if (outW != w || outH != h) {
+    outFg = Uint8List(outW * outH * 4);
+    outAlpha = Uint8List(outW * outH);
+    final rowBytes = w * 4;
+    for (var y = 0; y < h; y++) {
+      final dstRow = (y + padT) * outW + padL;
+      outFg.setRange(dstRow * 4, dstRow * 4 + rowBytes, fg, y * rowBytes);
+      outAlpha.setRange(dstRow, dstRow + w, alpha, y * w);
+    }
+  }
+
   final shifted = crop.translate(padL.toDouble(), padT.toDouble());
   final composited = img.Image.fromBytes(
       width: outW, height: outH, bytes: outRgba.buffer, numChannels: 4);
@@ -536,7 +649,57 @@ _Composited _compositeWork(Map<String, Object> args) {
     originalJpg: img.encodeJpg(original, quality: 88),
     autoCrop: shifted,
     faceRect: face.translate(padL.toDouble(), padT.toDouble()),
+    foreground: outFg,
+    alpha: outAlpha,
   );
+}
+
+/// 换底色请求：只带前景/掩码与新底色，不含任何需要重新推理的东西。
+class RecolorRequest {
+  const RecolorRequest({
+    required this.foreground,
+    required this.alpha,
+    required this.width,
+    required this.height,
+    required this.bg,
+  });
+
+  final Uint8List foreground;
+  final Uint8List alpha;
+  final int width;
+  final int height;
+  final Uint8List bg;
+}
+
+class RecolorResult {
+  const RecolorResult({required this.rgba, required this.jpg});
+
+  final Uint8List rgba;
+  final Uint8List jpg;
+}
+
+/// isolate 入口：换底色。
+///
+/// 抠图掩码、解混后的前景色、构图框都与底色无关，所以换底只是**一次
+/// alpha 混合**（O(n)，几十毫秒）。早期实现是整条流水线重跑——包括最贵的
+/// MODNet 推理——用户每点一次色块都要重新等一遍进度条，纯属浪费。
+RecolorResult recolorWorker(RecolorRequest req) {
+  final w = req.width, h = req.height;
+  final fg = req.foreground, alpha = req.alpha;
+  final br = req.bg[0], bgG = req.bg[1], bb = req.bg[2];
+  final out = Uint8List(w * h * 4);
+  for (var px = 0; px < alpha.length; px++) {
+    final i = px * 4;
+    final a = alpha[px];
+    final inv = 255 - a;
+    out[i] = (fg[i] * a + br * inv) ~/ 255;
+    out[i + 1] = (fg[i + 1] * a + bgG * inv) ~/ 255;
+    out[i + 2] = (fg[i + 2] * a + bb * inv) ~/ 255;
+    out[i + 3] = 255;
+  }
+  final image =
+      img.Image.fromBytes(width: w, height: h, bytes: out.buffer, numChannels: 4);
+  return RecolorResult(rgba: out, jpg: img.encodeJpg(image, quality: 90));
 }
 
 /// 掩码精修：3×3 均值轻羽化 + **膝点映射**（高端饱和、低端保留）

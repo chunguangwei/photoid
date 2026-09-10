@@ -376,7 +376,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get customInvalid => '请填写合法数值（宽/高 50–2000，宽高比 0.5–2，KB 5–2048，且最小≤最大）';
 
   @override
-  String get editSwitchBg => '切换底色（重新生成）';
+  String get editSwitchBg => '切换底色';
 
   @override
   String get editRegenerating => '正在按新底色重新生成…';
