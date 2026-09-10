@@ -11,6 +11,13 @@ import 'services/update_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // release 下子树构建/绘制异常默认只显示灰盒且静默：
+  // 这里把异常+堆栈打到 logcat（release 可见），便于真机问题定位
+  ErrorWidget.builder = (details) {
+    debugPrint('PhotoID ErrorWidget: ${details.exception}');
+    debugPrintStack(stackTrace: details.stack);
+    return ErrorWidget(details.exception);
+  };
   await LocaleService.load();
   runApp(const PhotoIdApp());
 }

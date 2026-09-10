@@ -1,6 +1,8 @@
 
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show compute;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
@@ -39,14 +41,15 @@ class _EditPageState extends State<EditPage> {
   bool _showOriginal = false;
   bool _regenerating = false;
 
-  static const _hdPrefKey = 'hd_mode_enabled';
+  static const _hdPrefKey = 'hd_mode_enabled_v2';
   static const _beautyPrefKey = 'beauty_intensity';
 
   /// 美颜强度 0–1（滑杆，持久化）
   double _beauty = 0.5;
 
-  /// 预览用合成图缓存：应用美颜后的 compositedJpg
+  /// 预览用合成图缓存：应用美颜后的 compositedJpg；版本号驱动编辑器重建
   Uint8List? _previewJpg;
+  int _previewVersion = 0;
 
   /// 高精修版（MODNet 发丝级抠图）开关；默认 false=普通版（ML Kit 快速），
   /// 用户主动选高精才走慢速精细模型。持久化到 SharedPreferences。
@@ -75,20 +78,26 @@ class _EditPageState extends State<EditPage> {
     }
   }
 
-  /// 美颜变化（滑杆松手）：重算预览合成图（编辑器回自动构图，与成片同参数）
-  void _refreshEffects({bool persistBeauty = false}) {
+  /// 美颜变化（滑杆松手）：重算预览合成图（编辑器回自动构图，与成片同参数）。
+  /// 磨皮是高斯模糊重活，放后台 isolate 防 UI 卡顿。
+  Future<void> _refreshEffects({bool persistBeauty = false}) async {
     if (persistBeauty) {
       SharedPreferences.getInstance()
           .then((p) => p.setInt(_beautyPrefKey, (_beauty * 100).round()));
     }
     final r = _result;
     if (r == null) return;
-    var imgOut = r.composited.clone();
+    Uint8List jpg;
     if (_beauty > 0) {
-      imgOut = ImagePipeline.beautify(imgOut, r.faceRect, _beauty);
+      jpg = await compute(_beautifyWorker,
+          _BeautyTask(r.compositedJpg, r.faceRect, _beauty));
+    } else {
+      jpg = r.compositedJpg;
     }
+    if (!mounted || _result != r) return; // 期间又跑了新流水线
     setState(() {
-      _previewJpg = img.encodeJpg(imgOut, quality: 90);
+      _previewJpg = jpg;
+      _previewVersion++;
       _currentCrop = null; // 预览重算后回自动构图，避免用户框与效果错位
     });
   }
@@ -311,7 +320,7 @@ class _EditPageState extends State<EditPage> {
               child: _showOriginal
                   ? Image.memory(result.originalBytes, fit: BoxFit.contain)
                   : CropEditor(
-                      key: ValueKey(_previewJpg?.length),
+                      key: ValueKey(_previewVersion),
                       imageBytes: _previewJpg ?? result.compositedJpg,
                       imageWidth: result.composited.width,
                       imageHeight: result.composited.height,
@@ -549,4 +558,21 @@ class _SmoothProgressState extends State<_SmoothProgress>
       },
     );
   }
+}
+
+/// 后台 isolate 美颜任务参数
+class _BeautyTask {
+  const _BeautyTask(this.jpg, this.face, this.intensity);
+
+  final Uint8List jpg;
+  final Rect face;
+  final double intensity;
+}
+
+/// isolate 入口：解码 → 美颜 → 重编码
+Uint8List _beautifyWorker(_BeautyTask t) {
+  final im = img.decodeJpg(t.jpg);
+  if (im == null) return t.jpg;
+  return img.encodeJpg(ImagePipeline.beautify(im, t.face, t.intensity),
+      quality: 90);
 }

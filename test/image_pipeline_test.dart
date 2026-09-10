@@ -66,4 +66,17 @@ void main() {
       _expectDecodableWithSameSize(out, 480, 640);
     });
   });
+
+  test('encodeToKbRange：min 达不到时 EOI 后填充补齐', () {
+    // 纯色图即使 q98 也很小，天然达不到 min
+    final image = img.Image(width: 295, height: 413);
+    img.fill(image, color: img.ColorRgb8(67, 142, 219));
+    final out = ImagePipeline.encodeToKbRange(image, 200, 500);
+    // 必须恰好 200KB（填充后）
+    expect(out.lengthInBytes, 200 * 1024);
+    // 且仍是合法 JPEG：解码器读到 FFD9 即止
+    final decoded = img.decodeJpg(out);
+    expect(decoded, isNotNull);
+    expect(decoded!.width, 295);
+  });
 }

@@ -324,6 +324,16 @@ class ImagePipeline {
     while (best.lengthInBytes / 1024 > maxKb && guard++ < 6) {
       best = img.encodeJpg(image, quality: math.max(10, 85 - guard * 12));
     }
+    // min 达不到（纯色背景图即使 q98 也很小）→ EOI 后填充补齐。
+    // JPEG 解码器读到 FFD9 即止，尾部填充字节不破坏解析，
+    // 各类报名系统均接受（行业通行做法），合规检测不再报不可修复的 fileTooSmall
+    if (minKb > 0 && best.lengthInBytes < minKb * 1024) {
+      final padded = Uint8List(minKb * 1024)..setRange(0, best.length, best);
+      for (var i = best.length; i < padded.length; i++) {
+        padded[i] = 0xFF;
+      }
+      best = padded;
+    }
     return best;
   }
 

@@ -111,28 +111,36 @@ class _SplashPageState extends State<SplashPage>
                     ),
                   ),
                   child: SizedBox(
-                    width: 260,
+                    width: 300,
                     height: 340,
                     child: Stack(
                       alignment: Alignment.topCenter,
                       children: [
                         // 白色剪影（logo 人形主调，柔和投影出质感）
                         CustomPaint(
-                          size: const Size(260, 340),
+                          size: const Size(300, 340),
                           painter: _SilhouettePainter(),
                         ),
                         // 双眼（头部，眨眼）
+                        // 双眼 + 中间细线（大白经典表情）
                         Positioned(
-                          top: 80,
+                          top: 76,
                           child: AnimatedBuilder(
                             animation: _blink,
                             builder: (context, _) {
                               final sy = 1 - _blink.value * 0.9;
                               return Row(
                                 mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   _eye(sy),
-                                  const SizedBox(width: 30),
+                                  Container(
+                                    width: 34,
+                                    height: 2.5,
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 3),
+                                    color: const Color(0xFF2B2B2B),
+                                  ),
                                   _eye(sy),
                                 ],
                               );
@@ -197,8 +205,8 @@ class _SplashPageState extends State<SplashPage>
   Widget _eye(double scaleY) => Transform.scale(
         scaleY: scaleY,
         child: Container(
-          width: 13,
-          height: 13,
+          width: 11,
+          height: 11,
           decoration: const BoxDecoration(
             color: Color(0xFF2B2B2B),
             shape: BoxShape.circle,
@@ -214,29 +222,27 @@ class _SilhouettePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final cx = w / 2;
-    // 全身气球人：头 + 卵圆身 + 短臂 + 短腿（大重叠融成一体）
+    // 大白造型：横椭圆大头 + 卵圆身 + 左臂下垂 + 右臂举起自拍 + 短腿
     final path = Path()
-      ..addOval(Rect.fromCircle(center: Offset(cx, 88), radius: 56))
-      // 身体（卵圆，顶部宽、与头底深度融合）
+      // 头（横椭圆，宽大于高）
       ..addOval(Rect.fromCenter(
-          center: Offset(cx, 205), width: 190, height: 190))
-      // 左右短臂（微外张胶囊）
+          center: Offset(cx, 78), width: 132, height: 102))
+      // 身体（卵圆）
+      ..addOval(Rect.fromCenter(
+          center: Offset(cx, 208), width: 178, height: 190))
+      // 左臂（下垂微外张胶囊）
       ..addRRect(RRect.fromRectAndRadius(
           Rect.fromCenter(
-              center: Offset(cx - 98, 190), width: 38, height: 110),
+              center: Offset(cx - 96, 200), width: 38, height: 118),
           const Radius.circular(19)))
+      // 短腿
       ..addRRect(RRect.fromRectAndRadius(
           Rect.fromCenter(
-              center: Offset(cx + 98, 190), width: 38, height: 110),
-          const Radius.circular(19)))
-      // 左右短腿
-      ..addRRect(RRect.fromRectAndRadius(
-          Rect.fromCenter(
-              center: Offset(cx - 34, 300), width: 42, height: 60),
+              center: Offset(cx - 34, 302), width: 42, height: 62),
           const Radius.circular(18)))
       ..addRRect(RRect.fromRectAndRadius(
           Rect.fromCenter(
-              center: Offset(cx + 34, 300), width: 42, height: 60),
+              center: Offset(cx + 34, 302), width: 42, height: 62),
           const Radius.circular(18)));
 
     // 地面软阴影（椭圆 + 模糊）
@@ -249,19 +255,55 @@ class _SilhouettePainter extends CustomPainter {
 
     // 主体：径向渐变（左上受光白 → 右下微蓝灰），气球软立体
     final bounds = Rect.fromLTWH(cx - 120, 28, 240, 320);
-    canvas.drawPath(
-        path,
+    final bodyPaint = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(-0.45, -0.55),
+        radius: 1.15,
+        colors: const [
+          Colors.white,
+          Color(0xFFF4F6FA),
+          Color(0xFFDDE4EE),
+        ],
+        stops: [0.0, 0.55, 1.0],
+      ).createShader(bounds);
+    canvas.drawPath(path, bodyPaint);
+
+    // 腰缝线（微弱）
+    canvas.drawLine(
+        Offset(cx - 78, 218),
+        Offset(cx + 78, 218),
         Paint()
-          ..shader = RadialGradient(
-            center: const Alignment(-0.45, -0.55),
-            radius: 1.15,
-            colors: const [
-              Colors.white,
-              Color(0xFFF4F6FA),
-              Color(0xFFDDE4EE),
-            ],
-            stops: [0.0, 0.55, 1.0],
-          ).createShader(bounds));
+          ..color = const Color(0xFFC9D2E0).withValues(alpha: 0.6)
+          ..strokeWidth = 1.2);
+
+    // 右臂（举起自拍）：从肩部向右上 50° 胶囊
+    canvas.save();
+    canvas.translate(cx + 82, 148);
+    canvas.rotate(-0.85);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            const Rect.fromLTWH(-17, -12, 88, 34),
+            const Radius.circular(17)),
+        bodyPaint);
+    canvas.restore();
+
+    // 手 + 手机（深灰机身 + 亮屏 + 摄像头小点）
+    final phoneCx = cx + 118, phoneCy = 96.0;
+    canvas.drawCircle(Offset(phoneCx - 6, phoneCy + 26), 14, bodyPaint);
+    final phone = RRect.fromRectAndRadius(
+        Rect.fromCenter(
+            center: Offset(phoneCx, phoneCy), width: 40, height: 62),
+        const Radius.circular(7));
+    canvas.drawRRect(phone, Paint()..color = const Color(0xFF2B2B2B));
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            Rect.fromCenter(
+                center: Offset(phoneCx, phoneCy), width: 33, height: 54),
+            const Radius.circular(5)),
+        Paint()..color = const Color(0xFFBBD6F2));
+    // 摄像头
+    canvas.drawCircle(Offset(phoneCx, phoneCy - 23), 2.5,
+        Paint()..color = const Color(0xFF2B2B2B));
   }
 
   @override
