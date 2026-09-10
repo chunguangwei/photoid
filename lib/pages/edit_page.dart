@@ -42,10 +42,10 @@ class _EditPageState extends State<EditPage> {
   bool _regenerating = false;
 
   static const _hdPrefKey = 'hd_mode_enabled_v2';
-  static const _beautyPrefKey = 'beauty_intensity';
+  static const _beautyPrefKey = 'beauty_intensity_v2';
 
-  /// 美颜强度 0–1（滑杆，持久化）
-  double _beauty = 0.5;
+  /// 美颜强度 0–1（滑杆，持久化）。默认 0=不开启，用户选了才优化
+  double _beauty = 0;
 
   /// 预览用合成图缓存：应用美颜后的 compositedJpg；版本号驱动编辑器重建
   Uint8List? _previewJpg;
