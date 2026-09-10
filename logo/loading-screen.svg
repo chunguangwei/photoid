@@ -1,0 +1,55 @@
+<svg width="1170" height="2532" viewBox="0 0 1170 2532" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="105" y1="42" x2="1115" y2="2460" gradientUnits="userSpaceOnUse"><stop stop-color="#F8FAFF"/><stop offset=".52" stop-color="#EEF3FF"/><stop offset="1" stop-color="#F8F3FF"/></linearGradient>
+    <linearGradient id="body" x1="388" y1="917" x2="803" y2="1900" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF"/><stop offset="1" stop-color="#E7ECF6"/></linearGradient>
+    <linearGradient id="face" x1="347" y1="757" x2="806" y2="1016" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF"/><stop offset="1" stop-color="#EEF2F9"/></linearGradient>
+    <filter id="shadow" x="155" y="663" width="872" height="1450" filterUnits="userSpaceOnUse"><feDropShadow dx="0" dy="38" stdDeviation="38" flood-color="#9EAAD0" flood-opacity=".25"/></filter>
+    <filter id="soft" x="0" y="0" width="1170" height="2532" filterUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="1"/></filter>
+  </defs>
+  <rect width="1170" height="2532" fill="url(#bg)"/>
+  <!-- Safe areas: top 150px / bottom 140px intentionally clear for iOS and Android system UI -->
+  <circle cx="1013" cy="360" r="194" fill="#DDE8FF" opacity=".55"/>
+  <circle cx="118" cy="1770" r="203" fill="#E8E0FF" opacity=".52"/>
+  <path d="M805 249C805 208 838 175 879 175H995C1036 175 1069 208 1069 249V365C1069 406 1036 439 995 439H879C838 439 805 406 805 365V249Z" fill="#FFF" opacity=".33"/>
+  <!-- subtle ID photo guide -->
+  <g opacity=".48" stroke="#91A9D8" stroke-width="10" stroke-linecap="round">
+    <path d="M193 772V698C193 668 217 644 247 644H321"/><path d="M849 644H923C953 644 977 668 977 698V772"/>
+    <path d="M193 1678V1752C193 1782 217 1806 247 1806H321"/><path d="M849 1806H923C953 1806 977 1782 977 1752V1678"/>
+  </g>
+  <g filter="url(#shadow)">
+    <!-- rear arm: viewer left / robot's right -->
+    <path d="M384 1173C275 1172 218 1264 241 1373L299 1650C315 1724 381 1766 448 1745C510 1726 540 1660 520 1594L463 1339C454 1293 471 1253 505 1223L466 1184C442 1176 412 1173 384 1173Z" fill="url(#body)"/>
+    <path d="M315 1420C359 1450 411 1458 461 1436" stroke="#D3DAE8" stroke-width="10" stroke-linecap="round"/>
+    <!-- body -->
+    <path d="M353 1210C353 1056 455 965 585 965C715 965 817 1056 817 1210V1549C817 1754 720 1884 585 1884C450 1884 353 1754 353 1549V1210Z" fill="url(#body)"/>
+    <path d="M368 1484C489 1512 681 1512 802 1484" stroke="#D8DFEC" stroke-width="9"/>
+    <ellipse cx="585" cy="1886" rx="273" ry="43" fill="#B7C1DD" opacity=".28" filter="url(#soft)"/>
+    <!-- legs -->
+    <path d="M405 1745C405 1704 438 1671 479 1671H531C572 1671 605 1704 605 1745V1884C605 1934 565 1974 515 1974H493C444 1974 405 1934 405 1884V1745Z" fill="url(#body)"/>
+    <path d="M565 1745C565 1704 598 1671 639 1671H691C732 1671 765 1704 765 1745V1884C765 1934 726 1974 677 1974H655C605 1974 565 1934 565 1884V1745Z" fill="url(#body)"/>
+    <!-- face/head -->
+    <path d="M302 829C302 682 424 588 585 588C746 588 868 682 868 829C868 958 754 1033 585 1033C416 1033 302 958 302 829Z" fill="url(#face)"/>
+    <!-- eyes: no connecting line, one eye half-closed mid-blink -->
+    <ellipse cx="500" cy="819" rx="31" ry="45" fill="#2E3340"/>
+    <path d="M651 839C674 815 708 815 731 839" stroke="#2E3340" stroke-width="24" stroke-linecap="round"/>
+    <!-- left arm holding selfie phone (viewer right) -->
+    <path d="M799 1172C893 1152 953 1217 944 1301L922 1514C916 1580 861 1627 795 1619C736 1612 696 1560 704 1498L723 1346C727 1304 710 1278 678 1252L705 1188C733 1183 766 1178 799 1172Z" fill="url(#body)"/>
+    <!-- phone -->
+    <g transform="rotate(-10 900 1070)">
+      <rect x="820" y="920" width="174" height="296" rx="31" fill="#343B54"/>
+      <rect x="833" y="938" width="148" height="259" rx="21" fill="#EEF4FF"/>
+      <circle cx="907" cy="1014" r="43" fill="#FF6F7D"/>
+      <circle cx="907" cy="1014" r="21" fill="#FFF" opacity=".95"/>
+      <rect x="878" y="1157" width="58" height="8" rx="4" fill="#B2BED8"/>
+    </g>
+    <!-- hand wrapped around phone -->
+    <path d="M778 1270C797 1202 855 1164 915 1183C967 1199 995 1254 979 1308L950 1401C934 1454 875 1485 824 1465C777 1447 752 1397 765 1350L778 1270Z" fill="url(#body)"/>
+    <path d="M849 1265L902 1281M832 1322L894 1339M816 1379L874 1395" stroke="#D4DCEA" stroke-width="10" stroke-linecap="round"/>
+  </g>
+  <!-- minimal loading indicator; no text so it localizes cleanly -->
+  <g transform="translate(495 2157)">
+    <rect width="180" height="10" rx="5" fill="#D6DEEF"/>
+    <rect width="72" height="10" rx="5" fill="#7188C8"/>
+  </g>
+  <circle cx="585" cy="2225" r="7" fill="#A7B5D6"/><circle cx="617" cy="2225" r="7" fill="#C3CBE2"/><circle cx="649" cy="2225" r="7" fill="#DCE1EF"/>
+</svg>
