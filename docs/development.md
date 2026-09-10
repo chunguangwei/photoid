@@ -44,7 +44,7 @@ lib/
 │   ├── edit_page.dart        # 编辑：流水线进度 + 底色切换 + 精修档 +
 │   │                         #   美颜/清晰度双滑杆 + 交互裁剪
 │   ├── crop_editor.dart      # 图版截取式裁剪编辑器（固定比例窗 + 缩放平移）
-│   ├── scan_effect.dart      # 扫描光带 / 体感进度条（CustomPainter，见 §2.2）
+│   ├── scan_effect.dart      # 扫描揭色 / 扫描叠加 / 体感进度条（见 §2.2）
 │   ├── result_page.dart      # 结果：合规检测报告 + 保存
 │   ├── spec_detail_page.dart # 规格详情：三栏参数卡 + 五色底色选择
 │   │                         #   （默认色带「· 推荐」标记）+ 要求清单
@@ -83,7 +83,7 @@ ImagePipeline.run()（edit_page 触发；PipelineStep 共 6 项，UI 逐条映�
                 （最长边 1440）+ 顺带编出 ML Kit 输入图（≤960px/q85）
   ③ segmenting  **并行**：MODNet 抠图（worker isolate）‖ ML Kit 人脸检测（原生线程）
                 两者互不争抢，总耗时 ≈ max 而非 sum
-  ④ compositing [isolate] 掩码精修 → 前景色解混 → 换底合成 → 自动构图
+  ④ compositing [isolate] 掩码精修（膝点映射+主体过滤）→ 前景色解混 → 换底合成 → 自动构图
                 → 按构图框越界量补底色边 → 编出预览 JPEG
   ⑤ framing     [isolate] 底色补边裁剪 → 规格缩放 → 效果通道 → 轻锐化
   ⑥ compressing 二分压缩 jpg，落到规格的 [minFileKb, maxFileKb]
@@ -152,7 +152,7 @@ MODNet 另有一个**常驻 worker isolate**（`ModnetSegmenter`）：spawn 一�
 
 ### 2.2 动效的性能写法
 
-`scan_effect.dart` 里的扫描光带与进度条都用 `CustomPaint` +
+`scan_effect.dart` 里的全部动效都用 `CustomPaint` +
 `super(repaint: controller)`，并包 `RepaintBoundary`：
 
 - 只触发**重绘**，不触发 rebuild / relayout；
@@ -161,6 +161,22 @@ MODNet 另有一个**常驻 worker isolate**（`ModnetSegmenter`）：spawn 一�
 反例（已被替换）：用 `AnimatedBuilder` 每帧重建 `Container` +
 `BoxDecoration(LinearGradient)`，等于每帧新建并编译一次 shader，
 还脏化整棵子树。
+
+**三个组件的分工**：
+
+| 组件 | 用途 | 形态 |
+| --- | --- | --- |
+| `ScanRevealEffect` | 流水线处理中（照片卡） | **包裹** child：灰度层作底，原色层按进度自上而下 `ClipRect` 揭开 + 光带 + 四角括号 |
+| `ScanOverlayEffect` | 效果重算中（预览区） | 只**覆盖**：同一套光带/括号，未扫区压暗，不做灰→彩 |
+| `SmoothProgressBar` | 步骤进度 | 向目标值缓动，≤0.97 |
+
+「灰度 → 彩色」的方向天然隐喻「原始 → 已修好」，同时把「正在处理」与
+「处理到哪了」两层信息一并给到用户，**不依赖任何文字**。
+
+重算中的预览区**不能**用 `ScanRevealEffect`：它需要把 child 实例化两份
+（灰度底 + 原色层），而底下是自带 `key`、内部持有手势与解码状态的
+`CropEditor`，复制会导致状态错乱。故拆出只覆盖不包裹的
+`ScanOverlayEffect`。
 
 ### 2.3 抠图与构图算法
 
@@ -184,7 +200,14 @@ min-filter 腐蚀 1px + 羽化。后果是——
 白边的物理成因是边缘像素本身混合了原背景色（常是白墙），直接按 alpha
 合成会把原背景带进新底色。`decontaminate()` 的做法是把半透明边缘像素的
 **颜色**替换为邻域内高不透明度像素的 alpha³ 加权平均色，**alpha 完全不动**：
-两趟半径 2，只处理边缘带（通常 <3% 像素），开销可忽略，发丝通透感完整保留。
+两趟半径 2，开销可忽略，发丝通透感完整保留。
+
+两条约束缺一不可，否则会产生**「头发外一圈白色光晕」**（曾经的线上回归）：
+
+1. **只处理真正的边缘带**（`24 ≤ a ≤ 200`，取色只认 `a ≥ 224` 的实心前景）。
+   放宽到 `[8, 240]` 会把大片中间调区域卷进来，等于拿邻域最亮色向外涂抹；
+2. **只允许把颜色拉暗**（且强度上限 0.6）。白边是「被背景提亮」造成的，
+   解混的物理方向只能是变暗；允许变亮就是在造光晕。
 
 #### 构图：允许越界 + 底色补边
 
@@ -253,8 +276,9 @@ maxHeight / minRatio / maxRatio / background(SpecBackground) / requirements`。
 
 静态工具（纯函数、可单测）：`cropRectFor` 构图、`paddedCrop` 底色补边裁剪、
 `resizeToSpecUniform` 等比缩放到规格、`encodeToKbRange` 二分压缩。
-顶层 isolate 入口与掩码算法（`refineAlpha` / `decontaminate` /
-`detectHeadTop` / `deliverWorker` / `previewWorker`）见 §2.1–2.3。
+顶层 isolate 入口与掩码算法（`refineAlpha` / `keepMainSubject` /
+`decontaminate` / `detectHeadTop` / `deliverWorker` / `previewWorker`）
+见 §2.1–2.3。
 
 ### ModnetSegmenter（lib/services/modnet_segmenter.dart）
 MODNet 发丝级抠图（`hivision_modnet`，HivisionIDPhotos 自训练，MIT）。
@@ -468,7 +492,7 @@ dart analyze            # 静态检查
 
 | 文件 | 覆盖 |
 | --- | --- |
-| `matting_framing_test` | 掩码精修不腐蚀轮廓、发丝带存活、真实头顶探测、构图越界补边、消白边不改 alpha |
+| `matting_framing_test` | 掩码精修不腐蚀轮廓、发丝带存活、**中高置信区判实心**（防人物溶解）、**飞地清除/孔洞填实**、真实头顶探测、构图越界补边、消白边不改 alpha 且**单向变暗**（防白色光晕） |
 | `isolate_delivery_test` | **真实 `compute`** 跑通交付/预览，验证跨 isolate 传参契约与补边底色 |
 | `effects_test` | 美颜/清晰度强度契约：0 短路、不外溢人脸外、保五官、不溢出回绕 |
 | `image_pipeline_test` | `encodeToKbRange` 区间命中与 EOI 填充 |

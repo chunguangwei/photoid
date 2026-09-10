@@ -300,22 +300,18 @@ class _EditPageState extends State<EditPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 照片卡 + 科技感扫描线（上下来回，体现 AI 修整过程）
+            // 照片卡 + 扫描揭色（灰→彩，无需文字即表达处理进度）
             Card(
               clipBehavior: Clip.antiAlias,
               child: SizedBox(
                 width: 160,
                 height: 213,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.file(
-                      File(widget.sourcePath),
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const SizedBox.expand(),
-                    ),
-                    const ScanLineEffect(),
-                  ],
+                child: ScanRevealEffect(
+                  child: Image.file(
+                    File(widget.sourcePath),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const SizedBox.expand(),
+                  ),
                 ),
               ),
             ),
@@ -406,7 +402,7 @@ class _EditPageState extends State<EditPage> {
                         ),
                         // 效果重算中：扫描动效表明「正在处理图片」
                         if (_effectsBusy)
-                          const IgnorePointer(child: ScanLineEffect()),
+                          const IgnorePointer(child: ScanOverlayEffect()),
                       ],
                     ),
             ),

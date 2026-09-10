@@ -539,12 +539,19 @@ _Composited _compositeWork(Map<String, Object> args) {
   );
 }
 
-/// 掩码精修：3×3 均值轻羽化 + 温和对比拉伸。
+/// 掩码精修：3×3 均值轻羽化 + **膝点映射**（高端饱和、低端保留）
+/// + 主体连通域过滤 + 孔洞填实。
 ///
 /// **不做形态学腐蚀**——旧版的 3×3 min-filter 会把整个人像轮廓向内啃掉一圈，
-/// 头发丝、耳廓、肩线这些本就只有 1–2px 的结构会直接消失；配合
-/// `(a-0.35)/0.5` 的激进截断，半透明发丝带被整体归零，观感就是「头发没了」。
-/// 消白边改由 [decontaminate] 在**颜色**上解决，alpha 保持完整。
+/// 头发丝、耳廓、肩线这些本就只有 1–2px 的结构会直接消失。消白边改由
+/// [decontaminate] 在**颜色**上解决。
+///
+/// 但「不腐蚀」不等于「不做高端饱和」——曾经把映射放宽成对称的
+/// `[0.06, 0.94]` 线性拉伸，结果 MODNet 在衣服/肩背这类低对比区域输出的
+/// `a≈0.7` 原样保留成半透明，观感是**人物从胸口往下溶解进底色**。
+/// 正确做法是不对称：
+/// - 低端只清 5% 以下的背景残噪（发丝半透明带必须活着）；
+/// - **高端 60% 以上直接判定为实心前景**（人体主体不允许半透明）。
 Uint8List refineAlpha(Uint8List mask, int w, int h) {
   final n = w * h;
   // 1) 轻羽化（3×3 均值）：抹掉 512→原尺寸上采样带来的阶梯锯齿
@@ -565,41 +572,139 @@ Uint8List refineAlpha(Uint8List mask, int w, int h) {
           9;
     }
   }
-  // 2) 温和对比拉伸：只清掉 <6% 的背景残噪与 >94% 的抖动，
-  //    中间的发丝半透明带按比例保留（这正是 MODNet 的价值所在）
-  const lo = 0.06, hi = 0.94;
+  // 2) 膝点映射：[lo, knee] → [0, 1]，knee 以上一律实心
+  const lo = 0.05, knee = 0.60;
   final out = Uint8List(n);
   for (var i = 0; i < n; i++) {
     final a = smooth[i] / 255.0;
-    out[i] = (((a - lo) / (hi - lo)).clamp(0.0, 1.0) * 255).round();
+    out[i] = (((a - lo) / (knee - lo)).clamp(0.0, 1.0) * 255).round();
   }
+  // 3) 只留主体、填实孔洞
+  keepMainSubject(out, w, h);
   return out;
 }
 
-/// 前景色解混（消白边）：把半透明边缘像素的颜色替换为邻域内**高不透明度**
-/// 像素的加权平均色。
+/// 只保留最大前景连通域，并把被主体包围的孔洞填实（**原地修改** [alpha]）。
+///
+/// 解决两类 MODNet 误判：
+/// - **飞地**：画面角落的建筑、地面色块被判成前景，换底后成了漂浮的残块；
+/// - **孔洞**：躯干内部被判成背景，换底后身体上出现底色斑点。
+///
+/// 判定阈值 128（配合 [refineAlpha] 的膝点映射，主体已是 255）。面积不足
+/// 最大域 25% 的独立连通域整体归零；从图像四边 flood fill 不到的背景像素
+/// 即为孔洞，填 255。
+void keepMainSubject(Uint8List alpha, int w, int h) {
+  final n = w * h;
+  final label = Int32List(n); // 0=未访问背景, -1=背景已访问, >0=前景域号
+  final queue = Int32List(n);
+
+  // ---- 前景连通域标记（4 邻域 BFS）----
+  var best = 0, bestArea = 0;
+  final areas = <int, int>{};
+  var next = 1;
+  for (var s = 0; s < n; s++) {
+    if (alpha[s] < 128 || label[s] != 0) continue;
+    final id = next++;
+    var head = 0, tail = 0;
+    queue[tail++] = s;
+    label[s] = id;
+    var area = 0;
+    while (head < tail) {
+      final p = queue[head++];
+      area++;
+      final x = p % w, y = p ~/ w;
+      if (x > 0 && alpha[p - 1] >= 128 && label[p - 1] == 0) {
+        label[p - 1] = id;
+        queue[tail++] = p - 1;
+      }
+      if (x < w - 1 && alpha[p + 1] >= 128 && label[p + 1] == 0) {
+        label[p + 1] = id;
+        queue[tail++] = p + 1;
+      }
+      if (y > 0 && alpha[p - w] >= 128 && label[p - w] == 0) {
+        label[p - w] = id;
+        queue[tail++] = p - w;
+      }
+      if (y < h - 1 && alpha[p + w] >= 128 && label[p + w] == 0) {
+        label[p + w] = id;
+        queue[tail++] = p + w;
+      }
+    }
+    areas[id] = area;
+    if (area > bestArea) {
+      bestArea = area;
+      best = id;
+    }
+  }
+  if (bestArea == 0) return; // 全背景，交由上层报 noPerson
+
+  // 清掉小飞地（连同其周围的半透明带）
+  for (var i = 0; i < n; i++) {
+    final id = label[i];
+    if (id > 0 && id != best && (areas[id] ?? 0) * 4 < bestArea) {
+      alpha[i] = 0;
+      label[i] = 0;
+    }
+  }
+
+  // ---- 孔洞填实：从四边 flood fill 背景，未触达的背景像素即为洞 ----
+  var head = 0, tail = 0;
+  void seed(int p) {
+    if (alpha[p] >= 128 || label[p] == -1) return;
+    label[p] = -1;
+    queue[tail++] = p;
+  }
+
+  for (var x = 0; x < w; x++) {
+    seed(x);
+    seed((h - 1) * w + x);
+  }
+  for (var y = 0; y < h; y++) {
+    seed(y * w);
+    seed(y * w + w - 1);
+  }
+  while (head < tail) {
+    final p = queue[head++];
+    final x = p % w, y = p ~/ w;
+    if (x > 0) seed(p - 1);
+    if (x < w - 1) seed(p + 1);
+    if (y > 0) seed(p - w);
+    if (y < h - 1) seed(p + w);
+  }
+  for (var i = 0; i < n; i++) {
+    if (alpha[i] < 128 && label[i] != -1) alpha[i] = 255;
+  }
+}
+
+/// 前景色解混（消白边）：把**半透明边缘带**像素的颜色替换为邻域内高不透明度
+/// 像素的加权平均色，alpha 完全不动。
 ///
 /// 白边/毛刺的物理成因是边缘像素本身混合了原背景色，直接按 alpha 合成会
-/// 把原背景（常是白墙）带进新底色里。工业界的解法是前景色估计而非腐蚀
-/// alpha：这里做两趟半径 2 的 alpha³ 加权外推，只处理边缘带
-/// （通常 <3% 像素），开销可忽略，而发丝的通透感完整保留。
+/// 把原背景（常是白墙）带进新底色里。工业界的解法是前景色估计而非腐蚀 alpha。
+///
+/// **两条必须的约束**（缺了会产生「头发外一圈白色光晕」）：
+/// 1. 只处理**真正的边缘带**（`24 ≤ a ≤ 200`）。放宽到 `[8,240]` 会把大片
+///    中间调区域也卷进来，等于拿邻域最亮色向外涂抹，观感就是发光。
+/// 2. 替换强度 `k` 上限 0.6，且**只允许把颜色拉暗、不允许拉亮**——白边是
+///    「被背景提亮」造成的，解混的物理方向只能是变暗；允许变亮就是在造光晕。
 Uint8List decontaminate(Uint8List rgba, Uint8List alpha, int w, int h) {
   final out = Uint8List.fromList(rgba);
   const r = 2;
+  const aLo = 24, aHi = 200;
   for (var pass = 0; pass < 2; pass++) {
     final src = Uint8List.fromList(out);
     for (var y = 0; y < h; y++) {
       for (var x = 0; x < w; x++) {
         final px = y * w + x;
         final a = alpha[px];
-        if (a < 8 || a > 240) continue; // 纯背景 / 纯前景，无需解混
+        if (a < aLo || a > aHi) continue; // 只处理边缘过渡带
         var sw = 0.0, sr = 0.0, sg = 0.0, sb = 0.0;
         final y0 = math.max(0, y - r), y1 = math.min(h - 1, y + r);
         final x0 = math.max(0, x - r), x1 = math.min(w - 1, x + r);
         for (var ny = y0; ny <= y1; ny++) {
           for (var nx = x0; nx <= x1; nx++) {
             final na = alpha[ny * w + nx];
-            if (na <= a) continue; // 只向更「实」的方向取色
+            if (na < 224) continue; // 只向「实心前景」取色，避免链式外推
             final t = na / 255.0;
             final wgt = t * t * t;
             final i = (ny * w + nx) * 4;
@@ -611,13 +716,14 @@ Uint8List decontaminate(Uint8List rgba, Uint8List alpha, int w, int h) {
         }
         if (sw <= 0) continue;
         final o = px * 4;
-        // alpha 越低说明原色污染越重，向估计的纯前景色靠得越多
-        final k = (1 - a / 255.0).clamp(0.0, 1.0);
-        out[o] = (src[o] + (sr / sw - src[o]) * k).round().clamp(0, 255);
-        out[o + 1] =
-            (src[o + 1] + (sg / sw - src[o + 1]) * k).round().clamp(0, 255);
-        out[o + 2] =
-            (src[o + 2] + (sb / sw - src[o + 2]) * k).round().clamp(0, 255);
+        // alpha 越低污染越重，向估计的纯前景色靠得越多；上限 0.6 防过冲
+        final k = ((1 - a / 255.0) * 0.75).clamp(0.0, 0.6);
+        for (var c = 0; c < 3; c++) {
+          final cur = src[o + c];
+          final est = (c == 0 ? sr : (c == 1 ? sg : sb)) / sw;
+          if (est >= cur) continue; // 解混只允许变暗，变亮 = 造光晕
+          out[o + c] = (cur + (est - cur) * k).round().clamp(0, 255);
+        }
       }
     }
   }

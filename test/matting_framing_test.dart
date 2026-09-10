@@ -189,6 +189,81 @@ void main() {
       final pureBg = (4 * w + 6) * 4;
       expect(out[pureBg], 255, reason: '纯背景像素不得改动');
     });
+
+    test('解混只允许变暗，绝不把边缘拉亮（白色光晕回归）', () {
+      const w = 8, h = 8;
+      final rgba = Uint8List(w * h * 4);
+      final alpha = Uint8List(w * h);
+      for (var y = 0; y < h; y++) {
+        for (var x = 0; x < w; x++) {
+          final i = (y * w + x) * 4;
+          final isFg = x < 4;
+          // 前景是**亮色**（浅色衣服），边缘偏暗——若允许双向替换，
+          // 解混会把边缘往亮拉，视觉上就是头发/肩线外一圈发光。
+          rgba[i] = isFg ? 240 : 20;
+          rgba[i + 1] = isFg ? 240 : 20;
+          rgba[i + 2] = isFg ? 240 : 20;
+          rgba[i + 3] = 255;
+          alpha[y * w + x] = isFg ? 255 : 0;
+        }
+      }
+      for (var y = 0; y < h; y++) {
+        alpha[y * w + 3] = 120;
+        final i = (y * w + 3) * 4;
+        rgba[i] = rgba[i + 1] = rgba[i + 2] = 90;
+      }
+      final out = decontaminate(rgba, alpha, w, h);
+      final edge = (4 * w + 3) * 4;
+      expect(out[edge], lessThanOrEqualTo(90),
+          reason: '解混方向必须单向变暗；变亮即产生白色光晕');
+    });
+  });
+
+  group('keepMainSubject 清飞地 + 填孔洞', () {
+    test('角落孤立小块被清零，主体保留', () {
+      const w = 64, h = 64;
+      final alpha = _maskWithBody(w, h, const Rect.fromLTWH(16, 16, 32, 32));
+      // 右下角一块 4×4 飞地（模拟被误判成前景的建筑/地面）
+      for (var y = 58; y < 62; y++) {
+        for (var x = 58; x < 62; x++) {
+          alpha[y * w + x] = 255;
+        }
+      }
+      keepMainSubject(alpha, w, h);
+      expect(alpha[60 * w + 60], 0, reason: '飞地必须清掉');
+      expect(alpha[32 * w + 32], 255, reason: '主体必须保留');
+    });
+
+    test('主体内部孔洞被填实', () {
+      const w = 64, h = 64;
+      final alpha = _maskWithBody(w, h, const Rect.fromLTWH(16, 16, 32, 32));
+      for (var y = 30; y < 34; y++) {
+        for (var x = 30; x < 34; x++) {
+          alpha[y * w + x] = 0; // 躯干中间被误判成背景
+        }
+      }
+      keepMainSubject(alpha, w, h);
+      expect(alpha[32 * w + 32], 255, reason: '被主体包围的孔洞必须填实');
+      expect(alpha[2 * w + 2], 0, reason: '真背景不得被填');
+    });
+
+    test('全背景掩码不抛异常（交由上层报 noPerson）', () {
+      final alpha = Uint8List(32 * 32);
+      expect(() => keepMainSubject(alpha, 32, 32), returnsNormally);
+    });
+  });
+
+  group('refineAlpha 高端饱和（人物半透明溶解回归）', () {
+    test('MODNet 中高置信区（a≈0.7）必须判为实心前景', () {
+      const w = 32, h = 32;
+      final m = Uint8List(w * h);
+      for (var i = 0; i < m.length; i++) {
+        m[i] = 180; // ≈0.71，衣服/肩背这类低对比区的典型输出
+      }
+      final out = refineAlpha(m, w, h);
+      expect(out[16 * w + 16], 255,
+          reason: '对称拉伸会让它停在半透明，观感是人物从胸口往下溶解进底色');
+    });
   });
 }
 
