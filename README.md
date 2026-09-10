@@ -10,9 +10,9 @@ PhotoID is an AI-powered ID photo maker that runs **entirely on-device**. Take a
 
 - 🏠 **Redesigned home** — brand header, 2×2 quick-action cards (shoot / recolor / resize KB / album), privacy banner and hot-spec picks; consistent on Android & iOS
 - 📷 **Capture or import** — shoot directly in the app (front/back camera switch with a portrait outline guide) or pick an existing photo
-- ✂️ **Hair-level cutout & five background colors** — on-device MODNet matting keeps fine hair strands, one-tap switch between blue / white / red / gray / dark-blue backgrounds, with a per-spec recommended default
+- ✂️ **Hair-level cutout & five background colors** — on-device MODNet matting keeps fine hair strands; the photo is pre-cropped to the head-and-shoulders region before inference so full-body shots no longer leave patches of ground or scenery behind. Switch between blue / white / red / gray / dark-blue **instantly** (no re-processing), with a per-spec recommended default
 - 🎯 **Auto framing & cropping** — locates the real hairline from the matte for composition; pads with the background color instead of cutting off the head or shoulders. Pinch/drag to fine-tune, ratio always locked
-- 💆 **Retouch & clarity (two independent sliders, both default to 0)** — face-only smoothing / wrinkle & blemish removal / even skin tone / subtle slimming, plus whole-image sharpening and clarity
+- 💆 **Retouch & clarity (two independent sliders, both default to 0)** — face-only dual-scale smoothing (pores & fine lines *and* blemishes, dark circles, uneven tone), even skin tone, brightening & warming for healthier complexion, plus subtle slimming; clarity sharpens luminance only (no color fringing) and adds punch via an S-curve and vibrance
 - ✅ **Compliance check** — format, file size (KB), pixel size, aspect ratio, background color, head ratio, head centering, and eyes-open checks against built-in specs
 - 🎓 **Student ID photo (education ID naming)** — save files with student-style IDs for easy archiving
 - 📚 **33+ built-in specs** — one-inch, two-inch, visa, exam and more, plus custom spec creation
@@ -82,9 +82,9 @@ PhotoID 是一款**纯端侧**的 AI 证件照制作应用。支持拍摄或从�
 
 - 🏠 **全新主页**——品牌渐变头 + 2×2 功能大卡（拍证件照 / 换底色 / 改 KB / 我的相册）+ 隐私横幅 + 热门规格，Android / iOS 双端一致
 - 📷 **拍摄 / 上传**——应用内直接拍摄（支持前后置切换与人像轮廓参考框），或从相册导入现有照片
-- ✨ **发丝级抠图 · 五色换底**——端侧 MODNet 抠图保留发丝细节，一键切换蓝 / 白 / 红 / 灰 / 深蓝五种底色，规格自带推荐默认色
+- ✨ **发丝级抠图 · 五色换底**——端侧 MODNet 抠图保留发丝细节；抠图前先粗裁到头肩范围，全身照不再残留大块地面或景物。蓝 / 白 / 红 / 灰 / 深蓝**秒切**（无需重新生成），规格自带推荐默认色
 - 🎯 **自动构图裁剪**——从抠图掩码定位真实发际线构图；画幅不够时用底色补边，不会切掉头顶或肩膀。支持双指缩放 / 拖动微调，比例始终锁定
-- 💆 **美颜 · 清晰度双滑杆（默认均为 0）**——美颜只作用于人脸（磨皮 / 去皱去斑 / 匀肤 / 轻度瘦脸），清晰度作用于整图（锐化 / 通透度）
+- 💆 **美颜 · 清晰度双滑杆（默认均为 0）**——美颜只作用于人脸：双尺度磨皮（毛孔细纹 + 色斑痘印眼袋）、匀肤、提亮暖肤改善气色、轻度瘦脸；清晰度作用于整图：只锐化明暗不动色彩（无彩色描边）+ S 曲线通透 + 智能鲜艳度
 - ✅ **合规检测**——格式、文件大小（KB）、像素尺寸、宽高比例、底色、头部占比、居中、睁眼逐项校验
 - 🎓 **学生报名照（教育 ID 命名）**——按学号式 ID 命名文件，便于归档管理
 - 📚 **33+ 内置规格**——一寸、二寸、签证、考试报名等，支持自定义规格

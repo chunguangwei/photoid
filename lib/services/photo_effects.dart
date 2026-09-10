@@ -37,12 +37,18 @@ class PhotoEffects {
 
   // ─────────────────────────── 面部精修 ───────────────────────────
 
-  /// 面部精修：高低频分离磨皮（去皱/去斑，保五官锐度）+ 匀肤 + 轻度瘦脸。
+  /// 面部精修：**双尺度**频率分离磨皮（细节层去毛孔细纹、中频层去色斑痘印）
+  /// + 匀肤 + 提亮 + 轻度瘦脸。
   ///
-  /// 与「整图高斯混合」的老做法相比，这里把图像拆成低频（肤色/光影）与
-  /// 高频（纹理/五官边缘）：**只压制低幅度高频**（毛孔、细纹、色斑），
-  /// 高幅度高频（眼睑、唇线、鼻翼）原样保留——所以强度拉满也不糊五官，
-  /// 且在低强度时就能明显看出皮肤变干净（解决「拉大效果不明显」）。
+  /// 为什么是双尺度（这是「拉满了也看不出效果」的根因）：
+  /// 皮肤瑕疵分布在两个尺度上——毛孔、细纹属于**高频小幅**；色斑、痘印、
+  /// 眼袋、肤色不匀属于**中频中幅**（幅度常达 30–60）。早期只做单尺度高频
+  /// 压制，且把「>26 幅度」一律当作五官结构全额保留，结果最该去掉的色斑
+  /// 完全没被碰到，用户观感就是「磨了但脸还是那样」。
+  ///
+  /// 现在分两层处理，且**判定阈值随强度放大**——强度越高，敢压的幅度越大，
+  /// 滑杆因此在全程都有可感知的变化；而五官结构靠「高幅度 + 非肤色」双重
+  /// 保护，仍然不会被糊。
   static Uint8List retouchFace(
       Uint8List rgba, int w, int h, Rect face, double intensity) {
     if (intensity <= 0 || face.width <= 2 || face.height <= 2) return rgba;
@@ -53,14 +59,21 @@ class PhotoEffects {
     final rx = math.max(4.0, face.width * 0.70);
     final ry = math.max(4.0, face.height * 0.82);
 
-    // 模糊半径随脸尺寸自适应：同一强度在大图/小图上观感一致
-    final radius = (face.width * 0.05).round().clamp(2, 40);
-    final blur = _boxBlurRgba(rgba, w, h, radius);
+    // 两个尺度的模糊半径都随脸尺寸自适应，保证不同分辨率下观感一致
+    final rDetail = (face.width * 0.030).round().clamp(2, 30); // 毛孔/细纹
+    final rBlotch = (face.width * 0.105).round().clamp(4, 90); // 色斑/痘印
+    final blurD = _boxBlurRgba(rgba, w, h, rDetail);
+    final blurB = _boxBlurRgba(rgba, w, h, rBlotch);
 
-    // 低幅高频的压制系数：intensity=1 时保留 12%（去皱/去斑）
-    final keepLow = 1.0 - 0.88 * intensity;
-    const tLo = 10.0; // 以下判定为瑕疵（全压）
-    const tHi = 26.0; // 以上判定为五官结构（全留）
+    // 细节层：intensity=1 时保留 10%
+    final keepDetail = 1.0 - 0.90 * intensity;
+    // 中频层：intensity=1 时保留 42%。不能压太狠——中频承载脸部立体感，
+    // 压没了会变成一张纸片脸。
+    final keepBlotch = 1.0 - 0.58 * intensity;
+
+    // 判定阈值随强度放大：低强度只碰细腻瑕疵，高强度才敢动明显色斑
+    final tLo = 8.0 + 6.0 * intensity;
+    final tHi = 26.0 + 40.0 * intensity;
 
     final x0 = math.max(0, (cx - rx).floor());
     final x1 = math.min(w - 1, (cx + rx).ceil());
@@ -75,7 +88,7 @@ class PhotoEffects {
         if (dx * dx + dy * dy > 1) continue;
         final i = (y * w + x) * 4;
         final r = rgba[i], g = rgba[i + 1], bl = rgba[i + 2];
-        if (!_isSkin(r, g, bl)) continue;
+        if (_skinWeight(r, g, bl) < 0.5) continue;
         sr += r;
         sg += g;
         sb += bl;
@@ -88,7 +101,12 @@ class PhotoEffects {
     final mg = evenOut ? sg / sn : 0.0;
     final mb = evenOut ? sb / sn : 0.0;
     final mLum = evenOut ? _lum(mr, mg, mb) : 1.0;
-    final evenK = 0.16 * intensity;
+    final evenK = 0.26 * intensity;
+    // 提亮：证件照普遍偏暗，轻微抬亮部能显著改善「气色」，比单纯磨皮更可感知
+    final brighten = 7.0 * intensity;
+    // 暖肤：红通道微增。人对「气色好」的判断主要来自肤色暖度而非光滑度，
+    // 这一项的可感知收益比继续加大磨皮强度高得多，且不损失任何细节。
+    final warm = 4.0 * intensity;
 
     final out = Uint8List.fromList(rgba);
     for (var y = y0; y <= y1; y++) {
@@ -98,17 +116,23 @@ class PhotoEffects {
         if (d2 > 1) continue;
         final i = (y * w + x) * 4;
         final r = rgba[i], g = rgba[i + 1], bl = rgba[i + 2];
-        if (!_isSkin(r, g, bl)) continue;
+        // 肤色权重是**软的**：眼/眉/唇/发权重 0（完全不动），
+        // 阴影侧的皮肤仍能拿到部分权重（旧版硬判据把它整片排除，
+        // 导致侧脸、逆光照几乎看不出效果）
+        final skin = _skinWeight(r, g, bl);
+        if (skin <= 0) continue;
 
         // 边缘羽化：外圈 30% 线性淡出，杜绝「面具边」
         final dist = math.sqrt(d2);
         final feather = dist <= 0.70 ? 1.0 : (1 - dist) / 0.30;
-        final k = intensity * feather;
+        final k = intensity * feather * skin;
         if (k <= 0) continue;
 
-        var nr = _hiLo(r, blur[i], keepLow, tLo, tHi);
-        var ng = _hiLo(g, blur[i + 1], keepLow, tLo, tHi);
-        var nb = _hiLo(bl, blur[i + 2], keepLow, tLo, tHi);
+        var nr = _twoScale(r, blurD[i], blurB[i], keepDetail, keepBlotch, tLo, tHi);
+        var ng = _twoScale(
+            g, blurD[i + 1], blurB[i + 1], keepDetail, keepBlotch, tLo, tHi);
+        var nb = _twoScale(
+            bl, blurD[i + 2], blurB[i + 2], keepDetail, keepBlotch, tLo, tHi);
 
         // 匀肤：仅拉齐色度，按当前像素亮度缩放目标色 → 保留立体光影
         if (evenOut) {
@@ -119,6 +143,13 @@ class PhotoEffects {
           nb += (mb * s - nb) * evenK * feather;
         }
 
+        // 提亮：暗部抬得多、亮部几乎不动，避免高光溢出成死白
+        final room = (255 - _lum(nr, ng, nb)) / 255;
+        final lift = brighten * room * feather;
+        nr += lift + warm * feather;
+        ng += lift;
+        nb += lift;
+
         out[i] = _u8(r + (nr - r) * k);
         out[i + 1] = _u8(g + (ng - g) * k);
         out[i + 2] = _u8(bl + (nb - bl) * k);
@@ -128,20 +159,26 @@ class PhotoEffects {
     return _slimFace(out, w, h, cx, cy, rx, ry, intensity);
   }
 
-  /// 高低频重建：低幅细节按 [keepLow] 压制，高幅细节全保留，中间平滑过渡。
-  static double _hiLo(
-      int src, int blurred, double keepLow, double tLo, double tHi) {
-    final d = src - blurred.toDouble();
-    final ad = d.abs();
-    final double s;
-    if (ad <= tLo) {
-      s = keepLow;
-    } else if (ad >= tHi) {
-      s = 1.0;
-    } else {
-      s = keepLow + (1 - keepLow) * ((ad - tLo) / (tHi - tLo));
-    }
-    return blurred + d * s;
+  /// 双尺度频率重建。
+  ///
+  /// 把像素拆成三层：中频以下（`blurB`，脸部立体感与光影）、中频细节
+  /// （`blurB → blurD`，色斑/痘印/肤色不匀）、高频细节（`blurD → src`，
+  /// 毛孔/细纹/噪点）。两个细节层分别按 [keepBlotch] / [keepDetail] 压制，
+  /// 并按幅度在 [tLo]–[tHi] 之间平滑过渡到「全额保留」——保证眼睑、唇线、
+  /// 鼻翼这些高幅结构不被磨掉。
+  static double _twoScale(int src, int blurD, int blurB, double keepDetail,
+      double keepBlotch, double tLo, double tHi) {
+    final dHigh = src - blurD.toDouble(); // 高频
+    final dMid = blurD - blurB.toDouble(); // 中频
+    return blurB + dMid * _blend(dMid.abs(), keepBlotch, tLo, tHi) +
+        dHigh * _blend(dHigh.abs(), keepDetail, tLo, tHi);
+  }
+
+  /// 幅度 [ad] 越大越接近「原样保留」（返回 1），越小越接近 [keep]。
+  static double _blend(double ad, double keep, double tLo, double tHi) {
+    if (ad <= tLo) return keep;
+    if (ad >= tHi) return 1.0;
+    return keep + (1 - keep) * ((ad - tLo) / (tHi - tLo));
   }
 
   /// 轻度瘦脸：仅下半脸（颧骨→下颌）水平向中线收缩，最大 4.5%。
@@ -180,8 +217,19 @@ class PhotoEffects {
 
   // ─────────────────────────── 画质清晰度 ───────────────────────────
 
-  /// 画质清晰度：USM 锐化（带阈值，不放大噪点）+ 局部对比度（去灰/通透）
-  /// + 极轻的全局对比与饱和补偿。作用于**整图**，与面部精修互不干扰。
+  /// 画质清晰度：**亮度通道** USM 锐化 + 局部对比（通透感）+ S 曲线
+  /// + 极轻饱和补偿。作用于整图，与面部精修互不干扰。
+  ///
+  /// 三处与早期实现的关键差异（早期观感「过锐、发假、暗部发脏」）：
+  ///
+  /// 1. **只锐化亮度，不锐化色度**。对 R/G/B 分别做 USM 会让互补色在边缘
+  ///    分离，产生彩色描边（紫边/绿边），在证件照的发丝与眼镜框上尤其明显。
+  ///    改为提取亮度增量、三通道等量施加，边缘干净得多。
+  /// 2. **S 曲线代替线性对比**。`128 + (v-128) * k` 会把暗部直接压死、
+  ///    高光顶死；S 曲线只拉开中间调，两端自然收敛，这才是「通透」而非
+  ///    「对比大」。
+  /// 3. **饱和度大幅降权**（0.10 → 0.05）。清晰度滑杆的语义是锐利与通透，
+  ///    颜色浓艳属于另一码事，混进来会让肤色发橙。
   static Uint8List enhanceClarity(
       Uint8List rgba, int w, int h, double intensity) {
     if (intensity <= 0) return rgba;
@@ -192,11 +240,13 @@ class PhotoEffects {
     final blurS = _boxBlurRgba(rgba, w, h, rSharp);
     final blurL = _boxBlurRgba(rgba, w, h, rLocal);
 
-    final amtSharp = 1.10 * intensity; // USM 强度
-    final amtLocal = 0.42 * intensity; // 局部对比（通透感）
+    final amtSharp = 0.85 * intensity; // USM 强度（亮度通道）
+    final amtLocal = 0.34 * intensity; // 局部对比（通透感）
     const noiseT = 3.0; // 低于此幅度视为噪点，不锐化
-    final contrast = 1 + 0.07 * intensity;
-    final sat = 1 + 0.10 * intensity;
+    final sCurve = 0.16 * intensity; // S 曲线强度
+    // 鲜艳度（vibrance）而非饱和度：见 _vibrance 的说明，可以给到远高于
+    // 线性饱和的系数而不会让肤色发橙
+    final vib = 0.30 * intensity;
 
     final out = Uint8List.fromList(rgba);
     final n = w * h;
@@ -206,31 +256,74 @@ class PhotoEffects {
           vg = rgba[i + 1].toDouble(),
           vb = rgba[i + 2].toDouble();
 
-      // 1) USM：仅对超过噪声阈值的细节增强
-      final dr = vr - blurS[i], dg = vg - blurS[i + 1], db = vb - blurS[i + 2];
-      if (dr.abs() > noiseT) vr += dr * amtSharp;
-      if (dg.abs() > noiseT) vg += dg * amtSharp;
-      if (db.abs() > noiseT) vb += db * amtSharp;
+      // 1) USM（仅亮度）：算出亮度增量后三通道等量施加，避免彩色描边
+      final lSrc = _lum(vr, vg, vb);
+      final lBlur =
+          _lum(blurS[i].toDouble(), blurS[i + 1].toDouble(), blurS[i + 2].toDouble());
+      final dl = lSrc - lBlur;
+      if (dl.abs() > noiseT) {
+        final add = dl * amtSharp;
+        vr += add;
+        vg += add;
+        vb += add;
+      }
 
-      // 2) 局部对比度：拉开大尺度明暗，去灰蒙
-      vr += (vr - blurL[i]) * amtLocal;
-      vg += (vg - blurL[i + 1]) * amtLocal;
-      vb += (vb - blurL[i + 2]) * amtLocal;
+      // 2) 局部对比度（同样走亮度）：拉开大尺度明暗，去灰蒙
+      final lLocal =
+          _lum(blurL[i].toDouble(), blurL[i + 1].toDouble(), blurL[i + 2].toDouble());
+      final addL = (lSrc - lLocal) * amtLocal;
+      vr += addL;
+      vg += addL;
+      vb += addL;
 
-      // 3) 极轻全局对比 + 饱和（绕中灰/绕亮度）
-      vr = 128 + (vr - 128) * contrast;
-      vg = 128 + (vg - 128) * contrast;
-      vb = 128 + (vb - 128) * contrast;
-      final l = _lum(vr, vg, vb);
-      vr = l + (vr - l) * sat;
-      vg = l + (vg - l) * sat;
-      vb = l + (vb - l) * sat;
+      // 3) S 曲线：只拉开中间调，暗部与高光自然收敛（不压死、不顶死）
+      if (sCurve > 0) {
+        vr = _sCurve(vr, sCurve);
+        vg = _sCurve(vg, sCurve);
+        vb = _sCurve(vb, sCurve);
+      }
+
+      // 4) 鲜艳度：低饱和区域多加、已鲜艳区域几乎不动
+      if (vib > 0) {
+        final l = _lum(vr, vg, vb);
+        final mx = math.max(vr, math.max(vg, vb));
+        final mn = math.min(vr, math.min(vg, vb));
+        final k = 1 + _vibrance(mx, mn, vib);
+        vr = l + (vr - l) * k;
+        vg = l + (vg - l) * k;
+        vb = l + (vb - l) * k;
+      }
 
       out[i] = _u8(vr);
       out[i + 1] = _u8(vg);
       out[i + 2] = _u8(vb);
     }
     return out;
+  }
+
+  /// 鲜艳度增量：**当前饱和度越高，加得越少**（`amt = k × (1 - sat)`）。
+  ///
+  /// 这是比线性饱和度更适合人像的做法。线性饱和对所有像素等比放大，肤色本就
+  /// 偏饱和，一放大立刻发橙发红，所以系数只能给到很小（0.05 级别），
+  /// 结果是「调了跟没调一样」。鲜艳度把增益让给灰淡区域（衣服、背景过渡），
+  /// 对已经饱和的肤色自动收手——因此可以给到 6 倍的系数而依然安全。
+  /// 衰减取**平方**而非线性：线性衰减下饱和度 0.45 的肤色仍能拿到 55% 增益，
+  /// 依旧会发橙；平方后只剩 30%，而近中性的灰淡区几乎不受影响（0.92），
+  /// 两者的增益差被明显拉开，这正是「鲜艳」与「过饱和」的分界。
+  static double _vibrance(double mx, double mn, double amount) {
+    if (mx <= 0) return 0;
+    final sat = ((mx - mn) / mx).clamp(0.0, 1.0);
+    final k = 1 - sat;
+    return amount * k * k;
+  }
+
+  /// S 曲线：以中灰为轴拉开中间调，两端平滑收敛。
+  /// [k] 为强度（0 时恒等）。用平滑步进与恒等函数按 k 混合实现，
+  /// 保证单调、无回绕、端点固定在 0/255。
+  static double _sCurve(double v, double k) {
+    final t = (v / 255).clamp(0.0, 1.0);
+    final sm = t * t * (3 - 2 * t); // smoothstep：中间调更陡、两端更平
+    return (t + (sm - t) * k) * 255;
   }
 
   // ─────────────────────────── 基础运算 ───────────────────────────
@@ -319,9 +412,35 @@ class PhotoEffects {
     }
   }
 
-  /// 经典 RGB 肤色判据：滤掉眼睛/眉毛/头发/嘴唇，避免磨糊五官。
-  static bool _isSkin(int r, int g, int b) =>
-      r > 95 && g > 40 && b > 20 && r > b && (r - math.min(g, b)) > 10;
+  /// 肤色权重 0–1（**软判据**，YCbCr 色度域）。
+  ///
+  /// 早期用的是经典 RGB 硬判据（`r>95 && g>40 && ...`），问题是它把阴影侧的
+  /// 皮肤、偏暗肤色整片排除在外——那些区域恰恰是最需要匀肤的地方，
+  /// 结果侧脸和逆光照几乎看不出美颜效果。
+  ///
+  /// 改用色度域软判据：Cb/Cr 落在肤色椭圆中心权重为 1，边缘线性衰减到 0。
+  /// **色度与亮度无关**，所以阴影里的皮肤同样能被识别；而眼睛、眉毛、头发、
+  /// 嘴唇的色度明显偏离该区域，权重仍为 0（完全不参与磨皮）。
+  static double _skinWeight(int r, int g, int b) {
+    final cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
+    final cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
+    // 经典 YCbCr 肤色窗口，边界各留 8 的软过渡带（避免权重突变造成色块）。
+    // 窗口刻意取得宽：偏红、偏黄、偏冷的肤色都要覆盖，漏掉就等于「没效果」。
+    final wCb = _window(cb, 77, 127, 8);
+    final wCr = _window(cr, 133, 177, 8);
+    if (wCb <= 0 || wCr <= 0) return 0;
+    // 亮度门控：极暗区（头发缝隙、鼻孔、瞳孔）色度不可信，一律不动
+    final y = 0.299 * r + 0.587 * g + 0.114 * b;
+    final wY = y <= 50 ? 0.0 : (y >= 80 ? 1.0 : (y - 50) / 30);
+    return wCb * wCr * wY;
+  }
+
+  /// 带软边的区间隶属度：[lo,hi] 内为 1，向外 [soft] 宽度内线性衰减到 0。
+  static double _window(double v, double lo, double hi, double soft) {
+    if (v < lo) return math.max(0.0, 1 - (lo - v) / soft);
+    if (v > hi) return math.max(0.0, 1 - (v - hi) / soft);
+    return 1;
+  }
 
   static double _lum(double r, double g, double b) =>
       0.299 * r + 0.587 * g + 0.114 * b;
