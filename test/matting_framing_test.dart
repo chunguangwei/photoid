@@ -184,6 +184,45 @@ void main() {
     });
   });
 
+  group('matteRoiFor 必须给肩膀留够（「没有肩膀」回归）', () {
+    test('ROI 横向不少于 5 个脸宽，肩膀不会被 ROI 边界切掉', () {
+      const w = 1200, h = 1800;
+      const face = Rect.fromLTWH(540, 400, 120, 150);
+      final roi = ImagePipeline.matteRoiFor(w, h, face, 0.75);
+      expect(roi, isNotNull);
+      // 肩宽约 2.5–3 个脸宽；ROI 必须比它宽出余量，否则掩码在边界被硬切，
+      // 成片里人物两侧被削平成纯底色
+      expect(roi!.width, greaterThanOrEqualTo(face.width * 5),
+          reason: '旧版按构图框×1.45 取 ROI，窄于肩宽，肩膀被切平');
+      expect(roi.bottom - face.bottom, greaterThanOrEqualTo(face.height * 3),
+          reason: '下巴以下要覆盖肩胸');
+    });
+  });
+
+  group('构图鲁棒性：头高被高估时不得把人物缩小（「人小且偏」回归）', () {
+    test('掩码头顶严重偏高（抠图误判）时，头部占比仍在合规区间', () {
+      const w = 800, h = 1200;
+      const face = Rect.fromLTWH(340, 300, 120, 150);
+      // 误判：掩码测出的头顶跑到画面最上方（背景残留连着头发的典型后果）
+      final r = cropFor(w, h, face, headTop: 2);
+      final headRatio = (face.bottom - (face.top - face.height * 0.55)) / r.height;
+      expect(headRatio, inInclusiveRange(0.45, 0.85),
+          reason: '头高必须被钳回可信区间，否则画幅按比例放大，人物又小又偏');
+    });
+
+    test('人像贴上边缘时 detectHeadTop 返回 null（头顶在画外，不可信）', () {
+      const w = 64, h = 64;
+      // 从第 0 行起就是前景：真实头顶在画外
+      final alpha = Uint8List(w * h);
+      for (var y = 0; y < 40; y++) {
+        for (var x = 16; x < 48; x++) {
+          alpha[y * w + x] = 255;
+        }
+      }
+      expect(detectHeadTop(alpha, w, h), isNull);
+    });
+  });
+
   group('cropRgbaWorker 按框裁像素', () {
     test('裁出的像素与源图对应位置一致', () {
       const w = 20, h = 20;

@@ -260,23 +260,30 @@ class ImagePipeline {
   /// - **收益不足就不裁**：ROI 面积超过源图 72% 时说明本就是半身构图，
   ///   裁了不改善精度，反而白白多一次全图拷贝。
   static Rect? matteRoiFor(int srcW, int srcH, Rect face, double aspect) {
-    /// 构图框外扩系数：留足头顶发饰、肩膀与手臂，避免 ROI 切掉真实人体
-    /// 导致掩码在边界处被硬切（那会在成片里留下直线切痕）。
-    const roiMargin = 1.45;
+    // ROI 以**人脸尺度**为基准，而不是以构图框为基准。
+    //
+    // 曾经按「构图框 × 1.45」取 ROI，结果把肩膀裁掉了：构图框宽只有其高的
+    // 0.75（证件照比例），乘 1.45 依然窄于人的肩宽，ROI 边界从肩膀中间切过
+    // ——掩码在边界处被硬切，成片里人物两侧被削平成纯底色（「没有肩膀」）。
+    // 人体比例是稳定的：肩宽约 2.5–3 个脸宽，所以横向必须按脸宽给足。
+    const sideFaces = 2.6; // 中线到左右各 2.6 个脸宽 ⇒ 总宽 5.2 脸宽
+    const upFaces = 1.6; // 头顶上方留 1.6 个脸高（含发饰、举起的手）
+    const downFaces = 4.0; // 下巴以下 4 个脸高，覆盖肩胸
 
-    final base = cropRectFor(srcW, srcH, face, aspect);
-    final cx = base.center.dx, cy = base.center.dy;
-    final halfW = base.width * roiMargin / 2;
-    final halfH = base.height * roiMargin / 2;
+    // 人脸够大（本就是证件照/半身照）时不裁：模型输入精度已足够，
+    // 裁了没收益，还多一次全图拷贝、多一重切到人体的风险。
+    if (face.width > srcW * 0.28 || face.height > srcH * 0.28) return null;
 
-    final left = math.max(0.0, cx - halfW);
-    final top = math.max(0.0, cy - halfH);
-    final right = math.min(srcW.toDouble(), cx + halfW);
-    final bottom = math.min(srcH.toDouble(), cy + halfH);
-    if (right - left < 32 || bottom - top < 32) return null;
+    final cx = face.center.dx;
+    final left = math.max(0.0, cx - face.width * sideFaces);
+    final right = math.min(srcW.toDouble(), cx + face.width * sideFaces);
+    final top = math.max(0.0, face.top - face.height * upFaces);
+    final bottom = math.min(srcH.toDouble(), face.bottom + face.height * downFaces);
+    if (right - left < 64 || bottom - top < 64) return null;
 
-    final roi = Rect.fromLTRB(
-        left.roundToDouble(), top.roundToDouble(), right.roundToDouble(), bottom.roundToDouble());
+    final roi = Rect.fromLTRB(left.roundToDouble(), top.roundToDouble(),
+        right.roundToDouble(), bottom.roundToDouble());
+    // 收益不足（ROI 几乎就是原图）就不裁
     if (roi.width * roi.height > srcW * srcH * 0.72) return null;
     return roi;
   }
@@ -332,7 +339,12 @@ class ImagePipeline {
         ? headTop
         : face.top - face.height * 0.55;
 
-    final headH = math.max(1.0, chin - crown);
+    // 头高合理性钳制：ML Kit 脸框（额头中部→下巴）与真实头高（发顶→下巴）
+    // 的比例在 1.2–1.8 之间。掩码测出的 crown 若因抠图误判（帽子、举手、
+    // 背景残留连着头发）而过高，headH 会被严重高估，导致画幅按比例放大、
+    // 人物在成片里又小又偏。这里无条件把头高压回可信区间。
+    final headH =
+        (chin - crown).clamp(face.height * 1.15, face.height * 1.85);
     var cropH = headH / headRatio;
     var cropW = cropH * aspect;
 
@@ -907,7 +919,14 @@ double? detectHeadTop(Uint8List alpha, int w, int h) {
       if (alpha[row + x] > 96) count++;
     }
     if (count >= need) {
-      if (++streak >= 2) return (y - 1).toDouble();
+      if (++streak >= 2) {
+        final top = y - 1;
+        // **贴着上边缘不可信**：说明人像被画面（或抠图前的 ROI 粗裁）截断，
+        // 真实头顶在画外，此时返回 0 会让「头顶→下巴」被高估，构图算出的
+        // 画幅远大于应有值——观感是人物又小又偏。交由人脸框兜底更准。
+        if (top <= 1) return null;
+        return top.toDouble();
+      }
     } else {
       streak = 0;
     }
