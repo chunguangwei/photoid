@@ -1,9 +1,9 @@
-# PhotoID 产品文档（当前版本 v0.5.2）
+# PhotoID 产品文档（当前版本 v0.6.0）
 
 > 本文档描述 **当前已实现** 的产品形态，随版本持续更新。
 > 历史规划稿见 [智能证件照App_PRD_V1.0.md](智能证件照App_PRD_V1.0.md)（保留存档，不代表现状）。
 
-- 当前版本：`0.5.2+34`（Android，GitHub Release tag `v0.5.2`）
+- 当前版本：`0.6.0+35`（Android，GitHub Release tag `v0.6.0`）
 - 平台：Android 8.0+（minSdk 26）/ iOS 15.5+
 - 仓库：https://github.com/chunguangwei/photoid
 - 联系：chunguangwee@gmail.com
