@@ -10,12 +10,10 @@ dependencies:
   camera: ^0.12.1
   flutter:
     sdk: flutter
-  flutter_launcher_icons: ^0.14.4
   flutter_localizations:
     sdk: flutter
   gal: ^2.3.3
   google_mlkit_face_detection: ^0.15.1
-  google_mlkit_selfie_segmentation: ^0.12.1
   http: ^1.6.0
   image: ^4.9.2
   image_picker: ^1.2.3
@@ -32,21 +30,24 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  # 纯构建期工具（生成启动器图标），不参与运行时，故放 dev
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   generate: true
   uses-material-design: true
+  # 注意：图标 PNG 不在此列——它们只是 flutter_launcher_icons 的构建输入，
+  # 应用代码从不 load，列进来会白白打进包体 1.4MB
   assets:
     - assets/photo_specs.json
-    - assets/icon.png
-    - assets/icon_foreground.png
-    - assets/splash_loading.png
     - assets/models/hivision_modnet.onnx
 
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon.png"
-  adaptive_icon_background: "#7B93C5"
-  adaptive_icon_foreground: "assets/icon_foreground.png"
+  image_path: "logo/icon.png"
+  # 背景用渐变图而非纯色：自适应图标在各家启动器的圆/方/水滴遮罩下
+  # 都能保留品牌渐变；前景是透明底的标记，位于安全区内不会被切
+  adaptive_icon_background: "logo/icon_background.png"
+  adaptive_icon_foreground: "logo/icon_foreground.png"
   remove_alpha_ios: true
