@@ -31,6 +31,17 @@ class _SplashPageState extends State<SplashPage>
   late final Animation<double> _floatOffset = Tween<double>(begin: -6, end: 6)
       .animate(CurvedAnimation(parent: _float, curve: Curves.easeInOut));
 
+  /// 左右摆头：旋转 ±3° + 水平 ±10 平移（3.2s 慢速往返）
+  late final AnimationController _sway = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 3200))
+    ..repeat(reverse: true);
+
+  late final Animation<double> _swayAngle =
+      Tween<double>(begin: -0.05, end: 0.05)
+          .animate(CurvedAnimation(parent: _sway, curve: Curves.easeInOut));
+  late final Animation<double> _swayX = Tween<double>(begin: -10, end: 10)
+      .animate(CurvedAnimation(parent: _sway, curve: Curves.easeInOut));
+
   Timer? _blinkTimer;
   Timer? _countdownTimer;
   int _remain = _totalSeconds;
@@ -68,6 +79,7 @@ class _SplashPageState extends State<SplashPage>
     _countdownTimer?.cancel();
     _blink.dispose();
     _float.dispose();
+    _sway.dispose();
     super.dispose();
   }
 
@@ -76,9 +88,19 @@ class _SplashPageState extends State<SplashPage>
     final l = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: scheme.surface,
-      body: SafeArea(
-        child: Column(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              scheme.primaryContainer.withValues(alpha: 0.35),
+              scheme.surface,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
           children: [
             // 跳过 + 倒计时
             Align(
@@ -100,10 +122,13 @@ class _SplashPageState extends State<SplashPage>
             const Spacer(flex: 2),
             // logo 白卡 + 眨眼双眼 + 浮动
             AnimatedBuilder(
-              animation: _floatOffset,
+              animation: Listenable.merge([_floatOffset, _sway]),
               builder: (context, child) => Transform.translate(
-                offset: Offset(0, _floatOffset.value),
-                child: child,
+                offset: Offset(_swayX.value, _floatOffset.value),
+                child: Transform.rotate(
+                  angle: _swayAngle.value,
+                  child: child,
+                ),
               ),
               child: Container(
                 width: 168,
@@ -112,10 +137,16 @@ class _SplashPageState extends State<SplashPage>
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(48),
                   boxShadow: [
+                    // 双层阴影：近处柔边深色 + 远处环境光，出质感
                     BoxShadow(
-                      color: scheme.primary.withValues(alpha: 0.15),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
+                      color: scheme.primary.withValues(alpha: 0.22),
+                      blurRadius: 18,
+                      offset: const Offset(0, 10),
+                    ),
+                    BoxShadow(
+                      color: scheme.primary.withValues(alpha: 0.08),
+                      blurRadius: 48,
+                      offset: const Offset(0, 24),
                     ),
                   ],
                 ),
@@ -129,7 +160,7 @@ class _SplashPageState extends State<SplashPage>
                     ),
                     // 双眼（logo 上半部，眨眼 scaleY）
                     Positioned(
-                      top: 52,
+                      top: 58,
                       child: AnimatedBuilder(
                         animation: _blink,
                         builder: (context, _) {
@@ -138,7 +169,7 @@ class _SplashPageState extends State<SplashPage>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               _eye(sy),
-                              const SizedBox(width: 28),
+                              const SizedBox(width: 22),
                               _eye(sy),
                             ],
                           );
@@ -158,22 +189,11 @@ class _SplashPageState extends State<SplashPage>
                 style: TextStyle(
                     fontSize: 12, color: scheme.onSurfaceVariant)),
             const Spacer(flex: 3),
-            // 广告位预留（本版占位，后续接广告 SDK 时替换内容）
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-              child: Container(
-                height: 60,
-                decoration: BoxDecoration(
-                  color: scheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                alignment: Alignment.center,
-                child: Text(l.splashAdPlaceholder,
-                    style: TextStyle(
-                        fontSize: 12, color: scheme.onSurfaceVariant)),
-              ),
-            ),
+            // 广告位槽（本版留空不展示文案，接广告 SDK 时在此填充）
+            const SizedBox(height: 60),
+            const SizedBox(height: 24),
           ],
+          ),
         ),
       ),
     );
@@ -182,8 +202,8 @@ class _SplashPageState extends State<SplashPage>
   Widget _eye(double scaleY) => Transform.scale(
         scaleY: scaleY,
         child: Container(
-          width: 12,
-          height: 12,
+          width: 13,
+          height: 13,
           decoration: const BoxDecoration(
             color: Color(0xFF2B2B2B),
             shape: BoxShape.circle,

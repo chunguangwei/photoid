@@ -13,7 +13,7 @@ Widget _wrap(Widget child) => MaterialApp(
     );
 
 void main() {
-  testWidgets('启动页：倒计时+跳过按钮+广告占位渲染，点跳过离开', (tester) async {
+  testWidgets('启动页：倒计时+跳过按钮渲染，点跳过离开', (tester) async {
     await tester.pumpWidget(_wrap(const SplashPage()));
     await tester.pump();
     final l = await AppLocalizations.delegate
@@ -21,8 +21,8 @@ void main() {
 
     // 倒计时跳过按钮
     expect(find.text(l.splashSkip(6)), findsOneWidget);
-    // 广告占位
-    expect(find.text(l.splashAdPlaceholder), findsOneWidget);
+    // 广告位槽留空：不展示「广告位」文案
+    expect(find.text(l.splashAdPlaceholder), findsNothing);
 
     await tester.tap(find.text(l.splashSkip(6)));
     await tester.pumpAndSettle();

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -36,6 +37,10 @@ class _UpdateDialog extends StatefulWidget {
 
 class _UpdateDialogState extends State<_UpdateDialog> {
   static const _apkName = 'photoid-update.apk';
+  static const _partName = 'photoid-update.apk.part';
+  // 断点续传状态（杀进程后仍可续）
+  static const _prefUrl = 'upd_resume_url';
+  static const _prefTotal = 'upd_resume_total';
 
   _DlState _state = _DlState.idle;
   int _received = 0;
@@ -48,12 +53,12 @@ class _UpdateDialogState extends State<_UpdateDialog> {
     super.dispose();
   }
 
+  /// 断点续传下载：
+  /// 1. 分片写入 .part 文件，URL/总大小持久化到 SharedPreferences
+  /// 2. 重试/重启后发现同 URL 分片 → Range: bytes=N- 续传（服务器需 206）
+  /// 3. 完成后改名正式 APK 并清状态；切后台被杀/网络中断均可从断点继续
   Future<void> _startDownload() async {
-    setState(() {
-      _state = _DlState.downloading;
-      _received = 0;
-      _total = 0;
-    });
+    setState(() => _state = _DlState.downloading);
     final client = http.Client();
     _client = client;
     try {
@@ -62,16 +67,39 @@ class _UpdateDialogState extends State<_UpdateDialog> {
           await UpdateService().resolveDownloadUrl(widget.info.downloadUrl);
       // cache 目录：open_filex FileProvider 覆盖，且系统清理策略友好
       final dir = await getTemporaryDirectory();
+      final part = File(p.join(dir.path, _partName));
       final file = File(p.join(dir.path, _apkName));
       if (await file.exists()) await file.delete();
+      final prefs = await SharedPreferences.getInstance();
 
-      final response =
-          await client.send(http.Request('GET', Uri.parse(url)));
-      if (response.statusCode != 200) {
+      // 断点恢复：同 URL 且有分片 → 从已有长度续传
+      var resumeFrom = 0;
+      if (prefs.getString(_prefUrl) == url && await part.exists()) {
+        resumeFrom = await part.length();
+      } else if (await part.exists()) {
+        await part.delete();
+      }
+
+      final req = http.Request('GET', Uri.parse(url));
+      if (resumeFrom > 0) req.headers['Range'] = 'bytes=$resumeFrom-';
+      final response = await client.send(req);
+      if (resumeFrom > 0 && response.statusCode != 206) {
+        // 服务器不支持续传：重来
+        resumeFrom = 0;
+        await part.delete();
+      }
+      if (response.statusCode != 200 && response.statusCode != 206) {
         throw HttpException('HTTP ${response.statusCode}');
       }
-      _total = response.contentLength ?? 0;
-      final sink = file.openWrite();
+      _received = resumeFrom;
+      _total = resumeFrom > 0
+          ? resumeFrom + (response.contentLength ?? 0)
+          : (response.contentLength ?? 0);
+      await prefs.setString(_prefUrl, url);
+      await prefs.setInt(_prefTotal, _total);
+
+      final sink = part.openWrite(
+          mode: resumeFrom > 0 ? FileMode.append : FileMode.write);
       await for (final chunk in response.stream) {
         sink.add(chunk);
         _received += chunk.length;
@@ -79,10 +107,13 @@ class _UpdateDialogState extends State<_UpdateDialog> {
       }
       await sink.flush();
       await sink.close();
-      // 完整性校验：长度不符视为失败，防止装到半截包
+      // 完整性校验：长度不符视为失败，防止装到半截包（分片保留可续）
       if (_total > 0 && _received != _total) {
         throw const HttpException('incomplete');
       }
+      await part.rename(file.path);
+      await prefs.remove(_prefUrl);
+      await prefs.remove(_prefTotal);
       if (!mounted) return;
       setState(() => _state = _DlState.done);
       await _install(file.path);
