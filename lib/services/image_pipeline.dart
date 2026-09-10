@@ -76,21 +76,23 @@ class ImagePipeline {
   Future<PipelineResult> run(String sourcePath, PhotoSpec spec,
       {bool flipHorizontal = false,
       MattingEngine engine = MattingEngine.mlkit}) async {
-    // 1. 解码 + 按 EXIF 旋转归一化（image 包不保证自动应用方向）
+    // 1. 解码 + 按 EXIF 旋转归一化（image 包不保证自动应用方向）。
+    // 解码/EXIF/缩放是重活（12MP 可达秒级），放后台 isolate
+    // 防 UI 冻结（处理页扫描/进度条动画卡顿根因）
     _report(PipelineStep.reading);
-    final rawBytes = await File(sourcePath).readAsBytes();
-    var work = img.decodeImage(rawBytes);
-    if (work == null) {
+    final loaded = await compute(_loadWork, <String, Object>{
+      'path': sourcePath,
+      'flip': flipHorizontal,
+      'maxSide': _maxWorkSide,
+    });
+    if (loaded == null) {
       throw PipelineException('readPhoto');
     }
-    work = img.bakeOrientation(work);
-    // 前置摄像头预览是镜像，takePicture 输出为传感器原始方向，需水平翻转对齐用户所见
-    if (flipHorizontal) work = img.flipHorizontal(work);
-    if (work.width > _maxWorkSide || work.height > _maxWorkSide) {
-      work = work.width >= work.height
-          ? img.copyResize(work, width: _maxWorkSide)
-          : img.copyResize(work, height: _maxWorkSide);
-    }
+    var work = img.Image.fromBytes(
+        width: loaded.w,
+        height: loaded.h,
+        bytes: loaded.rgba.buffer,
+        numChannels: 4);
 
     // ML Kit 输入文件：无 EXIF，保证人脸框坐标与 work 对齐。
     // 降级到 ≤960px/q85：vivo 等机型 MediaPipe 处理大输入会空 Packet
@@ -128,15 +130,13 @@ class ImagePipeline {
     }
     // 轻度羽化，保证边缘过渡自然
     maskImg = img.gaussianBlur(maskImg, radius: 3);
-    // 高精版走精修掩码（消白边三件套：置信度锐化截断半透明环带 →
-    // 3×3 腐蚀 1px 去残留 → 羽化）；普通版跳过重活直接合成
-    final maskW = engine == MattingEngine.modnet
-        ? await compute(_refineMask, <String, Object>{
-            'mask': maskImg.getBytes(),
-            'width': work.width,
-            'height': work.height,
-          })
-        : maskImg.getBytes();
+    // 两档统一精修掩码（消白边三件套：置信度锐化截断半透明环带 →
+    // 3×3 腐蚀 1px 去残留 → 羽化）——基础画质不做档位差异
+    final maskW = await compute(_refineMask, <String, Object>{
+      'mask': maskImg.getBytes(),
+      'width': work.width,
+      'height': work.height,
+    });
     _report(PipelineStep.compositing);
     final outBytes = await compute(_composite, <String, Object>{
       'rgba': work.getBytes(order: img.ChannelOrder.rgba),
@@ -183,12 +183,17 @@ class ImagePipeline {
 
     // 5. 缩放到目标像素并二分压缩到 KB 区间
     _report(PipelineStep.compressing);
-    final output = resizeToSpecUniform(
+    var output = resizeToSpecUniform(
         framed,
         spec.pixelWidth,
         spec.pixelHeight,
         img.ColorRgb8(
             spec.background.r, spec.background.g, spec.background.b));
+    // 档位差异（可见维度）：高精版加一道轻锐化，发丝/轮廓更利落
+    if (engine == MattingEngine.modnet) {
+      output = img.convolution(output,
+          filter: [0, -0.3, 0, -0.3, 2.2, -0.3, 0, -0.3, 0]);
+    }
     final jpg = encodeToKbRange(output, spec.minFileKb, spec.maxFileKb);
 
     mlFile.delete().ignore();
@@ -479,4 +484,31 @@ Uint8List _refineMask(Map<String, Object> args) {
     }
   }
   return out;
+}
+/// 后台 isolate 读图结果
+class _LoadedWork {
+  const _LoadedWork(this.w, this.h, this.rgba);
+
+  final int w;
+  final int h;
+  final Uint8List rgba;
+}
+
+/// isolate 入口：解码 → EXIF 归一化 → 镜像补偿 → 限边缩放
+_LoadedWork? _loadWork(Map<String, Object> args) {
+  final path = args['path'] as String;
+  final flip = args['flip'] as bool;
+  final maxSide = args['maxSide'] as int;
+  var work = img.decodeImage(File(path).readAsBytesSync());
+  if (work == null) return null;
+  work = img.bakeOrientation(work);
+  // 前置摄像头预览是镜像，takePicture 输出为传感器原始方向，需水平翻转对齐用户所见
+  if (flip) work = img.flipHorizontal(work);
+  if (work.width > maxSide || work.height > maxSide) {
+    work = work.width >= work.height
+        ? img.copyResize(work, width: maxSide)
+        : img.copyResize(work, height: maxSide);
+  }
+  return _LoadedWork(
+      work.width, work.height, work.getBytes(order: img.ChannelOrder.rgba));
 }
