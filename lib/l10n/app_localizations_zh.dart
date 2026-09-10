@@ -548,6 +548,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get beautyLabel => '美颜';
 
   @override
+  String get clarityLabel => '清晰度';
+
+  @override
   String get customUnitPx => 'PX';
 
   @override

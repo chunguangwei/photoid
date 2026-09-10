@@ -10,30 +10,76 @@ import 'package:path_provider/path_provider.dart';
 
 import '../models/photo_spec.dart';
 import 'modnet_segmenter.dart';
+import 'photo_effects.dart';
 
-/// 抠图引擎：mlkit=快速普通版；modnet=高精修发丝级（失败自动回退 mlkit）。
+/// 抠图引擎：两档均使用 MODNet，`modnet`（高精修）额外做一道轻锐化。
 enum MattingEngine { mlkit, modnet }
-
-/// 美颜为连续强度 0.0–1.0（用户拖拽），参数线性映射，见 [beautify]。
 
 /// 流水线处理步骤（UI 层据此映射 l10n 键，文案改动不影响翻译）。
 enum PipelineStep { preparing, reading, segmenting, compositing, framing, compressing }
-class PipelineException implements Exception {
 
+class PipelineException implements Exception {
   PipelineException(this.code);
   final String code;
   @override
   String toString() => code;
 }
 
+/// 成片交付参数（裁剪框 + 规格 + 效果强度）。
+///
+/// 独立成类是为了让「首次出片」「用户改裁剪框」「用户改美颜/清晰度」
+/// 三条路径复用同一个 isolate 入口 [deliverWorker]——主 isolate 永远
+/// 不碰像素，杜绝保存/调参瞬间的 UI 冻结。
+@immutable
+class DeliveryRequest {
+  const DeliveryRequest({
+    required this.rgba,
+    required this.width,
+    required this.height,
+    required this.crop,
+    required this.faceRect,
+    required this.targetWidth,
+    required this.targetHeight,
+    required this.bg,
+    required this.minKb,
+    required this.maxKb,
+    this.beauty = 0,
+    this.clarity = 0,
+    this.sharpen = false,
+  });
+
+  /// 换底后的完整工作图（RGBA）
+  final Uint8List rgba;
+  final int width;
+  final int height;
+
+  /// 裁剪框（工作图坐标系，**允许越界**：越界部分用底色补齐）
+  final Rect crop;
+
+  /// 人脸框（工作图坐标系），面部精修定位用
+  final Rect faceRect;
+  final int targetWidth;
+  final int targetHeight;
+
+  /// 底色 RGB
+  final Uint8List bg;
+  final int minKb;
+  final int maxKb;
+  final double beauty;
+  final double clarity;
+
+  /// 高精修档的轻锐化
+  final bool sharpen;
+}
+
 class PipelineResult {
-  PipelineResult({
+  const PipelineResult({
     required this.jpgBytes,
     required this.originalBytes,
-    required this.processed,
-    required this.original,
-    required this.composited,
     required this.compositedJpg,
+    required this.compositedRgba,
+    required this.compositedWidth,
+    required this.compositedHeight,
     required this.autoCrop,
     required this.faceRect,
   });
@@ -44,27 +90,28 @@ class PipelineResult {
   /// 原图预览字节（归一化后、工作分辨率）
   final Uint8List originalBytes;
 
-  /// 处理后的成片（规格像素，自动构图）
-  final img.Image processed;
-
-  /// 归一化后的原图（工作分辨率，用于原图/效果对比）
-  final img.Image original;
-
-  /// 换底后的完整工作图（交互裁剪编辑器的底图）
-  final img.Image composited;
-
   /// composited 的 JPEG 预览字节（编辑器显示用）
   final Uint8List compositedJpg;
 
-  /// 自动构图裁剪框（composited 坐标系），编辑器的初始变换
+  /// 换底后的完整工作图 RGBA（交互裁剪与效果重算的像素源）
+  final Uint8List compositedRgba;
+  final int compositedWidth;
+  final int compositedHeight;
+
+  /// 自动构图裁剪框（composited 坐标系，可能越界 → 交付时底色补齐）
   final Rect autoCrop;
 
-  /// 人脸框（composited 坐标系），精修磨皮区域定位
+  /// 人脸框（composited 坐标系）
   final Rect faceRect;
 }
 
 /// 处理流水线：EXIF 归一化 → 抠图 → 底色合成 → 人脸构图裁剪 → 二分压缩。
 /// 全流程端侧执行，无网络请求。
+///
+/// 线程模型（关键约束，勿回退）：主 isolate **不做任何像素级运算**。
+/// 解码/抠图/精修掩码/合成/裁剪/缩放/编码全部在后台 isolate，
+/// 主 isolate 只负责调度与进度上报——处理页的扫描动效与进度条
+/// 因此能保持满帧。
 class ImagePipeline {
   ImagePipeline({this.onProgress});
 
@@ -75,27 +122,19 @@ class ImagePipeline {
 
   Future<PipelineResult> run(String sourcePath, PhotoSpec spec,
       {bool flipHorizontal = false,
-      MattingEngine engine = MattingEngine.mlkit}) async {
-    // 1. 解码 + 按 EXIF 旋转归一化（image 包不保证自动应用方向）。
-    // 解码/EXIF/缩放是重活（12MP 可达秒级），放后台 isolate
-    // 防 UI 冻结（处理页扫描/进度条动画卡顿根因）
+      MattingEngine engine = MattingEngine.mlkit,
+      double beauty = 0,
+      double clarity = 0}) async {
+    // 1. 解码 + EXIF 归一化 + 限边缩放 + ML Kit 输入编码（全在 isolate）
     _report(PipelineStep.reading);
     final loaded = await compute(_loadWork, <String, Object>{
       'path': sourcePath,
       'flip': flipHorizontal,
       'maxSide': _maxWorkSide,
     });
-    if (loaded == null) {
+    if (loaded == null || loaded.mlJpg.isEmpty) {
       throw PipelineException('readPhoto');
     }
-    var work = img.Image.fromBytes(
-        width: loaded.w,
-        height: loaded.h,
-        bytes: loaded.rgba.buffer,
-        numChannels: 4);
-    // mlJpg 已在同一 isolate 内编码（960px/q85），主线程零重活
-    final mlScale = loaded.mlScale;
-    final mlBytes = loaded.mlJpg;
 
     // ML Kit 输入文件：无 EXIF，保证人脸框坐标与 work 对齐。
     // 降级到 ≤960px/q85：vivo 等机型 MediaPipe 处理大输入会空 Packet
@@ -103,208 +142,151 @@ class ImagePipeline {
     final dir = await getTemporaryDirectory();
     final mlFile = File(p.join(
         dir.path, 'photoid_ml_${DateTime.now().millisecondsSinceEpoch}.jpg'));
-    if (mlBytes.isEmpty) throw PipelineException('readPhoto');
-    await mlFile.writeAsBytes(mlBytes);
-    // 2. 人像分割（双引擎：高精修=MODNet 发丝级；普通=ML Kit 快速）
-    _report(PipelineStep.segmenting);
-    // 分割统一走 MODNet（ML Kit 分割在部分机型原生崩溃杀进程；
-    // 模型固定 512 输入）。两档统一精修掩码，档位差异=高精输出轻锐化
-    final maskBytes = await ModnetSegmenter.segment(work);
-    var maskImg = img.Image.fromBytes(
-        width: work.width,
-        height: work.height,
-        bytes: maskBytes.buffer,
-        numChannels: 1);
-    if (maskImg.width != work.width || maskImg.height != work.height) {
-      maskImg = img.copyResize(maskImg,
-          width: work.width,
-          height: work.height,
-          interpolation: img.Interpolation.linear);
-    }
-    // 轻度羽化，保证边缘过渡自然
-    maskImg = img.gaussianBlur(maskImg, radius: 3);
-    // 两档统一精修掩码（消白边三件套：置信度锐化截断半透明环带 →
-    // 3×3 腐蚀 1px 去残留 → 羽化）——基础画质不做档位差异
-    final maskW = await compute(_refineMask, <String, Object>{
-      'mask': maskImg.getBytes(),
-      'width': work.width,
-      'height': work.height,
-    });
-    _report(PipelineStep.compositing);
-    final outBytes = await compute(_composite, <String, Object>{
-      'rgba': work.getBytes(order: img.ChannelOrder.rgba),
-      'width': work.width,
-      'height': work.height,
-      'mask': maskW,
-      'bg': Uint8List.fromList(
-          [spec.background.r, spec.background.g, spec.background.b]),
-    });
-    final composited = img.Image.fromBytes(
-        width: work.width,
-        height: work.height,
-        bytes: outBytes.buffer,
-        numChannels: 4);
+    await mlFile.writeAsBytes(loaded.mlJpg);
 
-    // 4. 人脸检测 + 自动构图裁剪
-    _report(PipelineStep.framing);
-    final detector = FaceDetector(
-        options:
-            FaceDetectorOptions(performanceMode: FaceDetectorMode.accurate));
-    final faces = await _withMlKitFallback(detector.processImage, mlFile, work);
-    detector.close();
-    if (faces.isEmpty) {
-      throw PipelineException('noFace');
+    try {
+      // 2. 人像分割与人脸检测**并行**：前者跑常驻 worker isolate，
+      //    后者跑 ML Kit 原生线程，互不争抢，整体耗时 ≈ max 而非 sum。
+      _report(PipelineStep.segmenting);
+      final maskFuture =
+          ModnetSegmenter.segmentRgba(loaded.rgba, loaded.w, loaded.h);
+      final faceFuture = _detectFace(mlFile, loaded);
+
+      final maskBytes = await maskFuture;
+      final faceRect = await faceFuture;
+
+      // 3. 掩码精修 + 前景色解混 + 换底合成 + 自动构图 + 底色补边（isolate）
+      _report(PipelineStep.compositing);
+      final bgRgb = Uint8List.fromList(
+          [spec.background.r, spec.background.g, spec.background.b]);
+      final comp = await compute(_compositeWork, <String, Object>{
+        'rgba': loaded.rgba,
+        'width': loaded.w,
+        'height': loaded.h,
+        'mask': maskBytes,
+        'bg': bgRgb,
+        'face': faceRect,
+        'aspect': spec.aspect,
+      });
+
+      // 4. 裁剪 → 规格缩放 → 效果 → 二分压缩（isolate）
+      _report(PipelineStep.framing);
+      final jpg = await compute(
+        deliverWorker,
+        DeliveryRequest(
+          rgba: comp.rgba,
+          width: comp.width,
+          height: comp.height,
+          crop: comp.autoCrop,
+          faceRect: comp.faceRect,
+          targetWidth: spec.pixelWidth,
+          targetHeight: spec.pixelHeight,
+          bg: bgRgb,
+          minKb: spec.minFileKb,
+          maxKb: spec.maxFileKb,
+          beauty: beauty,
+          clarity: clarity,
+          sharpen: engine == MattingEngine.modnet,
+        ),
+      );
+      _report(PipelineStep.compressing);
+
+      return PipelineResult(
+        jpgBytes: jpg,
+        originalBytes: comp.originalJpg,
+        compositedJpg: comp.jpg,
+        compositedRgba: comp.rgba,
+        compositedWidth: comp.width,
+        compositedHeight: comp.height,
+        autoCrop: comp.autoCrop,
+        faceRect: comp.faceRect,
+      );
+    } finally {
+      mlFile.delete().ignore();
     }
+  }
+
+  /// 人脸检测（最大脸），返回 work 坐标系人脸框；未检出抛 `noFace`。
+  Future<Rect> _detectFace(File mlFile, _LoadedWork loaded) async {
+    final detector = FaceDetector(
+        options: FaceDetectorOptions(performanceMode: FaceDetectorMode.accurate));
+    final List<Face> faces;
+    try {
+      faces = await _withMlKitFallback(detector.processImage, mlFile, loaded);
+    } finally {
+      detector.close();
+    }
+    if (faces.isEmpty) throw PipelineException('noFace');
     final face = faces.reduce((a, b) =>
         a.boundingBox.width * a.boundingBox.height >=
                 b.boundingBox.width * b.boundingBox.height
             ? a
             : b);
-    // 人脸框从 ML 输入坐标映射回 work/composited 坐标
-    final invScale = mlScale < 1 ? 1 / mlScale : 1.0;
-    final faceRect = Rect.fromLTRB(
-        face.boundingBox.left * invScale,
-        face.boundingBox.top * invScale,
-        face.boundingBox.right * invScale,
-        face.boundingBox.bottom * invScale);
-    final autoCrop = _cropRect(composited, faceRect, spec);
-    final framed = img.copyCrop(composited,
-        x: autoCrop.left.round(),
-        y: autoCrop.top.round(),
-        width: autoCrop.width.round(),
-        height: autoCrop.height.round());
-
-    // 5. 缩放到目标像素并二分压缩到 KB 区间
-    _report(PipelineStep.compressing);
-    var output = resizeToSpecUniform(
-        framed,
-        spec.pixelWidth,
-        spec.pixelHeight,
-        img.ColorRgb8(
-            spec.background.r, spec.background.g, spec.background.b));
-    // 档位差异（可见维度）：高精版加一道轻锐化，发丝/轮廓更利落
-    if (engine == MattingEngine.modnet) {
-      output = img.convolution(output,
-          filter: [0, -0.2, 0, -0.2, 1.8, -0.2, 0, -0.2, 0]);
-    }
-    final jpg = encodeToKbRange(output, spec.minFileKb, spec.maxFileKb);
-
-    mlFile.delete().ignore();
-    return PipelineResult(
-      jpgBytes: jpg,
-      originalBytes: img.encodeJpg(work, quality: 88),
-      processed: output,
-      original: work,
-      composited: composited,
-      compositedJpg: img.encodeJpg(composited, quality: 90),
-      autoCrop: autoCrop,
-      faceRect: faceRect,
-    );
+    // 人脸框从 ML 输入坐标映射回 work 坐标
+    final s = loaded.mlScale < 1 ? 1 / loaded.mlScale : 1.0;
+    return Rect.fromLTRB(
+        face.boundingBox.left * s,
+        face.boundingBox.top * s,
+        face.boundingBox.right * s,
+        face.boundingBox.bottom * s);
   }
 
-  /// 以人脸框计算构图裁剪框（不扩边）：头部（人脸框×1.5 补偿头顶）约占
-  /// 照片高 62%，水平居中，顶部留白约 10%。
-  /// crop 超出图像时先等比缩到图内、再平移回界内——填充优先：
-  /// 已合规的照片不会被缩出一圈底色边。
-  static Rect cropRectFor(
-      int srcW, int srcH, Rect face, double aspect) {
-    final headH = face.height * 1.5;
-    var cropH = headH / 0.62;
+  /// 以「头顶 → 下巴」的真实头部高度计算构图裁剪框。
+  ///
+  /// 头部占成片高度 [_headRatio]，头顶留白 [_topMarginRatio]，水平居下巴中线。
+  ///
+  /// **关键设计：裁剪框允许越出源图**——越界部分在交付时用底色补齐。
+  /// 背景已是纯色，补边完全不可见；而旧版把框钳进图内会直接切掉头顶或
+  /// 肩膀（原图人物顶天立地时必然发生），这是「人物轮廓丢失」的主因。
+  /// 唯一例外是**底边不补**：身体下方悬空一块纯色会很假，
+  /// 因此底边超出时整体上移，宁可少一点头顶留白。
+  static Rect cropRectFor(int srcW, int srcH, Rect face, double aspect,
+      {double? headTop}) {
+    /// 头部（头顶→下巴）占成片高度
+    const headRatio = 0.62;
+
+    /// 头顶到画面上沿的留白，占成片高度
+    const topMarginRatio = 0.11;
+
+    final chin = face.bottom;
+    // 掩码头顶不可信（未传 / 高于人脸框太多，如举手、帽饰）时退回经验值：
+    // ML Kit 框上沿约在额头中部，头顶再往上约 0.55 个脸高
+    final crown = (headTop != null &&
+            headTop < face.top &&
+            headTop > face.top - face.height * 1.3)
+        ? headTop
+        : face.top - face.height * 0.55;
+
+    final headH = math.max(1.0, chin - crown);
+    var cropH = headH / headRatio;
     var cropW = cropH * aspect;
-    // 画幅不能无限放大：限制在源图短边的 3 倍内，避免过度放大模糊
-    final maxCrop = math.max(srcW, srcH) * 3.0;
-    if (cropH > maxCrop) {
-      cropH = maxCrop.toDouble();
-      cropW = cropH * aspect;
-    }
-    // 超出图像则等比缩到能放下
-    final fit = math.min(srcW / cropW, srcH / cropH);
-    if (fit < 1) {
-      cropW *= fit;
-      cropH *= fit;
-    }
-    // 高由宽 ÷ 比例推导（比例锁定，杜绝拉伸）；钳制后回推宽
-    var cropWi = cropW.round().clamp(1, srcW);
-    var cropHi = (cropWi / aspect).round().clamp(1, srcH);
-    cropWi = (cropHi * aspect).round().clamp(1, srcW);
-    cropHi = (cropWi / aspect).round().clamp(1, srcH);
-    final cx = face.left + face.width / 2;
-    // 先补偿头顶（face.height×0.5）再留 10% 白边
-    final top = face.top - face.height * 0.5 - cropH * 0.10;
-    final left = cx - cropW / 2;
-    final x = left.round().clamp(0, srcW - cropWi).toDouble();
-    final y = top.round().clamp(0, srcH - cropHi).toDouble();
-    return Rect.fromLTWH(x, y, cropWi.toDouble(), cropHi.toDouble());
-  }
 
-  Rect _cropRect(img.Image source, Rect face, PhotoSpec spec) =>
-      cropRectFor(source.width, source.height, face, spec.aspect);
-
-  /// 美颜（保真路线，行业最佳实践对齐）：
-  /// 面部椭圆 × **肤色门控**（眼睛/嘴唇/头发/眉毛不磨皮，杜绝糊五官）+
-  /// 全图微提亮/微润色（≤8%，审核安全）。无瘦脸大眼等形变。
-  /// [intensity] 0.0–1.0 连续强度（用户拖拽）；0 = 原图。
-  /// [face] 为输出图坐标系人脸框。
-  static img.Image beautify(img.Image src, Rect face, double intensity) {
-    if (intensity <= 0) return src;
-    intensity = intensity.clamp(0.0, 1.0);
-    final blurred = img.gaussianBlur(src.clone(), radius: 5);
-    final cx = face.left + face.width / 2;
-    final cy = face.top + face.height / 2;
-    final rx = face.width * 0.62;
-    final ry = face.height * 0.72;
-    final k = 0.75 * intensity; // 磨皮混合上限 75%，保皮肤纹理
-    final x0 = math.max(0, (cx - rx).floor());
-    final x1 = math.min(src.width - 1, (cx + rx).ceil());
-    final y0 = math.max(0, (cy - ry).floor());
-    final y1 = math.min(src.height - 1, (cy + ry).ceil());
-    for (var y = y0; y <= y1; y++) {
-      for (var x = x0; x <= x1; x++) {
-        final dx = (x - cx) / rx;
-        final dy = (y - cy) / ry;
-        if (dx * dx + dy * dy > 1) continue;
-        final sp = src.getPixel(x, y);
-        // 肤色门控（经典 RGB 规则）：非肤色像素（眼/唇/眉/发）跳过
-        final r = sp.r.toInt(), g = sp.g.toInt(), b = sp.b.toInt();
-        final isSkin = r > 95 &&
-            g > 40 &&
-            b > 20 &&
-            r > b &&
-            (r - math.min(g, b)) > 10;
-        if (!isSkin) continue;
-        final bp = blurred.getPixel(x, y);
-        src.setPixelRgb(
-            x,
-            y,
-            (sp.r * (1 - k) + bp.r * k).round(),
-            (sp.g * (1 - k) + bp.g * k).round(),
-            (sp.b * (1 - k) + bp.b * k).round());
-      }
+    // 画幅不能超过源图太多：越界部分要靠底色补边，补太多会让人物在纯色里
+    // 「悬浮」，也会把工作图撑到数倍内存。1.5 倍足够覆盖极端大头照。
+    final maxW = srcW * 1.5, maxH = srcH * 1.5;
+    if (cropW > maxW || cropH > maxH) {
+      final f = math.min(maxW / cropW, maxH / cropH);
+      cropW *= f;
+      cropH *= f;
     }
-    // 微提亮 + 微润色（随强度线性，上限保守）
-    return img.adjustColor(src,
-        brightness: 1 + 0.06 * intensity,
-        saturation: 1 + 0.08 * intensity);
-  }
 
-  /// 等比缩放到规格像素：只用单一缩放因子（宽向对齐），杜绝拉伸。
-  /// 源图比例已由裁剪框锁定，高度与目标的舍入差 ≤1px：
-  /// 多出则从底部裁掉，不足用底色补齐。
-  static img.Image resizeToSpecUniform(
-      img.Image src, int targetW, int targetH, img.Color bg) {
-    final f = targetW / src.width;
-    var out = img.copyResize(src,
-        width: targetW,
-        height: (src.height * f).round(),
-        interpolation: img.Interpolation.cubic);
-    if (out.height == targetH) return out;
-    if (out.height > targetH) {
-      return img.copyCrop(out, x: 0, y: 0, width: targetW, height: targetH);
-    }
-    final canvas =
-        img.Image(width: targetW, height: targetH, backgroundColor: bg);
-    img.compositeImage(canvas, out, dstX: 0, dstY: 0);
-    return canvas;
+    // 宽高整数化，比例由宽推导后回推，杜绝舍入造成的拉伸
+    var cropWi = math.max(1, cropW.round());
+    var cropHi = math.max(1, (cropWi / aspect).round());
+    cropWi = math.max(1, (cropHi * aspect).round());
+
+    // 纵向：头顶上方留 topMarginRatio 的白
+    var top = crown - cropHi * topMarginRatio;
+    // 底边不补色：超出源图时整体上移（不足以完全容纳时贴底）
+    if (top + cropHi > srcH) top = (srcH - cropHi).toDouble();
+    // 顶边可以补色，但不允许把头顶推出画面
+    if (top > crown) top = crown;
+
+    // 横向：以下巴中线居中，两侧越界由底色补齐（纯背景，不可见）
+    final left = (face.left + face.width / 2) - cropWi / 2;
+
+    return Rect.fromLTWH(
+        left.roundToDouble(), top.roundToDouble(), cropWi.toDouble(), cropHi.toDouble());
   }
 
   /// 二分 JPEG 质量压到 maxKb 以下（优先接近上限的最高质量）。
@@ -339,8 +321,7 @@ class ImagePipeline {
     // 目标钳制在 [min, max]：min>max 的异常输入也不能撑破上限
     final floorKb = maxKb > 0 ? math.min(minKb, maxKb) : minKb;
     if (floorKb > 0 && best.lengthInBytes < floorKb * 1024) {
-      final padded = Uint8List(floorKb * 1024)
-        ..setRange(0, best.length, best);
+      final padded = Uint8List(floorKb * 1024)..setRange(0, best.length, best);
       for (var i = best.length; i < padded.length; i++) {
         padded[i] = 0xFF;
       }
@@ -349,41 +330,86 @@ class ImagePipeline {
     return best;
   }
 
+  /// 底色补边裁剪：[crop] 可越界，越界区域填 [bg]。
+  /// 换底后背景是纯色，所以补边与真实背景完全无缝。
+  static img.Image paddedCrop(img.Image src, Rect crop, img.ColorRgb8 bg) {
+    final w = math.max(1, crop.width.round());
+    final h = math.max(1, crop.height.round());
+    final x = crop.left.round();
+    final y = crop.top.round();
+    if (x >= 0 && y >= 0 && x + w <= src.width && y + h <= src.height) {
+      return img.copyCrop(src, x: x, y: y, width: w, height: h);
+    }
+    final canvas = _filled(w, h, bg);
+    // 源图与裁剪框的交集，整块搬到画布对应位置
+    final sx = math.max(0, x);
+    final sy = math.max(0, y);
+    final ex = math.min(src.width, x + w);
+    final ey = math.min(src.height, y + h);
+    if (ex > sx && ey > sy) {
+      final piece =
+          img.copyCrop(src, x: sx, y: sy, width: ex - sx, height: ey - sy);
+      img.compositeImage(canvas, piece, dstX: sx - x, dstY: sy - y);
+    }
+    return canvas;
+  }
+
+  /// 建一张**真正填充了底色**的画布。
+  ///
+  /// 坑：`img.Image(backgroundColor:)` 只是记录属性，并不会写像素，
+  /// 直接用会得到全黑底——补边/补齐区域会出现黑边。必须显式 fill。
+  static img.Image _filled(int w, int h, img.Color bg) =>
+      img.fill(img.Image(width: w, height: h), color: bg);
+
+  /// 等比缩放到规格像素：只用单一缩放因子（宽向对齐），杜绝拉伸。
+  /// 源图比例已由裁剪框锁定，高度与目标的舍入差 ≤1px：
+  /// 多出则从底部裁掉，不足用底色补齐。
+  static img.Image resizeToSpecUniform(
+      img.Image src, int targetW, int targetH, img.Color bg) {
+    final f = targetW / src.width;
+    final out = img.copyResize(src,
+        width: targetW,
+        height: math.max(1, (src.height * f).round()),
+        interpolation: img.Interpolation.cubic);
+    if (out.height == targetH) return out;
+    if (out.height > targetH) {
+      return img.copyCrop(out, x: 0, y: 0, width: targetW, height: targetH);
+    }
+    final canvas = _filled(targetW, targetH, bg);
+    img.compositeImage(canvas, out, dstX: 0, dstY: 0);
+    return canvas;
+  }
+
   void _report(PipelineStep step) => onProgress?.call(step);
 
   /// 双通路执行 ML Kit 任务：NV21 为主，PlatformException 时回退 fromFile。
   /// 背景：fromFilePath 在部分机型 NPE（不挂 MediaImage）；NV21 在华为等
   /// 无 GMS/受限设备上又报 internal error——两路互备覆盖两类故障。
-  Future<T> _withMlKitFallback<T>(
-      Future<T> Function(InputImage input) task,
-      File file,
-      img.Image work) async {
+  Future<T> _withMlKitFallback<T>(Future<T> Function(InputImage input) task,
+      File file, _LoadedWork loaded) async {
     if (!Platform.isAndroid) return task(InputImage.fromFile(file));
     try {
-      return await task(await _inputImage(file, work));
+      final nv21 = await compute(rgbaToNv21, <String, Object>{
+        'rgba': loaded.rgba,
+        'width': loaded.w,
+        'height': loaded.h,
+      });
+      return await task(InputImage.fromBytes(
+        bytes: nv21,
+        metadata: InputImageMetadata(
+          size: Size(loaded.w.toDouble(), loaded.h.toDouble()),
+          rotation: InputImageRotation.rotation0deg,
+          format: InputImageFormat.nv21,
+          bytesPerRow: loaded.w,
+        ),
+      ));
     } on PlatformException {
       return task(InputImage.fromFile(file));
     }
   }
-
-  /// 构造 NV21 输入图像（仅 Android）。
-  Future<InputImage> _inputImage(File file, img.Image work) async {
-    final nv21 = await compute(rgbaToNv21, <String, Object>{
-      'rgba': work.getBytes(order: img.ChannelOrder.rgba),
-      'width': work.width,
-      'height': work.height,
-    });
-    return InputImage.fromBytes(
-      bytes: nv21,
-      metadata: InputImageMetadata(
-        size: Size(work.width.toDouble(), work.height.toDouble()),
-        rotation: InputImageRotation.rotation0deg,
-        format: InputImageFormat.nv21,
-        bytesPerRow: work.width,
-      ),
-    );
-  }
 }
+
+// ───────────────────────────── isolate 入口 ─────────────────────────────
 
 /// RGBA → NV21（BT.601 全幅转换，2×2 色度子采样）。顶层函数，供 compute 调用。
 Uint8List rgbaToNv21(Map<String, Object> args) {
@@ -410,74 +436,283 @@ Uint8List rgbaToNv21(Map<String, Object> args) {
   return out;
 }
 
-/// 逐像素 alpha 混合：out = fg·a + bg·(1-a)。顶层函数，供 compute 调用。
-Uint8List _composite(Map<String, Object> args) {
-  final rgba = args['rgba'] as Uint8List;
-  final mask = args['mask'] as Uint8List;
-  final bg = args['bg'] as Uint8List;
-  final out = Uint8List(rgba.length);
-  final br = bg[0], bgG = bg[1], bb = bg[2];
-  for (var px = 0; px < mask.length; px++) {
-    final i = px * 4;
-    final a = mask[px];
-    final inv = 255 - a;
-    out[i] = (rgba[i] * a + br * inv) ~/ 255;
-    out[i + 1] = (rgba[i + 1] * a + bgG * inv) ~/ 255;
-    out[i + 2] = (rgba[i + 2] * a + bb * inv) ~/ 255;
-    out[i + 3] = 255;
-  }
-  return out;
+/// 合成阶段产物（**已按自动构图框补好底色边**）。
+///
+/// 补边放在这里而不是交付时，是为了让工作图坐标系里的 [autoCrop] 永远
+/// 落在图内：交互裁剪编辑器是「窗口固定、图片可缩放平移」的模型，
+/// 表达不了越界的裁剪框——若不在此处补边，编辑器显示的初始构图会与
+/// 实际成片对不上。补的是纯底色，与换底后的背景无缝。
+class _Composited {
+  const _Composited({
+    required this.rgba,
+    required this.width,
+    required this.height,
+    required this.jpg,
+    required this.originalJpg,
+    required this.autoCrop,
+    required this.faceRect,
+  });
+
+  final Uint8List rgba;
+  final int width;
+  final int height;
+  final Uint8List jpg;
+  final Uint8List originalJpg;
+
+  /// 自动构图框（已补边坐标系，保证不越界）
+  final Rect autoCrop;
+
+  /// 人脸框（已补边坐标系）
+  final Rect faceRect;
 }
 
-
-/// 掩码精修（消白边）：锐化 alpha 曲线 → 3×3 min-filter 腐蚀 1px → 边缘保留羽化。
-/// 顶层函数，供 compute 调用。
-Uint8List _refineMask(Map<String, Object> args) {
-  final mask = args['mask'] as Uint8List;
+/// isolate 入口：掩码精修 → 前景色解混 → 换底合成 → 自动构图 → 底色补边 → 预览编码。
+_Composited _compositeWork(Map<String, Object> args) {
+  final rgba = args['rgba'] as Uint8List;
   final w = args['width'] as int;
   final h = args['height'] as int;
-  final n = w * h;
+  final bg = args['bg'] as Uint8List;
+  final face = args['face'] as Rect;
+  final aspect = args['aspect'] as double;
+  final alpha = refineAlpha(args['mask'] as Uint8List, w, h);
 
-  // 1) alpha 锐化：a' = clamp((a-0.35)/(1-0.5))，0.35 以下的半透明环归零
-  final sharpened = Uint8List(n);
-  for (var i = 0; i < n; i++) {
-    final a = mask[i] / 255.0;
-    final s = ((a - 0.35) / 0.5).clamp(0.0, 1.0);
-    sharpened[i] = (s * 255).round();
+  // 换底合成（前景色解混消白边，alpha 完整保留）
+  final fg = decontaminate(rgba, alpha, w, h);
+  final comp = Uint8List(w * h * 4);
+  final br = bg[0], bgG = bg[1], bb = bg[2];
+  for (var px = 0; px < alpha.length; px++) {
+    final i = px * 4;
+    final a = alpha[px];
+    final inv = 255 - a;
+    comp[i] = (fg[i] * a + br * inv) ~/ 255;
+    comp[i + 1] = (fg[i + 1] * a + bgG * inv) ~/ 255;
+    comp[i + 2] = (fg[i + 2] * a + bb * inv) ~/ 255;
+    comp[i + 3] = 255;
   }
 
-  // 2) 3×3 min-filter 腐蚀一圈
-  final eroded = Uint8List.fromList(sharpened);
-  for (var y = 1; y < h - 1; y++) {
-    for (var x = 1; x < w - 1; x++) {
-      var m = 255;
-      for (var dy = -1; dy <= 1; dy++) {
-        for (var dx = -1; dx <= 1; dx++) {
-          final v = sharpened[(y + dy) * w + (x + dx)];
-          if (v < m) m = v;
-        }
-      }
-      eroded[y * w + x] = m;
+  // 自动构图：优先用掩码测得的真实发际线定位头顶
+  final crop =
+      ImagePipeline.cropRectFor(w, h, face, aspect, headTop: detectHeadTop(alpha, w, h));
+
+  // 按构图框越界量补底色边，并把坐标系整体平移
+  final padL = math.max(0, -crop.left.round());
+  final padT = math.max(0, -crop.top.round());
+  final padR = math.max(0, crop.right.round() - w);
+  final padB = math.max(0, crop.bottom.round() - h);
+
+  final original =
+      img.Image.fromBytes(width: w, height: h, bytes: rgba.buffer, numChannels: 4);
+
+  Uint8List outRgba = comp;
+  var outW = w, outH = h;
+  if (padL > 0 || padT > 0 || padR > 0 || padB > 0) {
+    outW = w + padL + padR;
+    outH = h + padT + padB;
+    outRgba = Uint8List(outW * outH * 4);
+    // 先铺满底色，再把合成图整块搬进去（逐行 setRange，比逐像素快得多）
+    for (var i = 0; i < outRgba.length; i += 4) {
+      outRgba[i] = br;
+      outRgba[i + 1] = bgG;
+      outRgba[i + 2] = bb;
+      outRgba[i + 3] = 255;
+    }
+    final rowBytes = w * 4;
+    for (var y = 0; y < h; y++) {
+      final src = y * rowBytes;
+      final dst = ((y + padT) * outW + padL) * 4;
+      outRgba.setRange(dst, dst + rowBytes, comp, src);
     }
   }
 
-  // 3) 羽化：仅对中间 alpha（非全 0 非全 255）做 3×3 均值，平滑边缘锯齿
-  final out = Uint8List.fromList(eroded);
-  for (var y = 1; y < h - 1; y++) {
-    for (var x = 1; x < w - 1; x++) {
-      final c = eroded[y * w + x];
-      if (c == 0 || c == 255) continue;
-      var sum = 0;
-      for (var dy = -1; dy <= 1; dy++) {
-        for (var dx = -1; dx <= 1; dx++) {
-          sum += eroded[(y + dy) * w + (x + dx)];
+  final shifted = crop.translate(padL.toDouble(), padT.toDouble());
+  final composited = img.Image.fromBytes(
+      width: outW, height: outH, bytes: outRgba.buffer, numChannels: 4);
+
+  return _Composited(
+    rgba: outRgba,
+    width: outW,
+    height: outH,
+    jpg: img.encodeJpg(composited, quality: 90),
+    originalJpg: img.encodeJpg(original, quality: 88),
+    autoCrop: shifted,
+    faceRect: face.translate(padL.toDouble(), padT.toDouble()),
+  );
+}
+
+/// 掩码精修：3×3 均值轻羽化 + 温和对比拉伸。
+///
+/// **不做形态学腐蚀**——旧版的 3×3 min-filter 会把整个人像轮廓向内啃掉一圈，
+/// 头发丝、耳廓、肩线这些本就只有 1–2px 的结构会直接消失；配合
+/// `(a-0.35)/0.5` 的激进截断，半透明发丝带被整体归零，观感就是「头发没了」。
+/// 消白边改由 [decontaminate] 在**颜色**上解决，alpha 保持完整。
+Uint8List refineAlpha(Uint8List mask, int w, int h) {
+  final n = w * h;
+  // 1) 轻羽化（3×3 均值）：抹掉 512→原尺寸上采样带来的阶梯锯齿
+  final smooth = Uint8List(n);
+  for (var y = 0; y < h; y++) {
+    final yl = y > 0 ? y - 1 : 0, yr = y < h - 1 ? y + 1 : h - 1;
+    for (var x = 0; x < w; x++) {
+      final xl = x > 0 ? x - 1 : 0, xr = x < w - 1 ? x + 1 : w - 1;
+      smooth[y * w + x] = (mask[yl * w + xl] +
+              mask[yl * w + x] +
+              mask[yl * w + xr] +
+              mask[y * w + xl] +
+              mask[y * w + x] +
+              mask[y * w + xr] +
+              mask[yr * w + xl] +
+              mask[yr * w + x] +
+              mask[yr * w + xr]) ~/
+          9;
+    }
+  }
+  // 2) 温和对比拉伸：只清掉 <6% 的背景残噪与 >94% 的抖动，
+  //    中间的发丝半透明带按比例保留（这正是 MODNet 的价值所在）
+  const lo = 0.06, hi = 0.94;
+  final out = Uint8List(n);
+  for (var i = 0; i < n; i++) {
+    final a = smooth[i] / 255.0;
+    out[i] = (((a - lo) / (hi - lo)).clamp(0.0, 1.0) * 255).round();
+  }
+  return out;
+}
+
+/// 前景色解混（消白边）：把半透明边缘像素的颜色替换为邻域内**高不透明度**
+/// 像素的加权平均色。
+///
+/// 白边/毛刺的物理成因是边缘像素本身混合了原背景色，直接按 alpha 合成会
+/// 把原背景（常是白墙）带进新底色里。工业界的解法是前景色估计而非腐蚀
+/// alpha：这里做两趟半径 2 的 alpha³ 加权外推，只处理边缘带
+/// （通常 <3% 像素），开销可忽略，而发丝的通透感完整保留。
+Uint8List decontaminate(Uint8List rgba, Uint8List alpha, int w, int h) {
+  final out = Uint8List.fromList(rgba);
+  const r = 2;
+  for (var pass = 0; pass < 2; pass++) {
+    final src = Uint8List.fromList(out);
+    for (var y = 0; y < h; y++) {
+      for (var x = 0; x < w; x++) {
+        final px = y * w + x;
+        final a = alpha[px];
+        if (a < 8 || a > 240) continue; // 纯背景 / 纯前景，无需解混
+        var sw = 0.0, sr = 0.0, sg = 0.0, sb = 0.0;
+        final y0 = math.max(0, y - r), y1 = math.min(h - 1, y + r);
+        final x0 = math.max(0, x - r), x1 = math.min(w - 1, x + r);
+        for (var ny = y0; ny <= y1; ny++) {
+          for (var nx = x0; nx <= x1; nx++) {
+            final na = alpha[ny * w + nx];
+            if (na <= a) continue; // 只向更「实」的方向取色
+            final t = na / 255.0;
+            final wgt = t * t * t;
+            final i = (ny * w + nx) * 4;
+            sw += wgt;
+            sr += src[i] * wgt;
+            sg += src[i + 1] * wgt;
+            sb += src[i + 2] * wgt;
+          }
         }
+        if (sw <= 0) continue;
+        final o = px * 4;
+        // alpha 越低说明原色污染越重，向估计的纯前景色靠得越多
+        final k = (1 - a / 255.0).clamp(0.0, 1.0);
+        out[o] = (src[o] + (sr / sw - src[o]) * k).round().clamp(0, 255);
+        out[o + 1] =
+            (src[o + 1] + (sg / sw - src[o + 1]) * k).round().clamp(0, 255);
+        out[o + 2] =
+            (src[o + 2] + (sb / sw - src[o + 2]) * k).round().clamp(0, 255);
       }
-      out[y * w + x] = sum ~/ 9;
     }
   }
   return out;
 }
+
+/// 从掩码探测真实头顶 y：自上而下第一条「前景像素数达到阈值」的扫描线。
+///
+/// 阈值取 `max(3, 宽度·0.35%)`，既能抓住细软的头发轮廓，
+/// 又不会被上采样噪点或残留碎块带偏；连续 2 行命中才确认，进一步抗噪。
+double? detectHeadTop(Uint8List alpha, int w, int h) {
+  final need = math.max(3, (w * 0.0035).round());
+  var streak = 0;
+  for (var y = 0; y < h; y++) {
+    var count = 0;
+    final row = y * w;
+    for (var x = 0; x < w; x++) {
+      if (alpha[row + x] > 96) count++;
+    }
+    if (count >= need) {
+      if (++streak >= 2) return (y - 1).toDouble();
+    } else {
+      streak = 0;
+    }
+  }
+  return null;
+}
+
+/// isolate 入口：底色补边裁剪 → 规格缩放 → 面部精修/清晰度 → 轻锐化 → 二分压缩。
+/// 首次出片、改裁剪框、改效果强度三条路径共用，保证预览与成片参数完全一致。
+Uint8List deliverWorker(DeliveryRequest req) {
+  final bg = img.ColorRgb8(req.bg[0], req.bg[1], req.bg[2]);
+  final source = img.Image.fromBytes(
+      width: req.width,
+      height: req.height,
+      bytes: req.rgba.buffer,
+      numChannels: 4);
+
+  final cropped = ImagePipeline.paddedCrop(source, req.crop, bg);
+  var out = ImagePipeline.resizeToSpecUniform(
+      cropped, req.targetWidth, req.targetHeight, bg);
+
+  if (req.beauty > 0 || req.clarity > 0) {
+    // 人脸框：工作图坐标 → 裁剪后输出坐标
+    final sx = req.targetWidth / cropped.width;
+    final sy = req.targetHeight / cropped.height;
+    final face = Rect.fromLTRB(
+        (req.faceRect.left - req.crop.left) * sx,
+        (req.faceRect.top - req.crop.top) * sy,
+        (req.faceRect.right - req.crop.left) * sx,
+        (req.faceRect.bottom - req.crop.top) * sy);
+    out = PhotoEffects.apply(out, face,
+        beauty: req.beauty, clarity: req.clarity);
+  }
+
+  // 高精修档：一道轻锐化，发丝/轮廓更利落
+  if (req.sharpen) {
+    out = img.convolution(out,
+        filter: [0, -0.2, 0, -0.2, 1.8, -0.2, 0, -0.2, 0]);
+  }
+  return ImagePipeline.encodeToKbRange(out, req.minKb, req.maxKb);
+}
+
+/// 预览效果重算任务（不裁剪，直接在工作图上出 JPEG 预览）。
+@immutable
+class PreviewRequest {
+  const PreviewRequest({
+    required this.rgba,
+    required this.width,
+    required this.height,
+    required this.faceRect,
+    required this.beauty,
+    required this.clarity,
+  });
+
+  final Uint8List rgba;
+  final int width;
+  final int height;
+  final Rect faceRect;
+  final double beauty;
+  final double clarity;
+}
+
+/// isolate 入口：工作图上应用效果并编码为预览 JPEG。
+Uint8List previewWorker(PreviewRequest req) {
+  final src = img.Image.fromBytes(
+      width: req.width,
+      height: req.height,
+      bytes: req.rgba.buffer,
+      numChannels: 4);
+  final out = PhotoEffects.apply(src, req.faceRect,
+      beauty: req.beauty, clarity: req.clarity);
+  return img.encodeJpg(out, quality: 90);
+}
+
 /// 后台 isolate 读图结果（含 ML Kit 输入）
 class _LoadedWork {
   const _LoadedWork(this.w, this.h, this.rgba, this.mlJpg, this.mlScale);
@@ -493,7 +728,7 @@ class _LoadedWork {
   final double mlScale;
 }
 
-/// isolate 入口：解码 → EXIF 归一化 → 镜像补偿 → 限边缩放
+/// isolate 入口：解码 → EXIF 归一化 → 镜像补偿 → 限边缩放 → ML 输入编码
 _LoadedWork? _loadWork(Map<String, Object> args) {
   final path = args['path'] as String;
   final flip = args['flip'] as bool;
@@ -520,7 +755,7 @@ _LoadedWork? _loadWork(Map<String, Object> args) {
   return _LoadedWork(
       work.width,
       work.height,
-      work.getBytes(order: img.ChannelOrder.rgba),
+      Uint8List.fromList(work.getBytes(order: img.ChannelOrder.rgba)),
       img.encodeJpg(mlImage, quality: 85),
       mlScale < 1 ? mlScale : 1.0);
 }

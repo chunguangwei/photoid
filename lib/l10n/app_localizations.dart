@@ -1094,6 +1094,12 @@ abstract class AppLocalizations {
   /// **'Beauty'**
   String get beautyLabel;
 
+  /// No description provided for @clarityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Clarity'**
+  String get clarityLabel;
+
   /// No description provided for @customUnitPx.
   ///
   /// In en, this message translates to:

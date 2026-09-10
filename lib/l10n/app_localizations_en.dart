@@ -569,6 +569,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get beautyLabel => 'Beauty';
 
   @override
+  String get clarityLabel => 'Clarity';
+
+  @override
   String get customUnitPx => 'PX';
 
   @override

@@ -30,20 +30,34 @@ class ModnetSegmenter {
   static final _pending = <int, _Job>{};
 
   /// 对 [work] 图做人像分割，返回与 work 同尺寸的灰度掩码（0-255）。
-  static Future<Uint8List> segment(img.Image work) async {
+  static Future<Uint8List> segment(img.Image work) => segmentRgba(
+      Uint8List.fromList(work.getBytes(order: img.ChannelOrder.rgba)),
+      work.width,
+      work.height);
+
+  /// 直接以 RGBA 缓冲区分割（流水线主路径）：避免主 isolate 再做一次
+  /// `getBytes` 通道转换（1440² 图约 6MB 拷贝），RGB 抽取放到 worker 内完成。
+  static Future<Uint8List> segmentRgba(Uint8List rgba, int w, int h) async {
     final worker = await _ensureWorker();
     final id = ++_seq;
     final job = _Job(id);
     _pending[id] = job;
-    worker.send([
-      id,
-      work.width,
-      work.height,
-      TransferableTypedData.fromList(
-          [work.getBytes(order: img.ChannelOrder.rgb)]),
-    ]);
-    debugPrint('MODNet segment queued (${work.width}x${work.height})');
+    worker.send([id, w, h, TransferableTypedData.fromList([rgba])]);
+    debugPrint('MODNet segment queued (${w}x$h)');
     return job.future;
+  }
+
+  /// 预热：提前 spawn worker、落盘 26MB 模型并建好 ONNX 会话。
+  ///
+  /// 首次分割的等待里有相当一部分是模型落盘 + session 构建（真机上可达
+  /// 数秒）。在启动页空闲期预热后，用户进到处理页时模型已就绪，
+  /// 体感等待时间大幅缩短。失败静默——真正处理时还会再试一次并给出提示。
+  static Future<void> warmUp() async {
+    try {
+      await _ensureWorker();
+    } catch (e) {
+      debugPrint('MODNet warmUp failed (will retry on demand): $e');
+    }
   }
 
   static Future<SendPort> _ensureWorker() {
@@ -130,20 +144,37 @@ class ModnetSegmenter {
   }
 
   /// 预处理 → 推理 → work 尺寸灰度掩码（全在 worker isolate 内）。
+  /// 输入为 RGBA 缓冲区，直接按 512×512 双线性重采样进模型，
+  /// 省掉一次全尺寸 Image 构造与通道转换。
   static Uint8List _infer(
-      OrtSession session, String inputName, int w, int h, Uint8List rgb) {
+      OrtSession session, String inputName, int w, int h, Uint8List rgba) {
     const size = inputSize;
     final plane = size * size;
 
-    final work = img.Image.fromBytes(
-        width: w, height: h, bytes: rgb.buffer, order: img.ChannelOrder.rgb);
-    final resized = img.copyResize(work, width: size, height: size);
-    final px = resized.getBytes(order: img.ChannelOrder.rgb);
+    // RGBA → 512×512 CHW float，归一化到 [-1,1]（双线性，无中间 Image 分配）
     final input = Float32List(3 * plane);
-    for (var i = 0; i < plane; i++) {
-      input[i] = px[i * 3] / 255.0 * 2 - 1;
-      input[plane + i] = px[i * 3 + 1] / 255.0 * 2 - 1;
-      input[plane * 2 + i] = px[i * 3 + 2] / 255.0 * 2 - 1;
+    final sx = w / size, sy = h / size;
+    for (var y = 0; y < size; y++) {
+      final fy = ((y + 0.5) * sy - 0.5).clamp(0.0, h - 1.0);
+      final y0 = fy.floor();
+      final y1 = y0 + 1 < h ? y0 + 1 : h - 1;
+      final ay = fy - y0;
+      for (var x = 0; x < size; x++) {
+        final fx = ((x + 0.5) * sx - 0.5).clamp(0.0, w - 1.0);
+        final x0 = fx.floor();
+        final x1 = x0 + 1 < w ? x0 + 1 : w - 1;
+        final ax = fx - x0;
+        final i00 = (y0 * w + x0) * 4,
+            i10 = (y0 * w + x1) * 4,
+            i01 = (y1 * w + x0) * 4,
+            i11 = (y1 * w + x1) * 4;
+        final o = y * size + x;
+        for (var c = 0; c < 3; c++) {
+          final top = rgba[i00 + c] + (rgba[i10 + c] - rgba[i00 + c]) * ax;
+          final bot = rgba[i01 + c] + (rgba[i11 + c] - rgba[i01 + c]) * ax;
+          input[c * plane + o] = (top + (bot - top) * ay) / 255.0 * 2 - 1;
+        }
+      }
     }
 
     final inputOrt =

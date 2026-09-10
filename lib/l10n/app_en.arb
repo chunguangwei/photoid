@@ -331,6 +331,7 @@
   "updateNeedInstallPermission": "Install permission required: system settings opened. Allow it, then come back and retry.",
   "updateRetryInstall": "Retry install",
   "beautyLabel": "Beauty",
+  "clarityLabel": "Clarity",
   "customUnitPx": "PX",
   "customUnitMm": "mm",
   "customDpi": "DPI",

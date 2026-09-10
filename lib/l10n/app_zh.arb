@@ -236,6 +236,7 @@
   "updateNeedInstallPermission": "需要「安装未知应用」权限：已打开系统设置，请允许后返回点击重试",
   "updateRetryInstall": "重试安装",
   "beautyLabel": "美颜",
+  "clarityLabel": "清晰度",
   "customUnitPx": "PX",
   "customUnitMm": "mm",
   "customDpi": "分辨率（DPI）",

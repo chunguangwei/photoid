@@ -58,6 +58,31 @@ class CropEditorState extends State<CropEditor> {
     _decode();
   }
 
+  /// 仅底图字节变化（美颜/清晰度重算出了新预览）时**只重新解码，
+  /// 保留用户已经调好的缩放与位移**。
+  ///
+  /// 尺寸不变说明还是同一张构图底片，用户的取景意图必须延续；
+  /// 之前靠外部换 `key` 强制重建来刷新底图，副作用是每动一次滑杆
+  /// 就把用户裁好的框打回自动构图。尺寸变了（换底/切换精修档重跑
+  /// 流水线）才需要重新初始化。
+  @override
+  void didUpdateWidget(CropEditor old) {
+    super.didUpdateWidget(old);
+    final resized = old.imageWidth != widget.imageWidth ||
+        old.imageHeight != widget.imageHeight ||
+        old.aspect != widget.aspect;
+    if (resized) {
+      _initialized = false;
+      _decodeFailed = false;
+      _decode();
+      return;
+    }
+    if (!identical(old.imageBytes, widget.imageBytes)) {
+      _decodeFailed = false;
+      _decode();
+    }
+  }
+
   Future<void> _decode() async {
     try {
       final codec = await ui.instantiateImageCodec(widget.imageBytes);
