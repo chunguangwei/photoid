@@ -1,3 +1,4 @@
+import 'package:photoid/services/modnet_segmenter.dart';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -78,5 +79,10 @@ void main() {
     final decoded = img.decodeJpg(out);
     expect(decoded, isNotNull);
     expect(decoded!.width, 295);
+  });
+
+  test('MODNet 模型输入维度约束钉死为 512（真机实证非 512 报 invalid dimensions）',
+      () {
+    expect(ModnetSegmenter.inputSize, 512);
   });
 }

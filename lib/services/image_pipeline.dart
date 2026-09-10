@@ -126,13 +126,10 @@ class ImagePipeline {
           height: work.height,
           interpolation: img.Interpolation.linear);
     }
+    // 轻度羽化，保证边缘过渡自然
     maskImg = img.gaussianBlur(maskImg, radius: 3);
-    // 掩码后处理（消白边三件套）：
-    // 1) 置信度锐化：低 alpha 截断——半透明环带混的是原背景色（白边来源）
-    // 2) 3×3 腐蚀 1px：再削一圈残留边缘
-    // 3) 轻度羽化：保证边缘过渡自然
-    maskImg = img.gaussianBlur(maskImg, radius: 3);
-    // 高精版走精修掩码；普通版跳过重活直接合成
+    // 高精版走精修掩码（消白边三件套：置信度锐化截断半透明环带 →
+    // 3×3 腐蚀 1px 去残留 → 羽化）；普通版跳过重活直接合成
     final maskW = engine == MattingEngine.modnet
         ? await compute(_refineMask, <String, Object>{
             'mask': maskImg.getBytes(),
