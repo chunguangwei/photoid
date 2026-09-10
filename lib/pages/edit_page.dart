@@ -236,15 +236,24 @@ class _EditPageState extends State<EditPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // 照片卡 + 科技感扫描线（上下来回，体现 AI 修整过程）
             Card(
               clipBehavior: Clip.antiAlias,
-              child: Image.file(
-                File(widget.sourcePath),
+              child: SizedBox(
                 width: 160,
                 height: 213,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    const SizedBox(width: 160, height: 213),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.file(
+                      File(widget.sourcePath),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          const SizedBox.expand(),
+                    ),
+                    const _ScanLineEffect(),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -576,4 +585,66 @@ Uint8List _beautifyWorker(_BeautyTask t) {
   if (im == null) return t.jpg;
   return img.encodeJpg(ImagePipeline.beautify(im, t.face, t.intensity),
       quality: 90);
+}
+
+/// 科技感扫描动效：渐变光带自上而下再从下到上循环，
+/// 叠加微呼吸亮度，体现「AI 正在修整」。
+class _ScanLineEffect extends StatefulWidget {
+  const _ScanLineEffect();
+
+  @override
+  State<_ScanLineEffect> createState() => _ScanLineEffectState();
+}
+
+class _ScanLineEffectState extends State<_ScanLineEffect>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 1800))
+    ..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.primary;
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, _) {
+        final y = Curves.easeInOut.transform(_c.value);
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            // 微呼吸亮度
+            Container(
+                color: Colors.white
+                    .withValues(alpha: 0.06 + 0.05 * y)),
+            // 扫描光带
+            Align(
+              alignment: Alignment(0, -1 + 2 * y),
+              child: Container(
+                height: 26,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      color.withValues(alpha: 0),
+                      color.withValues(alpha: 0.55),
+                      Colors.white.withValues(alpha: 0.85),
+                      color.withValues(alpha: 0.55),
+                      color.withValues(alpha: 0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }

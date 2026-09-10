@@ -267,7 +267,7 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l.updateCancel),
+            child: Text(l.dialogCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),

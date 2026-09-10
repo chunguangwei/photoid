@@ -613,4 +613,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String specKbUnreachable(Object kb) {
     return 'This spec yields ~${kb}KB max; minimum cannot exceed it';
   }
+
+  @override
+  String get dialogCancel => 'Cancel';
 }

@@ -46,7 +46,10 @@ class ModnetSegmenter {
     }
     final inputOrt = OrtValueTensor.createTensorWithDataList(
         input, [1, 3, _inputSize, _inputSize]);
-    final outputs = _session!.run(OrtRunOptions(), {'input': inputOrt});
+    // 输入名从 session 元数据取（模型构建差异可能是 input.1/x/img 等），
+    // 硬编码 'input' 会触发 ORT_INVALID_ARGUMENT(code=2)
+    final outputs = _session!.run(
+        OrtRunOptions(), {_session!.inputNames.first: inputOrt});
     inputOrt.release();
     final outOrt = outputs.first as OrtValueTensor;
     // 输出 matte [1,1,512,512]（0-1 float），嵌套 list 扁平化

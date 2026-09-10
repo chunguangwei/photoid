@@ -4,7 +4,6 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
-import 'package:google_mlkit_selfie_segmentation/google_mlkit_selfie_segmentation.dart';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -100,17 +99,9 @@ class ImagePipeline {
     await mlFile.writeAsBytes(img.encodeJpg(work, quality: 92));
     // 2. 人像分割（双引擎：高精修=MODNet 发丝级；普通=ML Kit 快速）
     _report(PipelineStep.segmenting);
-    Uint8List maskBytes;
-    if (engine == MattingEngine.modnet) {
-      try {
-        maskBytes = await ModnetSegmenter.segment(work);
-      } catch (_) {
-        // MODNet 不可用（模型缺失/设备不兼容）→ 回退 ML Kit
-        maskBytes = await _segmentMlKit(mlFile, work);
-      }
-    } else {
-      maskBytes = await _segmentMlKit(mlFile, work);
-    }
+    // 分割统一走 MODNet（ML Kit 分割在部分机型原生崩溃杀进程）；
+    // engine 参数保留语义但已等价，后续版本移除
+    final maskBytes = await ModnetSegmenter.segment(work);
     var maskImg = img.Image.fromBytes(
         width: work.width,
         height: work.height,
@@ -341,37 +332,6 @@ class ImagePipeline {
   }
 
   void _report(PipelineStep step) => onProgress?.call(step);
-
-  /// ML Kit 分割（普通版路径）：返回 work 尺寸 0-255 灰度掩码。
-  Future<Uint8List> _segmentMlKit(File mlFile, img.Image work) async {
-    final segmenter = SelfieSegmenter(
-        mode: SegmenterMode.single, enableRawSizeMask: false);
-    final segMask =
-        await _withMlKitFallback(segmenter.processImage, mlFile, work);
-    segmenter.close();
-    if (segMask == null) {
-      throw PipelineException('noPerson');
-    }
-    final conf = segMask.confidences;
-    final bytes = Uint8List(segMask.width * segMask.height);
-    for (var i = 0; i < bytes.length; i++) {
-      bytes[i] = (conf[i].clamp(0.0, 1.0) * 255).round();
-    }
-    if (segMask.width != work.width || segMask.height != work.height) {
-      final m = img.Image.fromBytes(
-          width: segMask.width,
-          height: segMask.height,
-          bytes: bytes.buffer,
-          numChannels: 1);
-      return img
-          .copyResize(m,
-              width: work.width,
-              height: work.height,
-              interpolation: img.Interpolation.linear)
-          .getBytes();
-    }
-    return bytes;
-  }
 
   /// 双通路执行 ML Kit 任务：NV21 为主，PlatformException 时回退 fromFile。
   /// 背景：fromFilePath 在部分机型 NPE（不挂 MediaImage）；NV21 在华为等

@@ -354,5 +354,6 @@
     "placeholders": {
       "kb": {}
     }
-  }
+  },
+  "dialogCancel": "Cancel"
 }

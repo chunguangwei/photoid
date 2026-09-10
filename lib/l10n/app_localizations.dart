@@ -1177,6 +1177,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This spec yields ~{kb}KB max; minimum cannot exceed it'**
   String specKbUnreachable(Object kb);
+
+  /// No description provided for @dialogCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get dialogCancel;
 }
 
 class _AppLocalizationsDelegate

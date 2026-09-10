@@ -592,4 +592,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String specKbUnreachable(Object kb) {
     return '该规格图片最大约 ${kb}KB，最小值不能超过它';
   }
+
+  @override
+  String get dialogCancel => '取消';
 }
