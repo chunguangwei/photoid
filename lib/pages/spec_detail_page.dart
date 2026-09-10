@@ -279,10 +279,18 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
     if (ok != true) return;
     final minKb = int.tryParse(minC.text.trim()) ?? 0;
     final maxKb = int.tryParse(maxC.text.trim()) ?? 0;
-    if (minKb < 0 || maxKb < 0 || (minKb > 0 && maxKb > 0 && minKb > maxKb)) {
+    // min 不可达钳制：像素总量决定 JPEG 质量 100 的上限，min 过高会让
+    // 编码器永远达不到下限，合规检测报无法修复的 fileTooSmall
+    final estMaxKb = _spec.pixelWidth * _spec.pixelHeight ~/ 400;
+    if (minKb < 0 ||
+        maxKb < 0 ||
+        (minKb > 0 && maxKb > 0 && minKb > maxKb) ||
+        minKb > estMaxKb) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l.customInvalid)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(minKb > estMaxKb
+              ? l.specKbUnreachable('${estMaxKb.clamp(1, 9999)}')
+              : l.customInvalid)));
       return;
     }
     setState(() =>

@@ -587,4 +587,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get specKbDialogTitle => '设置文件大小（KB）';
+
+  @override
+  String specKbUnreachable(Object kb) {
+    return '该规格图片最大约 ${kb}KB，最小值不能超过它';
+  }
 }

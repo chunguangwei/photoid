@@ -71,4 +71,28 @@ void main() {
       );
     });
   });
+
+  test('parseRelease 优先 arm64 包，不依赖资产排序', () {
+    final info = UpdateService.parseRelease({
+      'tag_name': 'v9.9.9',
+      'body': '',
+      'assets': [
+        // 通用包在前（字母序场景）
+        {'name': 'app-release.apk', 'browser_download_url': 'https://x/universal.apk'},
+        {'name': 'app-arm64-v8a-release.apk', 'browser_download_url': 'https://x/arm64.apk'},
+      ],
+    }, currentVersion: '1.0.0');
+    expect(info!.downloadUrl, 'https://x/arm64.apk');
+  });
+
+  test('parseRelease 无 arm64 时回退通用包', () {
+    final info = UpdateService.parseRelease({
+      'tag_name': 'v9.9.9',
+      'body': '',
+      'assets': [
+        {'name': 'app-release.apk', 'browser_download_url': 'https://x/universal.apk'},
+      ],
+    }, currentVersion: '1.0.0');
+    expect(info!.downloadUrl, 'https://x/universal.apk');
+  });
 }

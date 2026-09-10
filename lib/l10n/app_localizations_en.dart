@@ -608,4 +608,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get specKbDialogTitle => 'Set file size (KB)';
+
+  @override
+  String specKbUnreachable(Object kb) {
+    return 'This spec yields ~${kb}KB max; minimum cannot exceed it';
+  }
 }

@@ -253,5 +253,11 @@
   "specPrintSize": "冲印尺寸",
   "specFileFormat": "文件格式",
   "specKbEditable": "可设置大小",
-  "specKbDialogTitle": "设置文件大小（KB）"
+  "specKbDialogTitle": "设置文件大小（KB）",
+  "specKbUnreachable": "该规格图片最大约 {kb}KB，最小值不能超过它",
+  "@specKbUnreachable": {
+    "placeholders": {
+      "kb": {}
+    }
+  }
 }

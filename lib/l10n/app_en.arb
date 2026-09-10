@@ -348,5 +348,11 @@
   "specPrintSize": "Print size",
   "specFileFormat": "Format",
   "specKbEditable": "Set size",
-  "specKbDialogTitle": "Set file size (KB)"
+  "specKbDialogTitle": "Set file size (KB)",
+  "specKbUnreachable": "This spec yields ~{kb}KB max; minimum cannot exceed it",
+  "@specKbUnreachable": {
+    "placeholders": {
+      "kb": {}
+    }
+  }
 }

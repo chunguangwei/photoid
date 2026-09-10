@@ -1171,6 +1171,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Set file size (KB)'**
   String get specKbDialogTitle;
+
+  /// No description provided for @specKbUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'This spec yields ~{kb}KB max; minimum cannot exceed it'**
+  String specKbUnreachable(Object kb);
 }
 
 class _AppLocalizationsDelegate

@@ -128,15 +128,22 @@ class UpdateService {
     }
 
     final assets = release['assets'] as List<dynamic>? ?? const [];
-    String? apkUrl;
+    // 显式选择：优先 arm64 小包（99% 设备），回退通用大包。
+    // 不依赖 GitHub 资产排序（字母序会随命名变化）
+    String? arm64Url;
+    String? universalUrl;
     for (final asset in assets) {
       final assetMap = asset as Map<String, dynamic>;
-      final name = assetMap['name'] as String? ?? '';
-      if (name.toLowerCase().contains('apk')) {
-        apkUrl = assetMap['browser_download_url'] as String?;
-        break;
+      final name = (assetMap['name'] as String? ?? '').toLowerCase();
+      final url = assetMap['browser_download_url'] as String?;
+      if (url == null || !name.endsWith('.apk')) continue;
+      if (name.contains('arm64')) {
+        arm64Url = url;
+      } else {
+        universalUrl ??= url;
       }
     }
+    final apkUrl = arm64Url ?? universalUrl;
     if (apkUrl == null || apkUrl.isEmpty) return null;
 
     lastApkUrl = apkUrl;
