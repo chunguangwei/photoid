@@ -569,37 +569,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get beautyLabel => 'Beauty';
 
   @override
-  String get beautyOff => 'Off';
-
-  @override
-  String get beautyLight => 'Light';
-
-  @override
-  String get beautyStandard => 'Std';
-
-  @override
-  String get beautyStrong => 'Strong';
-
-  @override
-  String get suitLabel => 'Suit';
-
-  @override
-  String get suitNone => 'None';
-
-  @override
-  String get suitMenNavy => 'Men Navy';
-
-  @override
-  String get suitMenCharcoal => 'Men Gray';
-
-  @override
-  String get suitWomen => 'Women';
-
-  @override
-  String get suitComplianceHint =>
-      'Note: not recommended for strict scenarios (passport/visa)';
-
-  @override
   String get customUnitPx => 'PX';
 
   @override
@@ -619,4 +588,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get customHeightMm => 'Height (mm)';
+
+  @override
+  String splashSkip(Object seconds) {
+    return 'Skip ${seconds}s';
+  }
+
+  @override
+  String get splashAdPlaceholder => 'Ad';
+
+  @override
+  String get specPrintSize => 'Print size';
+
+  @override
+  String get specFileFormat => 'Format';
+
+  @override
+  String get specKbEditable => 'Set size';
+
+  @override
+  String get specKbDialogTitle => 'Set file size (KB)';
 }

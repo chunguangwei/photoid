@@ -548,36 +548,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get beautyLabel => '美颜';
 
   @override
-  String get beautyOff => '关';
-
-  @override
-  String get beautyLight => '轻度';
-
-  @override
-  String get beautyStandard => '标准';
-
-  @override
-  String get beautyStrong => '较强';
-
-  @override
-  String get suitLabel => '正装';
-
-  @override
-  String get suitNone => '无';
-
-  @override
-  String get suitMenNavy => '男·深蓝';
-
-  @override
-  String get suitMenCharcoal => '男·深灰';
-
-  @override
-  String get suitWomen => '女·圆领';
-
-  @override
-  String get suitComplianceHint => '提示：身份证/签证等严格场景不建议使用正装合成';
-
-  @override
   String get customUnitPx => 'PX';
 
   @override
@@ -597,4 +567,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get customHeightMm => '高度（mm）';
+
+  @override
+  String splashSkip(Object seconds) {
+    return '跳过 ${seconds}s';
+  }
+
+  @override
+  String get splashAdPlaceholder => '广告位';
+
+  @override
+  String get specPrintSize => '冲印尺寸';
+
+  @override
+  String get specFileFormat => '文件格式';
+
+  @override
+  String get specKbEditable => '可设置大小';
+
+  @override
+  String get specKbDialogTitle => '设置文件大小（KB）';
 }

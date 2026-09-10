@@ -236,21 +236,22 @@
   "updateNeedInstallPermission": "需要「安装未知应用」权限：已打开系统设置，请允许后返回点击重试",
   "updateRetryInstall": "重试安装",
   "beautyLabel": "美颜",
-  "beautyOff": "关",
-  "beautyLight": "轻度",
-  "beautyStandard": "标准",
-  "beautyStrong": "较强",
-  "suitLabel": "正装",
-  "suitNone": "无",
-  "suitMenNavy": "男·深蓝",
-  "suitMenCharcoal": "男·深灰",
-  "suitWomen": "女·圆领",
-  "suitComplianceHint": "提示：身份证/签证等严格场景不建议使用正装合成",
   "customUnitPx": "PX",
   "customUnitMm": "mm",
   "customDpi": "分辨率（DPI）",
   "customReset": "重置",
   "customTapToSwitch": "点击切换单位",
   "customWidthMm": "宽度（mm）",
-  "customHeightMm": "高度（mm）"
+  "customHeightMm": "高度（mm）",
+  "splashSkip": "跳过 {seconds}s",
+  "@splashSkip": {
+    "placeholders": {
+      "seconds": {}
+    }
+  },
+  "splashAdPlaceholder": "广告位",
+  "specPrintSize": "冲印尺寸",
+  "specFileFormat": "文件格式",
+  "specKbEditable": "可设置大小",
+  "specKbDialogTitle": "设置文件大小（KB）"
 }

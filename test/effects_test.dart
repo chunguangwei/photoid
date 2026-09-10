@@ -3,7 +3,6 @@ import 'dart:ui' show Rect;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:photoid/services/image_pipeline.dart';
-import 'package:photoid/services/suit_compositor.dart';
 
 /// 构造 480×640 纯色图 + 居中人脸框
 (img.Image, Rect) _fixture() {
@@ -14,54 +13,37 @@ import 'package:photoid/services/suit_compositor.dart';
 }
 
 void main() {
-  group('SuitCompositor', () {
-    test('none 样式返回原图', () {
+  group('beautify 强度', () {
+    test('强度 0 不修改任何像素', () {
       final (base, face) = _fixture();
-      final out = SuitCompositor.apply(base.clone(), face, SuitStyle.none);
-      expect(out.getPixel(240, 600), base.getPixel(240, 600));
-    });
-
-    test('男士西装：下巴下方被覆盖，面部区域不受影响', () {
-      final (base, face) = _fixture();
-      final out = SuitCompositor.apply(base.clone(), face, SuitStyle.menNavy);
-      // 下巴远下方（西装主体区）应变为西装色而非肤色
-      final suitPx = out.getPixel(240, 630);
-      expect(suitPx.r.toInt(), lessThan(100));
-      // 面部中心（鼻尖区）保持原色
-      expect(out.getPixel(240, 220), base.getPixel(240, 220));
-    });
-
-    test('女款无领带：胸前中心区接近衬衫色', () {
-      final (base, face) = _fixture();
-      final out =
-          SuitCompositor.apply(base.clone(), face, SuitStyle.womenNavy);
-      // 圆领衬衫区（领口下方 V 区内，领口随 neckH 下移后为 y≈420）
-      final shirtPx = out.getPixel(240, 420);
-      expect(shirtPx.r.toInt(), greaterThan(200));
-    });
-  });
-
-  group('beautify 档位', () {
-    test('off 档不修改任何像素', () {
-      final (base, face) = _fixture();
-      final out = ImagePipeline.beautify(
-          base.clone(), face, BeautyLevel.off);
+      final out = ImagePipeline.beautify(base.clone(), face, 0);
       expect(out.getPixel(240, 220), base.getPixel(240, 220));
       expect(out.getPixel(50, 50), base.getPixel(50, 50));
     });
 
-    test('strong 档：椭圆内磨皮，全图仅微提亮（色相不变）', () {
-      // 面部加噪声，磨皮应降低局部差异
+    test('强度 1：肤色区磨皮、非肤色像素（模拟眼睛）不被磨皮', () {
       final (base, face) = _fixture();
-      base.setPixelRgb(240, 220, 255, 255, 255);
-      base.setPixelRgb(242, 220, 0, 0, 0);
-      final out = ImagePipeline.beautify(
-          base.clone(), face, BeautyLevel.strong);
-      // 椭圆外角落：磨皮不生效，仅提亮 → R 略升、RGB 通道顺序保持（不变色）
-      final corner = out.getPixel(5, 5);
-      expect(corner.r.toInt(), greaterThan(200));
-      expect(corner.r.toInt(), greaterThan(corner.g.toInt()));
-      expect(corner.g.toInt(), greaterThan(corner.b.toInt()));
+      // 模拟深棕色眼睛（不满足肤色门控：r=60 < 95）
+      base.setPixelRgb(240, 220, 60, 40, 30);
+      final out = ImagePipeline.beautify(base.clone(), face, 1.0);
+      // 磨皮若生效会被拉向周边肤色 200；仅全图提亮（≤6%）属设计行为
+      expect(out.getPixel(240, 220).r.toInt(), lessThan(80));
+    });
+
+    test('强度提升单调增加提亮（色相顺序保持）', () {
+      final (base, face) = _fixture();
+      final corner = base.getPixel(5, 5);
+      final weak = ImagePipeline.beautify(base.clone(), face, 0.3);
+      final strong = ImagePipeline.beautify(base.clone(), face, 1.0);
+      // 角落（椭圆外）：仅提亮，且强度越高越亮
+      expect(strong.getPixel(5, 5).r.toInt(),
+          greaterThanOrEqualTo(weak.getPixel(5, 5).r.toInt()));
+      expect(weak.getPixel(5, 5).r.toInt(),
+          greaterThanOrEqualTo(corner.r.toInt()));
+      // 通道顺序保持（不变色）
+      final c = strong.getPixel(5, 5);
+      expect(c.r.toInt(), greaterThan(c.g.toInt()));
+      expect(c.g.toInt(), greaterThan(c.b.toInt()));
     });
   });
 }

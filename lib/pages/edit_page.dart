@@ -10,7 +10,6 @@ import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 import '../models/photo_spec.dart';
 import '../services/image_pipeline.dart';
-import '../services/suit_compositor.dart';
 import 'crop_editor.dart';
 import 'result_page.dart';
 
@@ -41,13 +40,12 @@ class _EditPageState extends State<EditPage> {
   bool _regenerating = false;
 
   static const _hdPrefKey = 'hd_mode_enabled';
-  static const _beautyPrefKey = 'beauty_level';
+  static const _beautyPrefKey = 'beauty_intensity';
 
-  /// 美颜档位（持久化）；正装样式（会话内）
-  BeautyLevel _beauty = BeautyLevel.standard;
-  SuitStyle _suit = SuitStyle.none;
+  /// 美颜强度 0–1（滑杆，持久化）
+  double _beauty = 0.5;
 
-  /// 预览用合成图缓存：应用美颜/正装后的 compositedJpg
+  /// 预览用合成图缓存：应用美颜后的 compositedJpg
   Uint8List? _previewJpg;
 
   /// 高精修版（MODNet 发丝级抠图+磨皮）开关；false=普通版（ML Kit 快速）。
@@ -72,26 +70,21 @@ class _EditPageState extends State<EditPage> {
     if (mounted) {
       setState(() {
         if (v != null) _hd = v;
-        if (b != null && b >= 0 && b < BeautyLevel.values.length) {
-          _beauty = BeautyLevel.values[b];
-        }
+        if (b != null) _beauty = (b / 100).clamp(0.0, 1.0);
       });
     }
   }
 
-  /// 美颜/正装变化：重算预览合成图（编辑器回到自动构图，与成片参数一致）
+  /// 美颜变化（滑杆松手）：重算预览合成图（编辑器回自动构图，与成片同参数）
   void _refreshEffects({bool persistBeauty = false}) {
     if (persistBeauty) {
       SharedPreferences.getInstance()
-          .then((p) => p.setInt(_beautyPrefKey, _beauty.index));
+          .then((p) => p.setInt(_beautyPrefKey, (_beauty * 100).round()));
     }
     final r = _result;
     if (r == null) return;
     var imgOut = r.composited.clone();
-    if (_suit != SuitStyle.none) {
-      imgOut = SuitCompositor.apply(imgOut, r.faceRect, _suit);
-    }
-    if (_beauty != BeautyLevel.off) {
+    if (_beauty > 0) {
       imgOut = ImagePipeline.beautify(imgOut, r.faceRect, _beauty);
     }
     setState(() {
@@ -218,10 +211,7 @@ class _EditPageState extends State<EditPage> {
         (r.faceRect.top - y) * sy,
         (r.faceRect.right - x) * sx,
         (r.faceRect.bottom - y) * sy);
-    if (_suit != SuitStyle.none) {
-      out = SuitCompositor.apply(out, face, _suit);
-    }
-    if (_beauty != BeautyLevel.off) {
+    if (_beauty > 0) {
       out = ImagePipeline.beautify(out, face, _beauty);
     }
     return ImagePipeline.encodeToKbRange(out, _spec.minFileKb, _spec.maxFileKb);
@@ -256,8 +246,7 @@ class _EditPageState extends State<EditPage> {
                 style: Theme.of(context).textTheme.bodySmall,
                 textAlign: TextAlign.center),
             const SizedBox(height: 20),
-            const SizedBox(
-                width: 180, child: LinearProgressIndicator()),
+            SizedBox(width: 180, child: _SmoothProgress(step: _step)),
             const SizedBox(height: 12),
             Text(_regenerating
                 ? l.editRegenerating
@@ -412,86 +401,29 @@ class _EditPageState extends State<EditPage> {
     );
   }
 
-  /// 美颜档位 + 正装选择行（与成片同参数，预览实时生效）
+  /// 美颜强度滑杆（拖拽实时看数值，松手重算预览；与成片同参数）
   Widget _effectsBar() {
     final l = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            Text(l.beautyLabel,
-                style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(width: 8),
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(children: [
-                  for (final lv in BeautyLevel.values)
-                    _miniChip(_beautyLabel(lv, l), _beauty == lv, () {
-                      _beauty = lv;
-                      _refreshEffects(persistBeauty: true);
-                    }),
-                ]),
-              ),
-            ),
-          ]),
-          const SizedBox(height: 6),
-          Row(children: [
-            Text(l.suitLabel,
-                style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(width: 8),
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(children: [
-                  for (final st in SuitStyle.values)
-                    _miniChip(_suitLabel(st, l), _suit == st, () {
-                      _suit = st;
-                      _refreshEffects();
-                    }),
-                ]),
-              ),
-            ),
-          ]),
-          if (_suit != SuitStyle.none)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(l.suitComplianceHint,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.error)),
-            ),
-        ],
-      ),
+      child: Row(children: [
+        Text(l.beautyLabel, style: Theme.of(context).textTheme.bodySmall),
+        Expanded(
+          child: Slider(
+            value: _beauty,
+            divisions: 20,
+            onChanged: (v) => setState(() => _beauty = v),
+            onChangeEnd: (_) => _refreshEffects(persistBeauty: true),
+          ),
+        ),
+        SizedBox(
+          width: 40,
+          child: Text('${(_beauty * 100).round()}%',
+              style: Theme.of(context).textTheme.bodySmall),
+        ),
+      ]),
     );
   }
-
-  Widget _miniChip(String label, bool selected, VoidCallback onTap) =>
-      Padding(
-        padding: const EdgeInsets.only(right: 6),
-        child: ChoiceChip(
-          label: Text(label),
-          labelStyle: const TextStyle(fontSize: 12),
-          visualDensity: VisualDensity.compact,
-          selected: selected,
-          onSelected: (_) => onTap(),
-        ),
-      );
-
-  String _beautyLabel(BeautyLevel lv, AppLocalizations l) => switch (lv) {
-        BeautyLevel.off => l.beautyOff,
-        BeautyLevel.light => l.beautyLight,
-        BeautyLevel.standard => l.beautyStandard,
-        BeautyLevel.strong => l.beautyStrong,
-      };
-
-  String _suitLabel(SuitStyle st, AppLocalizations l) => switch (st) {
-        SuitStyle.none => l.suitNone,
-        SuitStyle.menNavy => l.suitMenNavy,
-        SuitStyle.menCharcoal => l.suitMenCharcoal,
-        SuitStyle.womenNavy => l.suitWomen,
-      };
 
   /// 色块选底（对标行业交互：圆角色块 + 选中描边✓ + 名称）
   Widget _bgSwatch(SpecBackground bg) {
@@ -548,5 +480,73 @@ class _EditPageState extends State<EditPage> {
       default:
         return bg.name;
     }
+  }
+}
+
+/// 体感进度条：随流水线步骤向目标值缓动前进（6s easeOut），
+/// 避免处理中界面「卡死」感；始终 ≤0.95，完成由页面切换表达。
+class _SmoothProgress extends StatefulWidget {
+  const _SmoothProgress({required this.step});
+
+  final PipelineStep step;
+
+  @override
+  State<_SmoothProgress> createState() => _SmoothProgressState();
+}
+
+class _SmoothProgressState extends State<_SmoothProgress>
+    with SingleTickerProviderStateMixin {
+  static const _targets = {
+    PipelineStep.preparing: 0.10,
+    PipelineStep.reading: 0.22,
+    PipelineStep.segmenting: 0.55,
+    PipelineStep.compositing: 0.72,
+    PipelineStep.framing: 0.85,
+    PipelineStep.compressing: 0.95,
+  };
+
+  late final AnimationController _controller = AnimationController(
+      vsync: this, duration: const Duration(seconds: 6));
+  late Animation<double> _animation =
+      AlwaysStoppedAnimation(_targets[widget.step] ?? 0.1);
+  double _current = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _animateTo(_targets[widget.step] ?? 0.1);
+  }
+
+  @override
+  void didUpdateWidget(_SmoothProgress old) {
+    super.didUpdateWidget(old);
+    if (old.step != widget.step) {
+      _animateTo(_targets[widget.step] ?? 0.95);
+    }
+  }
+
+  void _animateTo(double target) {
+    _animation = Tween<double>(begin: _current, end: target)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _controller
+      ..reset()
+      ..forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, _) {
+        _current = _animation.value;
+        return LinearProgressIndicator(value: _current);
+      },
+    );
   }
 }

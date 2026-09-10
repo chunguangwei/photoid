@@ -331,21 +331,22 @@
   "updateNeedInstallPermission": "Install permission required: system settings opened. Allow it, then come back and retry.",
   "updateRetryInstall": "Retry install",
   "beautyLabel": "Beauty",
-  "beautyOff": "Off",
-  "beautyLight": "Light",
-  "beautyStandard": "Std",
-  "beautyStrong": "Strong",
-  "suitLabel": "Suit",
-  "suitNone": "None",
-  "suitMenNavy": "Men Navy",
-  "suitMenCharcoal": "Men Gray",
-  "suitWomen": "Women",
-  "suitComplianceHint": "Note: not recommended for strict scenarios (passport/visa)",
   "customUnitPx": "PX",
   "customUnitMm": "mm",
   "customDpi": "DPI",
   "customReset": "Reset",
   "customTapToSwitch": "Tap to switch unit",
   "customWidthMm": "Width (mm)",
-  "customHeightMm": "Height (mm)"
+  "customHeightMm": "Height (mm)",
+  "splashSkip": "Skip {seconds}s",
+  "@splashSkip": {
+    "placeholders": {
+      "seconds": {}
+    }
+  },
+  "splashAdPlaceholder": "Ad",
+  "specPrintSize": "Print size",
+  "specFileFormat": "Format",
+  "specKbEditable": "Set size",
+  "specKbDialogTitle": "Set file size (KB)"
 }

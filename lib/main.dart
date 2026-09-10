@@ -4,7 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'l10n/app_localizations.dart';
-import 'pages/home_page.dart';
+import 'pages/splash_page.dart';
 import 'pages/update_dialog.dart';
 import 'services/locale_service.dart';
 import 'services/update_service.dart';
@@ -71,7 +71,7 @@ class _PhotoIdAppState extends State<PhotoIdApp> {
           colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2B6CB0)),
           useMaterial3: true,
         ),
-        home: const HomePage(),
+        home: const SplashPage(),
       ),
     );
   }

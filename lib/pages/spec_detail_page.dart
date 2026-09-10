@@ -67,16 +67,12 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
+                    // 冲印尺寸按 300 DPI 换算（px ÷ 300 × 25.4mm）
+                    _paramColumn(context, l.specPrintSize,
+                        '${(spec.pixelWidth / 300 * 25.4).round()}×${(spec.pixelHeight / 300 * 25.4).round()}mm'),
                     _paramColumn(
                         context, l.specPixelSize, '${spec.pixelWidth}×${spec.pixelHeight}px'),
-                    _paramColumn(context, l.specDpi, '300'),
-                    _paramColumn(
-                      context,
-                      l.specFileSize,
-                      spec.minFileKb == 0
-                          ? l.specNoLimit
-                          : l.specKbRange('${spec.minFileKb}', '${spec.maxFileKb}'),
-                    ),
+                    _paramColumn(context, l.specDpi, '300 DPI'),
                   ],
                 ),
               ),
@@ -84,18 +80,54 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
             const SizedBox(height: 12),
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(l.specBgColor, style: theme.textTheme.titleSmall),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                    // 背景色行：色块直选（右侧）
+                    Row(
                       children: [
+                        Text(l.specBgColor,
+                            style: theme.textTheme.bodyMedium),
+                        const Spacer(),
                         for (final bg in idPhotoBackgrounds)
-                          _bgChip(context, l, spec, bg),
+                          _bgSwatch(spec, bg),
+                      ],
+                    ),
+                    const Divider(height: 24),
+                    // 文件大小行：可设置大小
+                    Row(
+                      children: [
+                        Text(l.specFileSize,
+                            style: theme.textTheme.bodyMedium),
+                        const SizedBox(width: 12),
+                        OutlinedButton.icon(
+                          onPressed: _editKbRange,
+                          icon: const Icon(Icons.edit, size: 14),
+                          label: Text(l.specKbEditable,
+                              style: const TextStyle(fontSize: 12)),
+                          style: OutlinedButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          spec.minFileKb == 0
+                              ? l.specNoLimit
+                              : l.specKbRange('${spec.minFileKb}',
+                                  '${spec.maxFileKb}'),
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 24),
+                    // 文件格式行
+                    Row(
+                      children: [
+                        Text(l.specFileFormat,
+                            style: theme.textTheme.bodyMedium),
+                        const Spacer(),
+                        Text('JPG', style: theme.textTheme.bodyMedium),
                       ],
                     ),
                   ],
@@ -172,22 +204,89 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
         ),
       );
 
-  /// 底色选择 chip：选中态高亮；规格默认底色带「推荐」标记。
-  Widget _bgChip(BuildContext context, AppLocalizations l, PhotoSpec spec,
-      SpecBackground bg) {
+  /// 背景色块（对标参考 app 行内色块直选）
+  Widget _bgSwatch(PhotoSpec spec, SpecBackground bg) {
     final selected = bg.name == _spec.background.name;
-    final isDefault = bg.name == widget.spec.background.name;
-    return ChoiceChip(
-      selected: selected,
-      onSelected: (_) =>
-          setState(() => _spec = _spec.copyWith(background: bg)),
-      avatar: CircleAvatar(
-        radius: 8,
-        backgroundColor: Color.fromARGB(255, bg.r, bg.g, bg.b),
+    return GestureDetector(
+      onTap: () => setState(() => _spec = _spec.copyWith(background: bg)),
+      child: Container(
+        width: 26,
+        height: 26,
+        margin: const EdgeInsets.only(left: 8),
+        decoration: BoxDecoration(
+          color: Color.fromARGB(255, bg.r, bg.g, bg.b),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: selected
+                ? Theme.of(context).colorScheme.primary
+                : Colors.black26,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: selected
+            ? Icon(Icons.check,
+                size: 14,
+                color: bg.r > 200 && bg.g > 200
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.white)
+            : null,
       ),
-      label: Text(isDefault
-          ? '${localizedBgName(context, bg)} · ${l.bgRecommended}'
-          : localizedBgName(context, bg)),
     );
   }
+
+  /// 「可设置大小」对话框：自定义 KB 区间（对标参考 app）
+  Future<void> _editKbRange() async {
+    final l = AppLocalizations.of(context);
+    final minC = TextEditingController(
+        text: _spec.minFileKb == 0 ? '' : '${_spec.minFileKb}');
+    final maxC = TextEditingController(
+        text: _spec.maxFileKb == 0 ? '' : '${_spec.maxFileKb}');
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.specKbDialogTitle),
+        content: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: minC,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: l.customMinKb),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: maxC,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: l.customMaxKb),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l.updateCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l.confirm),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final minKb = int.tryParse(minC.text.trim()) ?? 0;
+    final maxKb = int.tryParse(maxC.text.trim()) ?? 0;
+    if (minKb < 0 || maxKb < 0 || (minKb > 0 && maxKb > 0 && minKb > maxKb)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l.customInvalid)));
+      return;
+    }
+    setState(() =>
+        _spec = _spec.copyWith(minFileKb: minKb, maxFileKb: maxKb));
+  }
+
 }

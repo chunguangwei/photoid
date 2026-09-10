@@ -15,24 +15,7 @@ import 'modnet_segmenter.dart';
 /// 抠图引擎：mlkit=快速普通版；modnet=高精修发丝级（失败自动回退 mlkit）。
 enum MattingEngine { mlkit, modnet }
 
-/// 美颜档位（仅皮肤域磨皮/提亮/润色，不瘦脸不大眼，保真不失真）。
-enum BeautyLevel {
-  off(0, 1.0, 1.0),
-  light(0.30, 1.02, 1.03),
-  standard(0.45, 1.04, 1.05),
-  strong(0.60, 1.06, 1.08);
-
-  const BeautyLevel(this.smoothBlend, this.brightness, this.saturation);
-
-  /// 磨皮混合比例（0-1）
-  final double smoothBlend;
-
-  /// 提亮系数（1=不变）
-  final double brightness;
-
-  /// 饱和系数（1=不变）
-  final double saturation;
-}
+/// 美颜为连续强度 0.0–1.0（用户拖拽），参数线性映射，见 [beautify]。
 
 /// 流水线处理步骤（UI 层据此映射 l10n 键，文案改动不影响翻译）。
 enum PipelineStep { preparing, reading, segmenting, compositing, framing, compressing }
@@ -248,16 +231,20 @@ class ImagePipeline {
   Rect _cropRect(img.Image source, Rect face, PhotoSpec spec) =>
       cropRectFor(source.width, source.height, face, spec.aspect);
 
-  /// 美颜（仅皮肤域，保真不失真）：面部椭圆区域按档位磨皮 +
-  /// 全图微提亮/微润色。[face] 为输出图坐标系人脸框。
-  static img.Image beautify(img.Image src, Rect face,
-      [BeautyLevel level = BeautyLevel.standard]) {
-    if (level == BeautyLevel.off) return src;
-    final blurred = img.gaussianBlur(src.clone(), radius: 4);
+  /// 美颜（保真路线，行业最佳实践对齐）：
+  /// 面部椭圆 × **肤色门控**（眼睛/嘴唇/头发/眉毛不磨皮，杜绝糊五官）+
+  /// 全图微提亮/微润色（≤8%，审核安全）。无瘦脸大眼等形变。
+  /// [intensity] 0.0–1.0 连续强度（用户拖拽）；0 = 原图。
+  /// [face] 为输出图坐标系人脸框。
+  static img.Image beautify(img.Image src, Rect face, double intensity) {
+    if (intensity <= 0) return src;
+    intensity = intensity.clamp(0.0, 1.0);
+    final blurred = img.gaussianBlur(src.clone(), radius: 5);
     final cx = face.left + face.width / 2;
     final cy = face.top + face.height / 2;
     final rx = face.width * 0.62;
     final ry = face.height * 0.72;
+    final k = 0.75 * intensity; // 磨皮混合上限 75%，保皮肤纹理
     final x0 = math.max(0, (cx - rx).floor());
     final x1 = math.min(src.width - 1, (cx + rx).ceil());
     final y0 = math.max(0, (cy - ry).floor());
@@ -268,9 +255,15 @@ class ImagePipeline {
         final dy = (y - cy) / ry;
         if (dx * dx + dy * dy > 1) continue;
         final sp = src.getPixel(x, y);
+        // 肤色门控（经典 RGB 规则）：非肤色像素（眼/唇/眉/发）跳过
+        final r = sp.r.toInt(), g = sp.g.toInt(), b = sp.b.toInt();
+        final isSkin = r > 95 &&
+            g > 40 &&
+            b > 20 &&
+            r > b &&
+            (r - math.min(g, b)) > 10;
+        if (!isSkin) continue;
         final bp = blurred.getPixel(x, y);
-        // 按档位混合磨皮
-        final k = level.smoothBlend;
         src.setPixelRgb(
             x,
             y,
@@ -279,9 +272,10 @@ class ImagePipeline {
             (sp.b * (1 - k) + bp.b * k).round());
       }
     }
-    // 微提亮 + 微润色（保守，防失真）
+    // 微提亮 + 微润色（随强度线性，上限保守）
     return img.adjustColor(src,
-        brightness: level.brightness, saturation: level.saturation);
+        brightness: 1 + 0.06 * intensity,
+        saturation: 1 + 0.08 * intensity);
   }
 
   /// 等比缩放到规格像素：只用单一缩放因子（宽向对齐），杜绝拉伸。

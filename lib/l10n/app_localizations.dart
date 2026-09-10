@@ -1094,66 +1094,6 @@ abstract class AppLocalizations {
   /// **'Beauty'**
   String get beautyLabel;
 
-  /// No description provided for @beautyOff.
-  ///
-  /// In en, this message translates to:
-  /// **'Off'**
-  String get beautyOff;
-
-  /// No description provided for @beautyLight.
-  ///
-  /// In en, this message translates to:
-  /// **'Light'**
-  String get beautyLight;
-
-  /// No description provided for @beautyStandard.
-  ///
-  /// In en, this message translates to:
-  /// **'Std'**
-  String get beautyStandard;
-
-  /// No description provided for @beautyStrong.
-  ///
-  /// In en, this message translates to:
-  /// **'Strong'**
-  String get beautyStrong;
-
-  /// No description provided for @suitLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Suit'**
-  String get suitLabel;
-
-  /// No description provided for @suitNone.
-  ///
-  /// In en, this message translates to:
-  /// **'None'**
-  String get suitNone;
-
-  /// No description provided for @suitMenNavy.
-  ///
-  /// In en, this message translates to:
-  /// **'Men Navy'**
-  String get suitMenNavy;
-
-  /// No description provided for @suitMenCharcoal.
-  ///
-  /// In en, this message translates to:
-  /// **'Men Gray'**
-  String get suitMenCharcoal;
-
-  /// No description provided for @suitWomen.
-  ///
-  /// In en, this message translates to:
-  /// **'Women'**
-  String get suitWomen;
-
-  /// No description provided for @suitComplianceHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Note: not recommended for strict scenarios (passport/visa)'**
-  String get suitComplianceHint;
-
   /// No description provided for @customUnitPx.
   ///
   /// In en, this message translates to:
@@ -1195,6 +1135,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Height (mm)'**
   String get customHeightMm;
+
+  /// No description provided for @splashSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip {seconds}s'**
+  String splashSkip(Object seconds);
+
+  /// No description provided for @splashAdPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Ad'**
+  String get splashAdPlaceholder;
+
+  /// No description provided for @specPrintSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Print size'**
+  String get specPrintSize;
+
+  /// No description provided for @specFileFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get specFileFormat;
+
+  /// No description provided for @specKbEditable.
+  ///
+  /// In en, this message translates to:
+  /// **'Set size'**
+  String get specKbEditable;
+
+  /// No description provided for @specKbDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set file size (KB)'**
+  String get specKbDialogTitle;
 }
 
 class _AppLocalizationsDelegate
