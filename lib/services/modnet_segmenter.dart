@@ -25,6 +25,7 @@ class ModnetSegmenter {
   static const inputSize = 512;
 
   static SendPort? _worker;
+  static Future<SendPort>? _starting; // spawn memo：并发调用共享一次启动
   static int _seq = 0;
   static final _pending = <int, _Job>{};
 
@@ -45,15 +46,25 @@ class ModnetSegmenter {
     return job.future;
   }
 
-  static Future<SendPort> _ensureWorker() async {
+  static Future<SendPort> _ensureWorker() {
     final existing = _worker;
-    if (existing != null) return existing;
+    if (existing != null) return Future.value(existing);
+    return _starting ??= _spawnWorker();
+  }
+
+  static Future<SendPort> _spawnWorker() async {
     final ready = ReceivePort();
     final replies = ReceivePort();
     final modelPath = await _ensureModelFile();
     await Isolate.spawn(_workerMain, [ready.sendPort, replies.sendPort, modelPath]);
-    // 第一条消息 = worker 的 SendPort
-    _worker = await ready.first as SendPort;
+    // 第一条消息 = SendPort 或 ['err', msg]（worker 初始化失败）
+    final first = await ready.first
+        .timeout(const Duration(seconds: 30), onTimeout: () => ['err', 'worker init timeout']);
+    if (first is List) {
+      _starting = null;
+      throw StateError('MODNet worker init failed: ${first[1]}');
+    }
+    _worker = first as SendPort;
     replies.listen((msg) {
       final list = msg as List;
       final job = _pending.remove(list[0] as int);
@@ -80,15 +91,22 @@ class ModnetSegmenter {
   }
 
   /// worker isolate 主循环：建会话一次，串行处理分割任务。
+  /// 初始化失败回传 ['err', msg]——否则主 isolate 会死等 ready.first。
   static void _workerMain(List<dynamic> init) {
     final readyToMain = init[0] as SendPort;
     final replyToMain = init[1] as SendPort;
     final modelPath = init[2] as String;
 
-    OrtEnv.instance.init();
-    final session =
-        OrtSession.fromFile(File(modelPath), OrtSessionOptions());
-    final inputName = session.inputNames.first;
+    late final OrtSession session;
+    late final String inputName;
+    try {
+      OrtEnv.instance.init();
+      session = OrtSession.fromFile(File(modelPath), OrtSessionOptions());
+      inputName = session.inputNames.first;
+    } catch (e) {
+      readyToMain.send(['err', '$e']);
+      return;
+    }
 
     final tasks = ReceivePort();
     readyToMain.send(tasks.sendPort);

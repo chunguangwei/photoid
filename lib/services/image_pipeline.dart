@@ -93,29 +93,22 @@ class ImagePipeline {
         height: loaded.h,
         bytes: loaded.rgba.buffer,
         numChannels: 4);
+    // mlJpg 已在同一 isolate 内编码（960px/q85），主线程零重活
+    final mlScale = loaded.mlScale;
+    final mlBytes = loaded.mlJpg;
 
     // ML Kit 输入文件：无 EXIF，保证人脸框坐标与 work 对齐。
     // 降级到 ≤960px/q85：vivo 等机型 MediaPipe 处理大输入会空 Packet
     // SIGABRT（原生杀进程）；人脸框按比例映射回 work 坐标，精度损失可忽略
-    var mlImage = work;
-    final mlScale =
-        work.width >= work.height ? 960 / work.width : 960 / work.height;
-    if (mlScale < 1) {
-      mlImage = img.copyResize(work,
-          width: (work.width * mlScale).round(),
-          height: (work.height * mlScale).round());
-    }
     final dir = await getTemporaryDirectory();
     final mlFile = File(p.join(
         dir.path, 'photoid_ml_${DateTime.now().millisecondsSinceEpoch}.jpg'));
-    final mlBytes = img.encodeJpg(mlImage, quality: 85);
     if (mlBytes.isEmpty) throw PipelineException('readPhoto');
     await mlFile.writeAsBytes(mlBytes);
     // 2. 人像分割（双引擎：高精修=MODNet 发丝级；普通=ML Kit 快速）
     _report(PipelineStep.segmenting);
     // 分割统一走 MODNet（ML Kit 分割在部分机型原生崩溃杀进程；
-    // 模型固定 512 输入）。两档差异在掩码后处理：
-    // 普通=原掩码直出（快），高精=精修掩码（锐化截断+腐蚀去边+羽化）
+    // 模型固定 512 输入）。两档统一精修掩码，档位差异=高精输出轻锐化
     final maskBytes = await ModnetSegmenter.segment(work);
     var maskImg = img.Image.fromBytes(
         width: work.width,
@@ -192,7 +185,7 @@ class ImagePipeline {
     // 档位差异（可见维度）：高精版加一道轻锐化，发丝/轮廓更利落
     if (engine == MattingEngine.modnet) {
       output = img.convolution(output,
-          filter: [0, -0.3, 0, -0.3, 2.2, -0.3, 0, -0.3, 0]);
+          filter: [0, -0.2, 0, -0.2, 1.8, -0.2, 0, -0.2, 0]);
     }
     final jpg = encodeToKbRange(output, spec.minFileKb, spec.maxFileKb);
 
@@ -485,13 +478,19 @@ Uint8List _refineMask(Map<String, Object> args) {
   }
   return out;
 }
-/// 后台 isolate 读图结果
+/// 后台 isolate 读图结果（含 ML Kit 输入）
 class _LoadedWork {
-  const _LoadedWork(this.w, this.h, this.rgba);
+  const _LoadedWork(this.w, this.h, this.rgba, this.mlJpg, this.mlScale);
 
   final int w;
   final int h;
   final Uint8List rgba;
+
+  /// 960px/q85 JPEG（ML Kit 人脸检测输入）
+  final Uint8List mlJpg;
+
+  /// ml 图相对 work 的缩放比（人脸框映射回 work 坐标用）
+  final double mlScale;
 }
 
 /// isolate 入口：解码 → EXIF 归一化 → 镜像补偿 → 限边缩放
@@ -509,6 +508,19 @@ _LoadedWork? _loadWork(Map<String, Object> args) {
         ? img.copyResize(work, width: maxSide)
         : img.copyResize(work, height: maxSide);
   }
+  // ML Kit 输入同 isolate 产出（主线程零重活）
+  var mlImage = work;
+  final mlScale =
+      work.width >= work.height ? 960 / work.width : 960 / work.height;
+  if (mlScale < 1) {
+    mlImage = img.copyResize(work,
+        width: (work.width * mlScale).round(),
+        height: (work.height * mlScale).round());
+  }
   return _LoadedWork(
-      work.width, work.height, work.getBytes(order: img.ChannelOrder.rgba));
+      work.width,
+      work.height,
+      work.getBytes(order: img.ChannelOrder.rgba),
+      img.encodeJpg(mlImage, quality: 85),
+      mlScale < 1 ? mlScale : 1.0);
 }
