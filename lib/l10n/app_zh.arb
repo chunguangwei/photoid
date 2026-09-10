@@ -260,5 +260,14 @@
       "kb": {}
     }
   },
-  "dialogCancel": "取消"
+  "dialogCancel": "取消",
+  "homeCustomSaved": "我的自定义规格",
+  "customDeleteTitle": "删除自定义规格",
+  "customDeleteConfirm": "确定删除「{name}」吗？",
+  "@customDeleteConfirm": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "customDelete": "删除"
 }

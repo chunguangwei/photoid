@@ -15,6 +15,8 @@ class SpecBackground {
         json['g'] as int,
         json['b'] as int,
       );
+
+  Map<String, dynamic> toJson() => {'name': name, 'r': r, 'g': g, 'b': b};
 }
 
 class PhotoSpec {
@@ -89,6 +91,23 @@ class PhotoSpec {
         background: background ?? this.background,
         requirements: requirements,
       );
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'pixelWidth': pixelWidth,
+        'pixelHeight': pixelHeight,
+        'minFileKb': minFileKb,
+        'maxFileKb': maxFileKb,
+        'minWidth': minWidth,
+        'maxWidth': maxWidth,
+        'minHeight': minHeight,
+        'maxHeight': maxHeight,
+        'minRatio': minRatio,
+        'maxRatio': maxRatio,
+        'background': background.toJson(),
+        'requirements': requirements,
+      };
+
   factory PhotoSpec.fromJson(Map<String, dynamic> json) => PhotoSpec(
         id: json['id'] as String,
         name: json['name'] as String,

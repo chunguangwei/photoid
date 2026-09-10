@@ -355,5 +355,14 @@
       "kb": {}
     }
   },
-  "dialogCancel": "Cancel"
+  "dialogCancel": "Cancel",
+  "homeCustomSaved": "My Custom Specs",
+  "customDeleteTitle": "Delete custom spec",
+  "customDeleteConfirm": "Delete \"{name}\"?",
+  "@customDeleteConfirm": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "customDelete": "Delete"
 }

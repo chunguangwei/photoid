@@ -595,4 +595,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dialogCancel => '取消';
+
+  @override
+  String get homeCustomSaved => '我的自定义规格';
+
+  @override
+  String get customDeleteTitle => '删除自定义规格';
+
+  @override
+  String customDeleteConfirm(Object name) {
+    return '确定删除「$name」吗？';
+  }
+
+  @override
+  String get customDelete => '删除';
 }

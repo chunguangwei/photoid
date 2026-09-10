@@ -1183,6 +1183,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel'**
   String get dialogCancel;
+
+  /// No description provided for @homeCustomSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'My Custom Specs'**
+  String get homeCustomSaved;
+
+  /// No description provided for @customDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete custom spec'**
+  String get customDeleteTitle;
+
+  /// No description provided for @customDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"?'**
+  String customDeleteConfirm(Object name);
+
+  /// No description provided for @customDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get customDelete;
 }
 
 class _AppLocalizationsDelegate

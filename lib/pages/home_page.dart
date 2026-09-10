@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 import '../models/photo_spec.dart';
+import '../services/custom_spec_store.dart';
 import '../services/spec_library.dart';
 import 'custom_spec_page.dart';
 import 'edit_page.dart';
@@ -63,6 +64,20 @@ class _HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<_HomeTab> {
+  /// 已保存的自定义规格（首页展示，可删除）
+  List<PhotoSpec> _customSpecs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCustomSpecs();
+  }
+
+  Future<void> _loadCustomSpecs() async {
+    final list = await CustomSpecStore.load();
+    if (mounted) setState(() => _customSpecs = list);
+  }
+
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
 
@@ -133,6 +148,8 @@ class _HomeTabState extends State<_HomeTab> {
                     _primaryGrid(context, l),
                     const SizedBox(height: 8),
                     _secondaryTools(context, l),
+                    if (_customSpecs.isNotEmpty)
+                      _customSpecsSection(context, l),
                     const SizedBox(height: 16),
                     TextField(
                       controller: _searchCtrl,
@@ -281,12 +298,71 @@ class _HomeTabState extends State<_HomeTab> {
           _smallTool(
             icon: Icons.tune,
             label: l.homeCustomSpec,
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => const CustomSpecPage(),
-            )),
+            onTap: () async {
+              await Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const CustomSpecPage(),
+              ));
+              _loadCustomSpecs();
+            },
           ),
         ],
       );
+
+  /// 已保存自定义规格：点按进入详情，长按删除
+  Widget _customSpecsSection(BuildContext context, AppLocalizations l) =>
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l.homeCustomSaved,
+                style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final spec in _customSpecs)
+                  InputChip(
+                    label: Text(
+                        '${spec.name} ${spec.pixelWidth}×${spec.pixelHeight}'),
+                    onPressed: () =>
+                        Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => SpecDetailPage(spec: spec),
+                    )),
+                    onDeleted: () => _confirmDeleteCustom(spec),
+                    deleteIcon: const Icon(Icons.close, size: 16),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      );
+
+  Future<void> _confirmDeleteCustom(PhotoSpec spec) async {
+    final l = AppLocalizations.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.customDeleteTitle),
+        content: Text(l.customDeleteConfirm(spec.name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l.dialogCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l.customDelete),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await CustomSpecStore.delete(spec.id);
+      _loadCustomSpecs();
+    }
+  }
 
   Widget _smallTool(
           {required IconData icon,

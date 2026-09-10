@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/photo_spec.dart';
+import '../services/custom_spec_store.dart';
 import 'spec_detail_page.dart';
 
 /// 自定义规格表单：命名/像素/文件大小/底色 → 构造 PhotoSpec 进详情页。
@@ -83,7 +84,7 @@ class _CustomSpecPageState extends State<CustomSpecPage> {
     super.dispose();
   }
 
-  void _create() {
+  Future<void> _create() async {
     final l = AppLocalizations.of(context);
     final w = _toPx(_width.text);
     final h = _toPx(_height.text);
@@ -128,6 +129,9 @@ class _CustomSpecPageState extends State<CustomSpecPage> {
       maxRatio: ratio + 0.05,
       background: _bg,
     );
+    // 持久化保存（首页可复用/删除）
+    await CustomSpecStore.save(spec);
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(MaterialPageRoute(
       builder: (_) => SpecDetailPage(spec: spec),
     ));

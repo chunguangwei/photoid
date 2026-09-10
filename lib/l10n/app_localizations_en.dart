@@ -616,4 +616,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dialogCancel => 'Cancel';
+
+  @override
+  String get homeCustomSaved => 'My Custom Specs';
+
+  @override
+  String get customDeleteTitle => 'Delete custom spec';
+
+  @override
+  String customDeleteConfirm(Object name) {
+    return 'Delete \"$name\"?';
+  }
+
+  @override
+  String get customDelete => 'Delete';
 }
