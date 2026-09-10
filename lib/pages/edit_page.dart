@@ -51,6 +51,9 @@ class _EditPageState extends State<EditPage> {
   Uint8List? _previewJpg;
   int _previewVersion = 0;
 
+  /// 效果重算中（滑杆松手后 isolate 磨皮）：预览叠扫描动效 + 挡连拖
+  bool _effectsBusy = false;
+
   /// 高精修版（MODNet 发丝级抠图）开关；默认 false=普通版（ML Kit 快速），
   /// 用户主动选高精才走慢速精细模型。持久化到 SharedPreferences。
   bool _hd = false;
@@ -86,14 +89,19 @@ class _EditPageState extends State<EditPage> {
           .then((p) => p.setInt(_beautyPrefKey, (_beauty * 100).round()));
     }
     final r = _result;
-    if (r == null) return;
+    if (r == null || _effectsBusy) return; // 重算中忽略新触发
     final beauty = _beauty; // 入口快照：滑杆连发时只认最新值
+    setState(() => _effectsBusy = true);
     Uint8List jpg;
-    if (beauty > 0) {
-      jpg = await compute(
-          _beautifyWorker, _BeautyTask(r.compositedJpg, r.faceRect, beauty));
-    } else {
-      jpg = r.compositedJpg;
+    try {
+      if (beauty > 0) {
+        jpg = await compute(
+            _beautifyWorker, _BeautyTask(r.compositedJpg, r.faceRect, beauty));
+      } else {
+        jpg = r.compositedJpg;
+      }
+    } finally {
+      if (mounted) setState(() => _effectsBusy = false);
     }
     if (!mounted || _result != r || _beauty != beauty) return; // 新流水线/新强度优先
     setState(() {
@@ -329,14 +337,24 @@ class _EditPageState extends State<EditPage> {
             child: Center(
               child: _showOriginal
                   ? Image.memory(result.originalBytes, fit: BoxFit.contain)
-                  : CropEditor(
-                      key: ValueKey(_previewVersion),
-                      imageBytes: _previewJpg ?? result.compositedJpg,
-                      imageWidth: result.composited.width,
-                      imageHeight: result.composited.height,
-                      autoCrop: result.autoCrop,
-                      aspect: _spec.aspect,
-                      onChanged: (r) => _currentCrop = r,
+                  : Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CropEditor(
+                          key: ValueKey(_previewVersion),
+                          imageBytes: _previewJpg ?? result.compositedJpg,
+                          imageWidth: result.composited.width,
+                          imageHeight: result.composited.height,
+                          autoCrop: result.autoCrop,
+                          aspect: _spec.aspect,
+                          onChanged: (r) => _currentCrop = r,
+                        ),
+                        // 效果重算中：扫描动效（与处理中页同一套）
+                        if (_effectsBusy)
+                          const IgnorePointer(
+                            child: _ScanLineEffect(),
+                          ),
+                      ],
                     ),
             ),
           ),
