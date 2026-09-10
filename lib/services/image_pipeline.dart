@@ -92,16 +92,31 @@ class ImagePipeline {
           : img.copyResize(work, height: _maxWorkSide);
     }
 
-    // ML Kit 输入文件：与 work 像素一致、无 EXIF，保证掩码/人脸框坐标对齐
+    // ML Kit 输入文件：无 EXIF，保证人脸框坐标与 work 对齐。
+    // 降级到 ≤960px/q85：vivo 等机型 MediaPipe 处理大输入会空 Packet
+    // SIGABRT（原生杀进程）；人脸框按比例映射回 work 坐标，精度损失可忽略
+    var mlImage = work;
+    final mlScale =
+        work.width >= work.height ? 960 / work.width : 960 / work.height;
+    if (mlScale < 1) {
+      mlImage = img.copyResize(work,
+          width: (work.width * mlScale).round(),
+          height: (work.height * mlScale).round());
+    }
     final dir = await getTemporaryDirectory();
     final mlFile = File(p.join(
         dir.path, 'photoid_ml_${DateTime.now().millisecondsSinceEpoch}.jpg'));
-    await mlFile.writeAsBytes(img.encodeJpg(work, quality: 92));
+    final mlBytes = img.encodeJpg(mlImage, quality: 85);
+    if (mlBytes.isEmpty) throw PipelineException('readPhoto');
+    await mlFile.writeAsBytes(mlBytes);
     // 2. 人像分割（双引擎：高精修=MODNet 发丝级；普通=ML Kit 快速）
     _report(PipelineStep.segmenting);
-    // 分割统一走 MODNet（ML Kit 分割在部分机型原生崩溃杀进程）；
-    // engine 参数保留语义但已等价，后续版本移除
-    final maskBytes = await ModnetSegmenter.segment(work);
+    // 分割统一走 MODNet（ML Kit 分割在部分机型原生崩溃杀进程）。
+    // 两档实质差异：普通=384px 推理（快），高精=512px 推理（发丝更细）
+    final maskBytes = await ModnetSegmenter.segment(work,
+        inputSize: engine == MattingEngine.modnet
+            ? ModnetSegmenter.inputSizeHd
+            : ModnetSegmenter.inputSizeFast);
     var maskImg = img.Image.fromBytes(
         width: work.width,
         height: work.height,
@@ -154,7 +169,14 @@ class ImagePipeline {
                 b.boundingBox.width * b.boundingBox.height
             ? a
             : b);
-    final autoCrop = _cropRect(composited, face.boundingBox, spec);
+    // 人脸框从 ML 输入坐标映射回 work/composited 坐标
+    final invScale = mlScale < 1 ? 1 / mlScale : 1.0;
+    final faceRect = Rect.fromLTRB(
+        face.boundingBox.left * invScale,
+        face.boundingBox.top * invScale,
+        face.boundingBox.right * invScale,
+        face.boundingBox.bottom * invScale);
+    final autoCrop = _cropRect(composited, faceRect, spec);
     final framed = img.copyCrop(composited,
         x: autoCrop.left.round(),
         y: autoCrop.top.round(),
@@ -180,7 +202,7 @@ class ImagePipeline {
       composited: composited,
       compositedJpg: img.encodeJpg(composited, quality: 90),
       autoCrop: autoCrop,
-      faceRect: face.boundingBox,
+      faceRect: faceRect,
     );
   }
 

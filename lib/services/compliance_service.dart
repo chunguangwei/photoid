@@ -109,7 +109,12 @@ class ComplianceService {
   /// 底部两角是被摄者衣服/身体，不是背景——四角全采会把衣服色混进去。
   (int, int, int) _sampleCorners(img.Image image) {
     final short = image.width < image.height ? image.width : image.height;
-    final s = (short * 0.08).round().clamp(4, short ~/ 3).toInt();
+    // 上界可能小于 4（short<12 的极小图）：先算下界再钳，防 clamp 抛异常
+    final upper = short ~/ 3;
+    final s = (short * 0.08)
+        .round()
+        .clamp(upper < 4 ? upper : 4, upper < 1 ? 1 : upper)
+        .toInt();
     final midY = (image.height * 0.22).round();
     final regions = [
       (0, 0), // 左上
