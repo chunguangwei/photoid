@@ -45,9 +45,6 @@
       <feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#7A1E33" flood-opacity=".34"/>
     </filter>
   </defs>
-  <rect width="1024" height="1024" fill="url(#bg)"/>
-  <rect width="1024" height="1024" fill="url(#sheen)"/>
-  <rect width="1024" height="1024" fill="url(#vignette)"/>
   <g transform="translate(-179.2 -179.2) scale(1.35)" filter="url(#lift)">
     <!-- 取景框四角：证件照的通用符号 -->
     <g stroke="url(#frame)" stroke-width="43" stroke-linecap="round" fill="none">

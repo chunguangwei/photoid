@@ -29,7 +29,7 @@
     <linearGradient id="face" x1="430" y1="430" x2="600" y2="712" gradientUnits="userSpaceOnUse">
       <stop stop-color="#FFFFFF"/>
       <stop offset=".62" stop-color="#F7F9FE"/>
-      <stop offset="1" stop-color="#D8E1F4"/>
+      <stop offset="1" stop-color="#E2E9F8"/>
     </linearGradient>
     <!-- 徽章：粉红球体渐变 -->
     <linearGradient id="badge" x1="632" y1="620" x2="694" y2="686" gradientUnits="userSpaceOnUse">
@@ -48,28 +48,4 @@
   <rect width="1024" height="1024" fill="url(#bg)"/>
   <rect width="1024" height="1024" fill="url(#sheen)"/>
   <rect width="1024" height="1024" fill="url(#vignette)"/>
-  <g transform="translate(-179.2 -179.2) scale(1.35)" filter="url(#lift)">
-    <!-- 取景框四角：证件照的通用符号 -->
-    <g stroke="url(#frame)" stroke-width="43" stroke-linecap="round" fill="none">
-      <path d="M293 423V342C293 315 315 293 342 293H423"/>
-      <path d="M601 293H682C709 293 731 315 731 342V423"/>
-      <path d="M731 601V682C731 709 709 731 682 731H601"/>
-      <path d="M423 731H342C315 731 293 709 293 682V601"/>
-    </g>
-    <g id="portrait" transform="translate(-92.16 -102.51) scale(1.18)">
-    <!-- 头像剪影 -->
-    <path d="M385 599C385 499 442 433 512 433C582 433 639 499 639 599C639 662 586 706 512 706C438 706 385 662 385 599Z" fill="url(#face)"/>
-    <!-- 顶部高光弧：一条极淡的白弧，头像立刻有了球面反光 -->
-    <path d="M424 520C441 473 473 449 512 449C551 449 583 473 600 520" stroke="#FFFFFF" stroke-opacity=".85" stroke-width="14" stroke-linecap="round" fill="none"/>
-    <!-- 眼睛：一只睁开、一只眨眼（与启动页吉祥物同一套表情语言） -->
-    <ellipse cx="465" cy="558" rx="18" ry="25" fill="#5A70B8"/>
-    <circle cx="471" cy="549" r="6" fill="#FFFFFF" opacity=".92"/>
-    <path d="M537 570C553 553 576 553 592 570" stroke="#5A70B8" stroke-width="16" stroke-linecap="round" fill="none"/>
-    <!-- 合规对勾徽章 -->
-    <g filter="url(#liftSm)">
-      <circle cx="661" cy="651" r="34" fill="url(#badge)"/>
-      <path d="M648 651L658 661L677 639" stroke="#FFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    </g>
-    </g>
-  </g>
 </svg>
