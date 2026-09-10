@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show debugPrint;
@@ -57,20 +56,12 @@ class ModnetSegmenter {
         OrtValueTensor.createTensorWithDataList(input, [1, 3, size, size]);
     // 输入名从 session 元数据取（模型构建差异可能是 input.1/x/img 等），
     // 硬编码 'input' 会触发 ORT_INVALID_ARGUMENT(code=2)。
-    // runAsync 在部分机型 isolate 启动挂死（卡在「正在智能抠图」）：
-    // 20s 超时回退同步 run（该路径在真机已验证可完成），同步路径 UI 短暂
-    // 冻结但必然出图，好于无限挂起。
-    debugPrint('MODNet inference start (${size}px, runAsync)');
-    List<OrtValue?> outputs;
-    try {
-      outputs = await _session!
-          .runAsync(OrtRunOptions(), {_session!.inputNames.first: inputOrt})!
-          .timeout(const Duration(seconds: 20));
-    } on TimeoutException {
-      debugPrint('MODNet runAsync timeout, fallback to sync run');
-      outputs = _session!
-          .run(OrtRunOptions(), {_session!.inputNames.first: inputOrt});
-    }
+    // 同步 run：唯一在真机验证过必出图的路径（UI 冻结 2-4s 可接受）。
+    // 插件 runAsync 的 isolate 裸指针传递在子 isolate 异常时永不回传，
+    // 曾致真机永久卡在「正在智能抠图」，已弃用。
+    debugPrint('MODNet inference start (${size}px)');
+    final outputs = _session!
+        .run(OrtRunOptions(), {_session!.inputNames.first: inputOrt});
     debugPrint('MODNet inference done');
     inputOrt.release();
     final outOrt = outputs.first as OrtValueTensor;
