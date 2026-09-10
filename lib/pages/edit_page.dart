@@ -51,8 +51,9 @@ class _EditPageState extends State<EditPage> {
   Uint8List? _previewJpg;
   int _previewVersion = 0;
 
-  /// 效果重算中（滑杆松手后 isolate 磨皮）：预览叠扫描动效 + 挡连拖
-  bool _effectsBusy = false;
+  /// 效果重算计数（滑杆松手后 isolate 磨皮）：
+  /// >0 时预览叠扫描动效；并发允许，结尾 staleness 检查保证收敛到最新值
+  int _effectsBusyCount = 0;
 
   /// 高精修版（MODNet 发丝级抠图）开关；默认 false=普通版（ML Kit 快速），
   /// 用户主动选高精才走慢速精细模型。持久化到 SharedPreferences。
@@ -89,9 +90,9 @@ class _EditPageState extends State<EditPage> {
           .then((p) => p.setInt(_beautyPrefKey, (_beauty * 100).round()));
     }
     final r = _result;
-    if (r == null || _effectsBusy) return; // 重算中忽略新触发
-    final beauty = _beauty; // 入口快照：滑杆连发时只认最新值
-    setState(() => _effectsBusy = true);
+    if (r == null) return;
+    final beauty = _beauty; // 入口快照：staleness 检查只认最新值
+    setState(() => _effectsBusyCount++);
     Uint8List jpg;
     try {
       if (beauty > 0) {
@@ -101,7 +102,7 @@ class _EditPageState extends State<EditPage> {
         jpg = r.compositedJpg;
       }
     } finally {
-      if (mounted) setState(() => _effectsBusy = false);
+      if (mounted) setState(() => _effectsBusyCount--);
     }
     if (!mounted || _result != r || _beauty != beauty) return; // 新流水线/新强度优先
     setState(() {
@@ -350,7 +351,7 @@ class _EditPageState extends State<EditPage> {
                           onChanged: (r) => _currentCrop = r,
                         ),
                         // 效果重算中：扫描动效（与处理中页同一套）
-                        if (_effectsBusy)
+                        if (_effectsBusyCount > 0)
                           const IgnorePointer(
                             child: _ScanLineEffect(),
                           ),
