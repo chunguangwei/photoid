@@ -1,7 +1,7 @@
 name: photoid
 description: 智能证件照 - 本地处理的合规证件照
 publish_to: 'none'
-version: 0.3.8+20
+version: 0.3.9+21
 
 environment:
   sdk: ^3.5.0
@@ -39,6 +39,7 @@ flutter:
   assets:
     - assets/photo_specs.json
     - assets/icon.png
+    - assets/icon_foreground.png
     - assets/splash_loading.png
     - assets/models/hivision_modnet.onnx
 
@@ -47,5 +48,5 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/icon.png"
   adaptive_icon_background: "#7B93C5"
-  adaptive_icon_foreground: "assets/icon.png"
+  adaptive_icon_foreground: "assets/icon_foreground.png"
   remove_alpha_ios: true
