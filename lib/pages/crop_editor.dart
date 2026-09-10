@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -115,14 +116,18 @@ class CropEditorState extends State<CropEditor> {
     _initialized = true;
   }
 
-  /// 钳制：缩放 ≥1，图片始终覆盖窗口
+  /// 钳制：缩放 ≥1，图片始终覆盖窗口。
+  /// 浮点误差容忍：disp 与窗口理论相等时 `_window - disp` 会是 +ε（如
+  /// 2.84e-14），clamp(下界>上界) 抛 ArgumentError（release 下灰盒），
+  /// 故下界钳到 ≤0。
   void _clampAll() {
     _scale = _scale.clamp(1.0, 8.0);
     final dispW = widget.imageWidth * _baseScale * _scale;
     final dispH = widget.imageHeight * _baseScale * _scale;
-    final dx = _offset.dx.clamp(_window.width - dispW, 0.0);
-    final dy = _offset.dy.clamp(_window.height - dispH, 0.0);
-    _offset = Offset(dx, dy);
+    final loX = math.min(0.0, _window.width - dispW);
+    final loY = math.min(0.0, _window.height - dispH);
+    _offset = Offset(
+        _offset.dx.clamp(loX, 0.0), _offset.dy.clamp(loY, 0.0));
   }
 
   /// 当前取图窗对应的图像坐标裁剪框（高由宽÷比例推导，严格等比）

@@ -1,11 +1,15 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs><linearGradient id="a" x1="210" y1="170" x2="825" y2="867" gradientUnits="userSpaceOnUse"><stop stop-color="#8EA7E8"/><stop offset="1" stop-color="#5F75BB"/></linearGradient></defs>
-  <rect width="1024" height="1024" rx="236" fill="url(#a)"/>
-  <!-- portrait frame -->
-  <g stroke="#FFF" stroke-width="43" stroke-linecap="round"><path d="M293 423V342C293 315 315 293 342 293H423"/><path d="M601 293H682C709 293 731 315 731 342V423"/><path d="M731 601V682C731 709 709 731 682 731H601"/><path d="M423 731H342C315 731 293 709 293 682V601"/></g>
-  <!-- minimalist blinking portrait -->
-  <path d="M385 599C385 499 442 433 512 433C582 433 639 499 639 599C639 662 586 706 512 706C438 706 385 662 385 599Z" fill="#FFF"/>
-  <ellipse cx="465" cy="558" rx="18" ry="25" fill="#6479BD"/>
-  <path d="M537 570C553 553 576 553 592 570" stroke="#6479BD" stroke-width="16" stroke-linecap="round"/>
-  <circle cx="661" cy="651" r="34" fill="#FF7180"/><path d="M648 651L658 661L677 639" stroke="#FFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Full-bleed background: iOS and Android apply their own icon masks. -->
+  <rect width="1024" height="1024" fill="url(#a)"/>
+  <!-- The mark is enlarged 35% for stronger recognition at real app-icon sizes. -->
+  <g transform="translate(-179.2 -179.2) scale(1.35)">
+    <!-- portrait frame -->
+    <g stroke="#FFF" stroke-width="43" stroke-linecap="round"><path d="M293 423V342C293 315 315 293 342 293H423"/><path d="M601 293H682C709 293 731 315 731 342V423"/><path d="M731 601V682C731 709 709 731 682 731H601"/><path d="M423 731H342C315 731 293 709 293 682V601"/></g>
+    <!-- minimalist blinking portrait -->
+    <path d="M385 599C385 499 442 433 512 433C582 433 639 499 639 599C639 662 586 706 512 706C438 706 385 662 385 599Z" fill="#FFF"/>
+    <ellipse cx="465" cy="558" rx="18" ry="25" fill="#6479BD"/>
+    <path d="M537 570C553 553 576 553 592 570" stroke="#6479BD" stroke-width="16" stroke-linecap="round"/>
+    <circle cx="661" cy="651" r="34" fill="#FF7180"/><path d="M648 651L658 661L677 639" stroke="#FFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
 </svg>
