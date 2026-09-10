@@ -87,14 +87,15 @@ class _EditPageState extends State<EditPage> {
     }
     final r = _result;
     if (r == null) return;
+    final beauty = _beauty; // 入口快照：滑杆连发时只认最新值
     Uint8List jpg;
-    if (_beauty > 0) {
-      jpg = await compute(_beautifyWorker,
-          _BeautyTask(r.compositedJpg, r.faceRect, _beauty));
+    if (beauty > 0) {
+      jpg = await compute(
+          _beautifyWorker, _BeautyTask(r.compositedJpg, r.faceRect, beauty));
     } else {
       jpg = r.compositedJpg;
     }
-    if (!mounted || _result != r) return; // 期间又跑了新流水线
+    if (!mounted || _result != r || _beauty != beauty) return; // 新流水线/新强度优先
     setState(() {
       _previewJpg = jpg;
       _previewVersion++;

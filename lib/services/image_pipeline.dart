@@ -327,8 +327,11 @@ class ImagePipeline {
     // min 达不到（纯色背景图即使 q98 也很小）→ EOI 后填充补齐。
     // JPEG 解码器读到 FFD9 即止，尾部填充字节不破坏解析，
     // 各类报名系统均接受（行业通行做法），合规检测不再报不可修复的 fileTooSmall
-    if (minKb > 0 && best.lengthInBytes < minKb * 1024) {
-      final padded = Uint8List(minKb * 1024)..setRange(0, best.length, best);
+    // 目标钳制在 [min, max]：min>max 的异常输入也不能撑破上限
+    final floorKb = maxKb > 0 ? math.min(minKb, maxKb) : minKb;
+    if (floorKb > 0 && best.lengthInBytes < floorKb * 1024) {
+      final padded = Uint8List(floorKb * 1024)
+        ..setRange(0, best.length, best);
       for (var i = best.length; i < padded.length; i++) {
         padded[i] = 0xFF;
       }
