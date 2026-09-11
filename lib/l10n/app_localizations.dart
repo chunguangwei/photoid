@@ -980,18 +980,6 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get saveAction;
 
-  /// No description provided for @editHd.
-  ///
-  /// In en, this message translates to:
-  /// **'HD Enhanced'**
-  String get editHd;
-
-  /// No description provided for @editNormal.
-  ///
-  /// In en, this message translates to:
-  /// **'Standard'**
-  String get editNormal;
-
   /// No description provided for @processingTitle.
   ///
   /// In en, this message translates to:

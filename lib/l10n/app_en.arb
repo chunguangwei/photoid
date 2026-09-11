@@ -293,8 +293,6 @@
   "editCropReset": "Reset",
   "editTitle": "Edit",
   "saveAction": "Save",
-  "editHd": "HD Enhanced",
-  "editNormal": "Standard",
   "processingTitle": "Creating your photo with AI",
   "processingDesc": "We use AI portrait recognition to scan and optimize your photo. This may take a moment, please wait.",
   "processingBusy": "Processing…",

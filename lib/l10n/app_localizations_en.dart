@@ -503,12 +503,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saveAction => 'Save';
 
   @override
-  String get editHd => 'HD Enhanced';
-
-  @override
-  String get editNormal => 'Standard';
-
-  @override
   String get processingTitle => 'Creating your photo with AI';
 
   @override

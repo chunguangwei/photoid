@@ -198,8 +198,6 @@
   "editCropReset": "还原",
   "editTitle": "编辑",
   "saveAction": "保存",
-  "editHd": "高清精修版",
-  "editNormal": "原图普通版",
   "processingTitle": "正在智能调整制作您的照片",
   "processingDesc": "我们将使用AI人像识别技术扫描您的照片，并将它调整至最佳状态，这可能需要一些时间，请耐心等待。",
   "processingBusy": "制作中…",

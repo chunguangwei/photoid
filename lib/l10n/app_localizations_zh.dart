@@ -484,12 +484,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get saveAction => '保存';
 
   @override
-  String get editHd => '高清精修版';
-
-  @override
-  String get editNormal => '原图普通版';
-
-  @override
   String get processingTitle => '正在智能调整制作您的照片';
 
   @override

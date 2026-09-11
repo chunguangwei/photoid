@@ -1,55 +1,40 @@
 <svg width="1170" height="2532" viewBox="0 0 1170 2532" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="105" y1="42" x2="1115" y2="2460" gradientUnits="userSpaceOnUse"><stop stop-color="#F8FAFF"/><stop offset=".52" stop-color="#EEF3FF"/><stop offset="1" stop-color="#F8F3FF"/></linearGradient>
-    <linearGradient id="body" x1="388" y1="917" x2="803" y2="1900" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF"/><stop offset="1" stop-color="#E7ECF6"/></linearGradient>
-    <linearGradient id="face" x1="347" y1="757" x2="806" y2="1016" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF"/><stop offset="1" stop-color="#EEF2F9"/></linearGradient>
-    <filter id="shadow" x="155" y="663" width="872" height="1450" filterUnits="userSpaceOnUse"><feDropShadow dx="0" dy="38" stdDeviation="38" flood-color="#9EAAD0" flood-opacity=".25"/></filter>
-    <filter id="soft" x="0" y="0" width="1170" height="2532" filterUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="1"/></filter>
+    <linearGradient id="bg" x1="80" y1="50" x2="1090" y2="2470" gradientUnits="userSpaceOnUse"><stop stop-color="#C4D4F7"/><stop offset=".52" stop-color="#91A9DF"/><stop offset="1" stop-color="#7186C3"/></linearGradient>
+    <radialGradient id="light" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(585 1270) rotate(90) scale(760 540)"><stop stop-color="#F2F6FF" stop-opacity=".55"/><stop offset="1" stop-color="#F2F6FF" stop-opacity="0"/></radialGradient>
+    <linearGradient id="white" x1="320" y1="620" x2="840" y2="1880" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF"/><stop offset=".6" stop-color="#F6F8FC"/><stop offset="1" stop-color="#DDE5F1"/></linearGradient>
+    <linearGradient id="arm" x1="235" y1="1110" x2="920" y2="1530" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF"/><stop offset=".7" stop-color="#F3F6FB"/><stop offset="1" stop-color="#D8E1EF"/></linearGradient>
+    <filter id="shadow" x="130" y="500" width="910" height="1490" filterUnits="userSpaceOnUse"><feDropShadow dx="0" dy="36" stdDeviation="36" flood-color="#485D94" flood-opacity=".27"/></filter>
+    <filter id="blur"><feGaussianBlur stdDeviation="13"/></filter>
   </defs>
-  <rect width="1170" height="2532" fill="url(#bg)"/>
-  <!-- Safe areas: top 150px / bottom 140px intentionally clear for iOS and Android system UI -->
-  <circle cx="1013" cy="360" r="194" fill="#DDE8FF" opacity=".55"/>
-  <circle cx="118" cy="1770" r="203" fill="#E8E0FF" opacity=".52"/>
-  <path d="M805 249C805 208 838 175 879 175H995C1036 175 1069 208 1069 249V365C1069 406 1036 439 995 439H879C838 439 805 406 805 365V249Z" fill="#FFF" opacity=".33"/>
-  <!-- subtle ID photo guide -->
-  <g opacity=".48" stroke="#91A9D8" stroke-width="10" stroke-linecap="round">
-    <path d="M193 772V698C193 668 217 644 247 644H321"/><path d="M849 644H923C953 644 977 668 977 698V772"/>
-    <path d="M193 1678V1752C193 1782 217 1806 247 1806H321"/><path d="M849 1806H923C953 1806 977 1782 977 1752V1678"/>
-  </g>
+  <rect width="1170" height="2532" fill="url(#bg)"/><rect width="1170" height="2532" fill="url(#light)"/>
+  <circle cx="1016" cy="350" r="190" fill="#E7EFFF" opacity=".14"/><circle cx="105" cy="1795" r="198" fill="#E4DBFF" opacity=".12"/>
+  <g stroke="#F3F6FF" stroke-width="10" stroke-linecap="round" opacity=".48"><path d="M178 766V706C178 675 203 650 234 650H300"/><path d="M870 650H936C967 650 992 675 992 706V766"/><path d="M178 1698V1758C178 1789 203 1814 234 1814H300"/><path d="M870 1814H936C967 1814 992 1789 992 1758V1698"/></g>
+  <ellipse cx="585" cy="1920" rx="288" ry="42" fill="#4B6096" opacity=".16" filter="url(#blur)"/>
   <g filter="url(#shadow)">
-    <!-- rear arm: viewer left / robot's right -->
-    <path d="M384 1173C275 1172 218 1264 241 1373L299 1650C315 1724 381 1766 448 1745C510 1726 540 1660 520 1594L463 1339C454 1293 471 1253 505 1223L466 1184C442 1176 412 1173 384 1173Z" fill="url(#body)"/>
-    <path d="M315 1420C359 1450 411 1458 461 1436" stroke="#D3DAE8" stroke-width="10" stroke-linecap="round"/>
-    <!-- body -->
-    <path d="M353 1210C353 1056 455 965 585 965C715 965 817 1056 817 1210V1549C817 1754 720 1884 585 1884C450 1884 353 1754 353 1549V1210Z" fill="url(#body)"/>
-    <path d="M368 1484C489 1512 681 1512 802 1484" stroke="#D8DFEC" stroke-width="9"/>
-    <ellipse cx="585" cy="1886" rx="273" ry="43" fill="#B7C1DD" opacity=".28" filter="url(#soft)"/>
-    <!-- legs -->
-    <path d="M405 1745C405 1704 438 1671 479 1671H531C572 1671 605 1704 605 1745V1884C605 1934 565 1974 515 1974H493C444 1974 405 1934 405 1884V1745Z" fill="url(#body)"/>
-    <path d="M565 1745C565 1704 598 1671 639 1671H691C732 1671 765 1704 765 1745V1884C765 1934 726 1974 677 1974H655C605 1974 565 1934 565 1884V1745Z" fill="url(#body)"/>
-    <!-- face/head -->
-    <path d="M302 829C302 682 424 588 585 588C746 588 868 682 868 829C868 958 754 1033 585 1033C416 1033 302 958 302 829Z" fill="url(#face)"/>
-    <!-- eyes: no connecting line, one eye half-closed mid-blink -->
-    <ellipse cx="500" cy="819" rx="31" ry="45" fill="#2E3340"/>
-    <path d="M651 839C674 815 708 815 731 839" stroke="#2E3340" stroke-width="24" stroke-linecap="round"/>
-    <!-- left arm holding selfie phone (viewer right) -->
-    <path d="M799 1172C893 1152 953 1217 944 1301L922 1514C916 1580 861 1627 795 1619C736 1612 696 1560 704 1498L723 1346C727 1304 710 1278 678 1252L705 1188C733 1183 766 1178 799 1172Z" fill="url(#body)"/>
-    <!-- phone -->
-    <g transform="rotate(-10 900 1070)">
-      <rect x="820" y="920" width="174" height="296" rx="31" fill="#343B54"/>
-      <rect x="833" y="938" width="148" height="259" rx="21" fill="#EEF4FF"/>
-      <circle cx="907" cy="1014" r="43" fill="#FF6F7D"/>
-      <circle cx="907" cy="1014" r="21" fill="#FFF" opacity=".95"/>
-      <rect x="878" y="1157" width="58" height="8" rx="4" fill="#B2BED8"/>
-    </g>
-    <!-- hand wrapped around phone -->
-    <path d="M778 1270C797 1202 855 1164 915 1183C967 1199 995 1254 979 1308L950 1401C934 1454 875 1485 824 1465C777 1447 752 1397 765 1350L778 1270Z" fill="url(#body)"/>
-    <path d="M849 1265L902 1281M832 1322L894 1339M816 1379L874 1395" stroke="#D4DCEA" stroke-width="10" stroke-linecap="round"/>
+    <!-- two short, outward soft-plastic arms sit behind the body -->
+    <path d="M360 1061C280 1087 221 1180 228 1280L240 1430C244 1501 298 1550 359 1545C418 1540 454 1488 443 1428L421 1284C415 1248 432 1218 463 1195L428 1082C406 1065 383 1056 360 1061Z" fill="url(#arm)"/>
+    <path d="M810 1061C890 1087 949 1180 942 1280L930 1430C926 1501 872 1550 811 1545C752 1540 716 1488 727 1428L749 1284C755 1248 738 1218 707 1195L742 1082C764 1065 787 1056 810 1061Z" fill="url(#arm)"/>
+    <path d="M272 1222C281 1169 310 1130 349 1116" stroke="#FFF" stroke-width="14" stroke-linecap="round" opacity=".86"/>
+    <path d="M898 1218C890 1170 862 1133 824 1118" stroke="#FFF" stroke-width="14" stroke-linecap="round" opacity=".86"/>
+    <!-- broad compact torso -->
+    <path d="M312 1240C312 1017 430 914 585 914C740 914 858 1017 858 1240V1500C858 1719 756 1852 585 1852C414 1852 312 1719 312 1500V1240Z" fill="url(#white)"/>
+    <path d="M331 1486C459 1512 711 1512 839 1486" stroke="#D4DEED" stroke-width="8"/>
+    <!-- small stable feet -->
+    <path d="M396 1708C396 1664 431 1629 475 1629H531C575 1629 610 1664 610 1708V1830C610 1879 570 1919 521 1919H485C436 1919 396 1879 396 1830V1708Z" fill="url(#white)"/>
+    <path d="M560 1708C560 1664 595 1629 639 1629H695C739 1629 774 1664 774 1708V1830C774 1879 734 1919 685 1919H649C600 1919 560 1879 560 1830V1708Z" fill="url(#white)"/>
+    <!-- low, wide head makes the silhouette warm and balanced -->
+    <rect x="303" y="585" width="564" height="350" rx="175" fill="url(#white)"/>
+    <!-- original wink expression, no eye-connecting line -->
+    <ellipse cx="493" cy="760" rx="30" ry="42" fill="#303647"/>
+    <path d="M655 782C677 760 711 760 733 782" stroke="#303647" stroke-width="23" stroke-linecap="round"/>
+    <!-- phone carried in the robot's left hand (viewer right) -->
+    <g transform="rotate(-9 787 1240)"><rect x="706" y="1095" width="156" height="270" rx="29" fill="#303952"/><rect x="718" y="1111" width="132" height="239" rx="19" fill="#EAF1FF"/><rect x="751" y="1130" width="66" height="11" rx="5.5" fill="#BECBE6"/><circle cx="784" cy="1215" r="38" fill="#FF7482"/><circle cx="784" cy="1215" r="18" fill="#FFF"/><path d="M761 1309H807" stroke="#AAB8D4" stroke-width="7" stroke-linecap="round"/></g>
+    <!-- hand wraps the handset, with understated finger seams -->
+    <path d="M730 1250C755 1196 820 1173 866 1208C906 1238 912 1296 879 1333L828 1390C793 1428 730 1427 694 1386C664 1351 668 1294 701 1269L730 1250Z" fill="url(#arm)"/>
+    <path d="M762 1261L822 1277M744 1315L812 1331M723 1360L779 1374" stroke="#C5D0E2" stroke-width="8" stroke-linecap="round"/>
+    <path d="M772 1246L831 1262M754 1300L822 1316M733 1345L788 1359" stroke="#FFF" stroke-width="5" stroke-linecap="round" opacity=".9"/>
   </g>
-  <!-- minimal loading indicator; no text so it localizes cleanly -->
-  <g transform="translate(495 2157)">
-    <rect width="180" height="10" rx="5" fill="#D6DEEF"/>
-    <rect width="72" height="10" rx="5" fill="#7188C8"/>
-  </g>
-  <circle cx="585" cy="2225" r="7" fill="#A7B5D6"/><circle cx="617" cy="2225" r="7" fill="#C3CBE2"/><circle cx="649" cy="2225" r="7" fill="#DCE1EF"/>
+  <g transform="translate(495 2157)"><rect width="180" height="10" rx="5" fill="#DDE7FA" opacity=".75"/><rect width="72" height="10" rx="5" fill="#FFF"/></g>
+  <circle cx="585" cy="2225" r="7" fill="#FFF"/><circle cx="617" cy="2225" r="7" fill="#DDE7FA"/><circle cx="649" cy="2225" r="7" fill="#DDE7FA"/>
 </svg>

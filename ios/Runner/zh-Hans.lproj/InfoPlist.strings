@@ -1,1 +1,4 @@
 "CFBundleDisplayName" = "智能证件照";
+"NSCameraUsageDescription" = "用于拍摄证件照";
+"NSPhotoLibraryUsageDescription" = "用于从相册选择照片制作证件照";
+"NSPhotoLibraryAddUsageDescription" = "用于将制作完成的证件照保存到相册";

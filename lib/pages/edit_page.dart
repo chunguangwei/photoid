@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
@@ -40,14 +39,15 @@ class _EditPageState extends State<EditPage> {
   bool _showOriginal = false;
   bool _regenerating = false;
 
-  static const _hdPrefKey = 'hd_mode_enabled_v2';
-  static const _beautyPrefKey = 'beauty_intensity_v3';
-  static const _clarityPrefKey = 'clarity_intensity_v3';
-
-  /// 面部精修强度 0–1（磨皮/去皱/匀肤/轻度瘦脸）。默认 0 = 不开启。
+  /// 面部精修强度 0–1（磨皮/匀肤/提亮/轻度瘦脸）。
+  ///
+  /// **每次进入处理页都从 0 开始，刻意不做持久化。** 用户看到的第一版成片
+  /// 必须是「原样处理」的结果——效果是否要加、加多少，应该由用户对着自己
+  /// 这张照片当场决定。沿用上次的强度意味着换了一张照片还在套旧参数，
+  /// 用户甚至不知道自己看到的是被修过的。
   double _beauty = 0;
 
-  /// 画质清晰度强度 0–1（锐化/局部对比/通透度）。默认 0 = 不开启。
+  /// 画质清晰度强度 0–1（锐化/局部对比/通透度）。同样默认 0、不持久化。
   double _clarity = 0;
 
   /// 预览用合成图缓存（效果重算产物）
@@ -66,9 +66,6 @@ class _EditPageState extends State<EditPage> {
   /// 导出中（生成成片跑在 isolate，期间禁用保存按钮防重复点击）
   bool _exporting = false;
 
-  /// 高精修版（MODNet 发丝级抠图）开关；持久化到 SharedPreferences。
-  bool _hd = false;
-
   final GlobalKey<CropEditorState> _editorKey = GlobalKey<CropEditorState>();
   Rect? _currentCrop;
 
@@ -76,26 +73,13 @@ class _EditPageState extends State<EditPage> {
   void initState() {
     super.initState();
     _spec = widget.spec;
-    _loadPrefs().then((_) => _run());
+    _run();
   }
 
   @override
   void dispose() {
     _effectsDebounce?.cancel();
     super.dispose();
-  }
-
-  Future<void> _loadPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final hd = prefs.getBool(_hdPrefKey);
-    final b = prefs.getInt(_beautyPrefKey);
-    final c = prefs.getInt(_clarityPrefKey);
-    if (!mounted) return;
-    setState(() {
-      if (hd != null) _hd = hd;
-      if (b != null) _beauty = (b / 100).clamp(0.0, 1.0);
-      if (c != null) _clarity = (c / 100).clamp(0.0, 1.0);
-    });
   }
 
   /// 效果变化（滑杆松手）：250ms 防抖后在 isolate 重算预览。
@@ -106,10 +90,6 @@ class _EditPageState extends State<EditPage> {
     _effectsDebounce?.cancel();
     _effectsDebounce =
         Timer(const Duration(milliseconds: 250), _refreshEffects);
-    SharedPreferences.getInstance().then((p) {
-      p.setInt(_beautyPrefKey, (_beauty * 100).round());
-      p.setInt(_clarityPrefKey, (_clarity * 100).round());
-    });
   }
 
   Future<void> _refreshEffects() async {
@@ -196,14 +176,6 @@ class _EditPageState extends State<EditPage> {
     }
   }
 
-  /// 高精修/普通版切换：按引擎重跑流水线
-  void _switchHd(bool hd) {
-    if (hd == _hd || _result == null) return;
-    setState(() => _hd = hd);
-    SharedPreferences.getInstance().then((p) => p.setBool(_hdPrefKey, hd));
-    _run();
-  }
-
   Future<void> _run() async {
     setState(() {
       _error = null;
@@ -223,7 +195,6 @@ class _EditPageState extends State<EditPage> {
         },
       ).run(widget.sourcePath, _spec,
           flipHorizontal: widget.flipHorizontal,
-          engine: _hd ? MattingEngine.modnet : MattingEngine.mlkit,
           beauty: _beauty,
           clarity: _clarity);
       if (!mounted) return;
@@ -304,7 +275,6 @@ class _EditPageState extends State<EditPage> {
           maxKb: _spec.maxFileKb,
           beauty: _beauty,
           clarity: _clarity,
-          sharpen: _hd,
         ),
       );
       if (!mounted) return;
@@ -401,18 +371,6 @@ class _EditPageState extends State<EditPage> {
     final kb = result.jpgBytes.lengthInBytes / 1024;
     return Column(
       children: [
-        // 版本切换：高精修版（MODNet 发丝级）/ 原图普通版
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: SegmentedButton<bool>(
-            segments: [
-              ButtonSegment(value: true, label: Text(l.editHd)),
-              ButtonSegment(value: false, label: Text(l.editNormal)),
-            ],
-            selected: {_hd},
-            onSelectionChanged: (s) => _switchHd(s.first),
-          ),
-        ),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(16),

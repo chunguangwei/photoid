@@ -28,7 +28,6 @@ DeliveryRequest _req({
   required Rect crop,
   double beauty = 0,
   double clarity = 0,
-  bool sharpen = false,
 }) =>
     DeliveryRequest(
       rgba: _workRgba(300, 400),
@@ -43,7 +42,6 @@ DeliveryRequest _req({
       maxKb: 500,
       beauty: beauty,
       clarity: clarity,
-      sharpen: sharpen,
     );
 
 void main() {
@@ -74,14 +72,13 @@ void main() {
       expect((c.b.toInt() - 219).abs(), lessThan(24));
     });
 
-    test('开启美颜+清晰度+锐化不崩溃，输出仍合规', () async {
+    test('开启美颜+清晰度不崩溃，输出仍合规', () async {
       final jpg = await compute(
           deliverWorker,
           _req(
               crop: const Rect.fromLTWH(20, 30, 240, 320),
               beauty: 1.0,
-              clarity: 1.0,
-              sharpen: true));
+              clarity: 1.0));
       final decoded = img.decodeJpg(jpg);
       expect(decoded, isNotNull);
       expect(decoded!.width, 295);

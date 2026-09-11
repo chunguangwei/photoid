@@ -13,8 +13,6 @@ import 'modnet_segmenter.dart';
 import 'photo_effects.dart';
 
 /// 抠图引擎：两档均使用 MODNet，`modnet`（高精修）额外做一道轻锐化。
-enum MattingEngine { mlkit, modnet }
-
 /// 流水线处理步骤（UI 层据此映射 l10n 键，文案改动不影响翻译）。
 enum PipelineStep { preparing, reading, segmenting, compositing, framing, compressing }
 
@@ -45,7 +43,6 @@ class DeliveryRequest {
     required this.maxKb,
     this.beauty = 0,
     this.clarity = 0,
-    this.sharpen = false,
   });
 
   /// 换底后的完整工作图（RGBA）
@@ -67,9 +64,6 @@ class DeliveryRequest {
   final int maxKb;
   final double beauty;
   final double clarity;
-
-  /// 高精修档的轻锐化
-  final bool sharpen;
 }
 
 class PipelineResult {
@@ -142,7 +136,6 @@ class ImagePipeline {
 
   Future<PipelineResult> run(String sourcePath, PhotoSpec spec,
       {bool flipHorizontal = false,
-      MattingEngine engine = MattingEngine.mlkit,
       double beauty = 0,
       double clarity = 0}) async {
     // 1. 解码 + EXIF 归一化 + 限边缩放 + ML Kit 输入编码（全在 isolate）
@@ -226,7 +219,6 @@ class ImagePipeline {
           maxKb: spec.maxFileKb,
           beauty: beauty,
           clarity: clarity,
-          sharpen: engine == MattingEngine.modnet,
         ),
       );
       _report(PipelineStep.compressing);
@@ -988,14 +980,17 @@ Uint8List deliverWorker(DeliveryRequest req) {
         beauty: req.beauty, clarity: req.clarity);
   }
 
-  // 缩放补偿锐化（resize sharpening）：**无条件执行**。
+  // 缩放补偿锐化（resize sharpening）：**无条件执行、固定强度**。
   //
   // 任何降采样都会损失一部分边缘锐度——即使用了多步区域平均也一样，
   // 因为平均本身就是低通。行业惯例是在缩放后补一道轻 USM 把边缘拉回来，
   // 这与用户的「清晰度」滑杆是两回事：滑杆是主观风格，这一步是还原缩放
   // 前就有的锐度，所以不给开关。
-  // 高精修档再多给一点，配合发丝级掩码让轮廓更利落。
-  out = PhotoEffects.resizeSharpen(out, req.sharpen ? 0.55 : 0.35);
+  //
+  // 曾经这里按「高精修/普通版」给 0.55 / 0.35 两档，但那个开关名不副实：
+  // 两档的抠图都走 MODNet，唯一差异就是这个系数，切换却要重跑整条流水线
+  // （含最贵的模型推理）。开关已删除，强度取两档中间值。
+  out = PhotoEffects.resizeSharpen(out, 0.45);
   return ImagePipeline.encodeToKbRange(out, req.minKb, req.maxKb);
 }
 
