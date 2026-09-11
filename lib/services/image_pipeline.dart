@@ -266,13 +266,15 @@ class ImagePipeline {
     // 0.75（证件照比例），乘 1.45 依然窄于人的肩宽，ROI 边界从肩膀中间切过
     // ——掩码在边界处被硬切，成片里人物两侧被削平成纯底色（「没有肩膀」）。
     // 人体比例是稳定的：肩宽约 2.5–3 个脸宽，所以横向必须按脸宽给足。
-    const sideFaces = 2.6; // 中线到左右各 2.6 个脸宽 ⇒ 总宽 5.2 脸宽
+    const sideFaces = 3.2; // 中线到左右各 3.2 个脸宽 ⇒ 总宽 6.4 脸宽（肩宽 2.5–3 脸宽，留足余量）
     const upFaces = 1.6; // 头顶上方留 1.6 个脸高（含发饰、举起的手）
     const downFaces = 4.0; // 下巴以下 4 个脸高，覆盖肩胸
 
     // 人脸够大（本就是证件照/半身照）时不裁：模型输入精度已足够，
-    // 裁了没收益，还多一次全图拷贝、多一重切到人体的风险。
-    if (face.width > srcW * 0.28 || face.height > srcH * 0.28) return null;
+    // 裁了没收益，还多一重切到人体边缘的风险。
+    // 阈值刻意取宽（0.36）：手机广角镜头 + 自拍距离下，人脸宽度常在 0.28–0.35 之间，
+    // 旧值 0.28 太保守，会对自拍近景也触发粗裁，把肩膀截掉。
+    if (face.width > srcW * 0.36 || face.height > srcH * 0.36) return null;
 
     final cx = face.center.dx;
     final left = math.max(0.0, cx - face.width * sideFaces);
@@ -448,16 +450,41 @@ class ImagePipeline {
   static img.Image _filled(int w, int h, img.Color bg) =>
       img.fill(img.Image(width: w, height: h), color: bg);
 
+  /// **多步降采样**：每步最多减半，用区域平均；最后一步才用 cubic 对齐尺寸。
+  ///
+  /// 这是成片清晰度的关键一环，别改回一步到位。证件照要把 2000+px 的工作图
+  /// 缩到 295×413（缩放因子常低于 0.15）。cubic 是**点采样**插值，它只看目标
+  /// 像素周围 4×4 个源像素——跨度 7 个像素取 1 个时，中间的信息根本没参与
+  /// 计算，等于无抗混叠地抽样：细节丢失、边缘发毛、布纹/发丝出摩尔纹。
+  /// 观感就是用户说的「不够清晰」，而且**调锐化参数救不回来**（信息已经没了）。
+  ///
+  /// 逐步减半时每一步都是区域平均，所有源像素都对结果有贡献，相当于
+  /// 先低通再降采样，是 mipmap 的思路。
+  static img.Image downscaleStepwise(img.Image src, int targetW, int targetH) {
+    var cur = src;
+    // 留一档给最后的 cubic：只要还大于目标 2 倍就继续减半
+    while (cur.width >= targetW * 2 && cur.height >= targetH * 2 &&
+        cur.width > 2 && cur.height > 2) {
+      cur = img.copyResize(cur,
+          width: cur.width ~/ 2,
+          height: math.max(1, cur.height ~/ 2),
+          interpolation: img.Interpolation.average);
+    }
+    if (cur.width == targetW && cur.height == targetH) return cur;
+    return img.copyResize(cur,
+        width: targetW,
+        height: targetH,
+        interpolation: img.Interpolation.cubic);
+  }
+
   /// 等比缩放到规格像素：只用单一缩放因子（宽向对齐），杜绝拉伸。
   /// 源图比例已由裁剪框锁定，高度与目标的舍入差 ≤1px：
   /// 多出则从底部裁掉，不足用底色补齐。
   static img.Image resizeToSpecUniform(
       img.Image src, int targetW, int targetH, img.Color bg) {
     final f = targetW / src.width;
-    final out = img.copyResize(src,
-        width: targetW,
-        height: math.max(1, (src.height * f).round()),
-        interpolation: img.Interpolation.cubic);
+    final out = downscaleStepwise(
+        src, targetW, math.max(1, (src.height * f).round()));
     if (out.height == targetH) return out;
     if (out.height > targetH) {
       return img.copyCrop(out, x: 0, y: 0, width: targetW, height: targetH);
@@ -961,11 +988,14 @@ Uint8List deliverWorker(DeliveryRequest req) {
         beauty: req.beauty, clarity: req.clarity);
   }
 
-  // 高精修档：一道轻锐化，发丝/轮廓更利落
-  if (req.sharpen) {
-    out = img.convolution(out,
-        filter: [0, -0.2, 0, -0.2, 1.8, -0.2, 0, -0.2, 0]);
-  }
+  // 缩放补偿锐化（resize sharpening）：**无条件执行**。
+  //
+  // 任何降采样都会损失一部分边缘锐度——即使用了多步区域平均也一样，
+  // 因为平均本身就是低通。行业惯例是在缩放后补一道轻 USM 把边缘拉回来，
+  // 这与用户的「清晰度」滑杆是两回事：滑杆是主观风格，这一步是还原缩放
+  // 前就有的锐度，所以不给开关。
+  // 高精修档再多给一点，配合发丝级掩码让轮廓更利落。
+  out = PhotoEffects.resizeSharpen(out, req.sharpen ? 0.55 : 0.35);
   return ImagePipeline.encodeToKbRange(out, req.minKb, req.maxKb);
 }
 
@@ -1026,19 +1056,26 @@ _LoadedWork? _loadWork(Map<String, Object> args) {
   work = img.bakeOrientation(work);
   // 前置摄像头预览是镜像，takePicture 输出为传感器原始方向，需水平翻转对齐用户所见
   if (flip) work = img.flipHorizontal(work);
+  // 限边缩放**必须显式指定插值**：`copyResize` 默认是 Interpolation.nearest
+  // （最近邻），4000px 的手机原图缩到 2400 时等于直接丢弃 40% 的像素且不做
+  // 任何平均——细节、发丝、布纹全在这一步就没了，后面再怎么锐化也救不回。
+  // 走 downscaleStepwise 既指定了插值，又在大比例缩放时逐步区域平均。
   if (work.width > maxSide || work.height > maxSide) {
-    work = work.width >= work.height
-        ? img.copyResize(work, width: maxSide)
-        : img.copyResize(work, height: maxSide);
+    final f = work.width >= work.height
+        ? maxSide / work.width
+        : maxSide / work.height;
+    work = ImagePipeline.downscaleStepwise(work,
+        math.max(1, (work.width * f).round()),
+        math.max(1, (work.height * f).round()));
   }
   // ML Kit 输入同 isolate 产出（主线程零重活）
   var mlImage = work;
   final mlScale =
       work.width >= work.height ? 960 / work.width : 960 / work.height;
   if (mlScale < 1) {
-    mlImage = img.copyResize(work,
-        width: (work.width * mlScale).round(),
-        height: (work.height * mlScale).round());
+    mlImage = ImagePipeline.downscaleStepwise(work,
+        math.max(1, (work.width * mlScale).round()),
+        math.max(1, (work.height * mlScale).round()));
   }
   return _LoadedWork(
       work.width,

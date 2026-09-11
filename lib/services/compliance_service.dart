@@ -171,8 +171,13 @@ class ComplianceService {
   }
 
   Future<List<CheckItem>> _faceChecks(img.Image image) async {
-    // 小图检测不到人脸，放大 2 倍再检
-    final up = img.copyResize(image, width: image.width * 2);
+    // 小图检测不到人脸，放大 2 倍再检。
+    // 必须显式给插值：copyResize 默认 nearest，放大后全是锯齿方块，
+    // 反而让检测器更难命中。
+    final up = img.copyResize(image,
+        width: image.width * 2,
+        height: image.height * 2,
+        interpolation: img.Interpolation.cubic);
     // Android：fromFilePath 不挂 MediaImage 会 NPE（与 image_pipeline 同一
     // 已知 bug），统一走 fromBytes+NV21；iOS 用临时文件
     InputImage input;

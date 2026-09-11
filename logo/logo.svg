@@ -1,75 +1,94 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <!-- 背景主渐变：四段停靠，中段提亮，避免大面积平涂的廉价感 -->
-    <linearGradient id="bg" x1="120" y1="80" x2="904" y2="944" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#A9BEF3"/>
-      <stop offset=".38" stop-color="#8199DE"/>
-      <stop offset=".72" stop-color="#6A81C9"/>
-      <stop offset="1" stop-color="#54679F"/>
+    <linearGradient id="bg" x1="110" y1="70" x2="914" y2="954" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9DB3EE"/>
+      <stop offset=".36" stop-color="#7A93DC"/>
+      <stop offset=".72" stop-color="#5E75BE"/>
+      <stop offset="1" stop-color="#46578F"/>
     </linearGradient>
     <!-- 左上柔光：模拟单一光源，是「微立体」的根 -->
     <radialGradient id="sheen" cx="0" cy="0" r="1"
-      gradientTransform="translate(300 232) rotate(52) scale(660)" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFFFFF" stop-opacity=".30"/>
+      gradientTransform="translate(296 226) rotate(52) scale(672)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity=".32"/>
       <stop offset=".55" stop-color="#FFFFFF" stop-opacity=".07"/>
       <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
     </radialGradient>
     <!-- 右下暗角：把体积压回去，形成明暗对比 -->
     <radialGradient id="vignette" cx="0" cy="0" r="1"
-      gradientTransform="translate(820 860) rotate(-135) scale(720)" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#2E3C6B" stop-opacity=".26"/>
-      <stop offset="1" stop-color="#2E3C6B" stop-opacity="0"/>
+      gradientTransform="translate(838 876) rotate(-135) scale(742)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#27345E" stop-opacity=".30"/>
+      <stop offset="1" stop-color="#27345E" stop-opacity="0"/>
     </radialGradient>
     <!-- 取景框：白色微渐变，上亮下沉 -->
-    <linearGradient id="frame" x1="300" y1="280" x2="740" y2="760" gradientUnits="userSpaceOnUse">
+    <linearGradient id="frame" x1="256" y1="256" x2="768" y2="768" gradientUnits="userSpaceOnUse">
       <stop stop-color="#FFFFFF"/>
-      <stop offset="1" stop-color="#E4EBFA"/>
+      <stop offset="1" stop-color="#DDE6F8"/>
     </linearGradient>
-    <!-- 头像块：顶部纯白 → 底部冷灰，制造球面感 -->
-    <linearGradient id="face" x1="430" y1="430" x2="600" y2="712" gradientUnits="userSpaceOnUse">
+    <!-- 头部：顶部纯白 → 底部冷灰，制造球面感 -->
+    <linearGradient id="head" x1="468" y1="366" x2="558" y2="518" gradientUnits="userSpaceOnUse">
       <stop stop-color="#FFFFFF"/>
-      <stop offset=".62" stop-color="#F7F9FE"/>
-      <stop offset="1" stop-color="#D8E1F4"/>
+      <stop offset=".58" stop-color="#F8FAFE"/>
+      <stop offset="1" stop-color="#D6E0F5"/>
+    </linearGradient>
+    <!-- 肩部：比头部整体暗半档，头肩因此自然分层（而不是糊成一块） -->
+    <linearGradient id="shoulder" x1="410" y1="540" x2="614" y2="686" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FBFCFF"/>
+      <stop offset=".55" stop-color="#EDF2FC"/>
+      <stop offset="1" stop-color="#C9D6F0"/>
     </linearGradient>
     <!-- 徽章：粉红球体渐变 -->
-    <linearGradient id="badge" x1="632" y1="620" x2="694" y2="686" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FF97A0"/>
-      <stop offset=".55" stop-color="#FF7180"/>
-      <stop offset="1" stop-color="#EF4E63"/>
+    <linearGradient id="badge" x1="617" y1="583" x2="687" y2="653" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF9AA4"/>
+      <stop offset=".52" stop-color="#FB6F80"/>
+      <stop offset="1" stop-color="#E8455C"/>
     </linearGradient>
     <!-- 元素投影：低透明、大扩散，克制不脏 -->
-    <filter id="lift" x="120" y="180" width="820" height="760" filterUnits="userSpaceOnUse">
-      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#1F2C55" flood-opacity=".22"/>
+    <filter id="lift" x="180" y="200" width="680" height="660" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#1B2749" flood-opacity=".24"/>
     </filter>
-    <filter id="liftSm" x="560" y="540" width="240" height="260" filterUnits="userSpaceOnUse">
-      <feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#7A1E33" flood-opacity=".34"/>
+    <filter id="liftSm" x="570" y="536" width="200" height="200" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="9" stdDeviation="10" flood-color="#6E1A2E" flood-opacity=".38"/>
     </filter>
   </defs>
   <rect width="1024" height="1024" fill="url(#bg)"/>
   <rect width="1024" height="1024" fill="url(#sheen)"/>
   <rect width="1024" height="1024" fill="url(#vignette)"/>
-  <g transform="translate(-179.2 -179.2) scale(1.35)" filter="url(#lift)">
-    <!-- 取景框四角：证件照的通用符号 -->
-    <g stroke="url(#frame)" stroke-width="43" stroke-linecap="round" fill="none">
-      <path d="M293 423V342C293 315 315 293 342 293H423"/>
-      <path d="M601 293H682C709 293 731 315 731 342V423"/>
-      <path d="M731 601V682C731 709 709 731 682 731H601"/>
-      <path d="M423 731H342C315 731 293 709 293 682V601"/>
+  <g filter="url(#lift)">
+    <!-- 取景四角：证件照的通用符号。刻意留出足够内边距，让人像完整
+         落在框内而不去压角标——旧版人像盖住下方两个角标，结构是乱的。 -->
+    <g stroke="url(#frame)" stroke-width="34" stroke-linecap="round" fill="none">
+      <path d="M256 360V300C256 276 276 256 300 256H360"/>
+      <path d="M664 256H724C748 256 768 276 768 300V360"/>
+      <path d="M768 664V724C768 748 748 768 724 768H664"/>
+      <path d="M360 768H300C276 768 256 748 256 724V664"/>
     </g>
-    <g id="portrait" transform="translate(-92.16 -102.51) scale(1.18)">
-    <!-- 头像剪影 -->
-    <path d="M385 599C385 499 442 433 512 433C582 433 639 499 639 599C639 662 586 706 512 706C438 706 385 662 385 599Z" fill="url(#face)"/>
-    <!-- 顶部高光弧：一条极淡的白弧，头像立刻有了球面反光 -->
-    <path d="M424 520C441 473 473 449 512 449C551 449 583 473 600 520" stroke="#FFFFFF" stroke-opacity=".85" stroke-width="14" stroke-linecap="round" fill="none"/>
-    <!-- 眼睛：一只睁开、一只眨眼（与启动页吉祥物同一套表情语言） -->
-    <ellipse cx="465" cy="558" rx="18" ry="25" fill="#5A70B8"/>
-    <circle cx="471" cy="549" r="6" fill="#FFFFFF" opacity=".92"/>
-    <path d="M537 570C553 553 576 553 592 570" stroke="#5A70B8" stroke-width="16" stroke-linecap="round" fill="none"/>
-    <!-- 合规对勾徽章 -->
+
+    <!-- 人像：头 + 肩的经典证件照半身剪影。
+         旧版只有一个椭圆「蛋」，既不像人，缩到桌面尺寸更是一团白。
+         加上肩线后，哪怕 48px 也能一眼读出「这是一张人像照」。
+         头肩之间留 24px 空隙 + 肩部渐变暗半档，是层次感的来源。 -->
+    <ellipse cx="512" cy="446" rx="74" ry="78" fill="url(#head)"/>
+    <!-- 头顶高光弧：一条极淡的白弧，球面反光立刻成立 -->
+    <path d="M468 410C479 385 494 372 512 372C530 372 545 385 556 410"
+          stroke="#FFFFFF" stroke-opacity=".7" stroke-width="9"
+          stroke-linecap="round" fill="none"/>
+
+    <path d="M366 648V644C366 582 431 542 512 542C593 542 658 582 658 644V648
+             C658 669 641 686 620 686H404C383 686 366 669 366 648Z"
+          fill="url(#shoulder)"/>
+    <!-- 肩线高光：沿肩的上缘，把肩「顶」出体积 -->
+    <path d="M404 622C419 580 459 556 512 556C565 556 605 580 620 622"
+          stroke="#FFFFFF" stroke-opacity=".5" stroke-width="8"
+          stroke-linecap="round" fill="none"/>
+
+    <!-- 合规对勾徽章：别在右肩上（层次在最上），语义即「这张照片已通过审核」。
+         旧版放在右下角标处，与取景框打架；挪到肩上后既不遮框，
+         又在整幅冷蓝里留了唯一一点暖色。 -->
     <g filter="url(#liftSm)">
-      <circle cx="661" cy="651" r="34" fill="url(#badge)"/>
-      <path d="M648 651L658 661L677 639" stroke="#FFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    </g>
+      <circle cx="644" cy="620" r="44" fill="url(#badge)"/>
+      <path d="M628 620L640 632L663 606" stroke="#FFFFFF" stroke-width="12"
+            stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     </g>
   </g>
 </svg>

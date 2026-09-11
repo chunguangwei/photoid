@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:ui' show Rect;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 import 'package:photoid/services/image_pipeline.dart';
 
 /// 造一张 w×h 的掩码：矩形「人物」区域为 255，其余为 0。
@@ -179,8 +180,15 @@ void main() {
 
     test('本就是半身构图：收益不足则不裁（返回 null）', () {
       const w = 480, h = 640;
-      const face = Rect.fromLTWH(160, 140, 160, 200); // 人脸已占很大比例
+      const face = Rect.fromLTWH(150, 130, 180, 220); // 人脸已占很大比例
       expect(ImagePipeline.matteRoiFor(w, h, face, 0.75), isNull);
+    });
+
+    test('近景自拍（脸宽 ≥ 36% 图宽）不裁，避免把肩膀截掉', () {
+      const w = 1000, h = 1400;
+      const face = Rect.fromLTWH(320, 380, 380, 460); // 脸宽 0.38 图宽
+      expect(ImagePipeline.matteRoiFor(w, h, face, 0.75), isNull,
+          reason: '自拍近景一旦粗裁，肩膀会被 ROI 边界切掉');
     });
   });
 
@@ -220,6 +228,45 @@ void main() {
         }
       }
       expect(detectHeadTop(alpha, w, h), isNull);
+    });
+  });
+
+  group('downscaleStepwise 抗混叠降采样（成片「不够清晰」的根因）', () {
+    test('1px 细条纹缩小 8 倍后收敛到中灰，而不是采样出全黑/全白', () {
+      final src = img.Image(width: 512, height: 512);
+      for (var y = 0; y < 512; y++) {
+        for (var x = 0; x < 512; x++) {
+          final v = x.isEven ? 0 : 255;
+          src.setPixelRgb(x, y, v, v, v);
+        }
+      }
+      final out = ImagePipeline.downscaleStepwise(src, 64, 64);
+      expect(out.width, 64);
+      expect(out.height, 64);
+      // 区域平均后细条纹应融合成中灰；点采样（nearest/cubic 一步到位）
+      // 会直接命中某一列，得到 0 或 255——那就是信息被整片丢掉
+      for (final x in [10, 30, 50]) {
+        expect((out.getPixel(x, 32).r.toInt() - 128).abs(), lessThan(40),
+            reason: '出现极值说明未做低通，细节在降采样时已经丢了');
+      }
+    });
+
+    test('大尺度明暗边界不被平均糊掉（低通只该吃掉高频）', () {
+      final src = img.Image(width: 400, height: 400);
+      for (var y = 0; y < 400; y++) {
+        for (var x = 0; x < 400; x++) {
+          final v = x < 200 ? 20 : 235;
+          src.setPixelRgb(x, y, v, v, v);
+        }
+      }
+      final out = ImagePipeline.downscaleStepwise(src, 50, 50);
+      expect(out.getPixel(5, 25).r.toInt(), lessThan(45));
+      expect(out.getPixel(45, 25).r.toInt(), greaterThan(210));
+    });
+
+    test('目标尺寸与源一致时原样返回（不做无谓重采样）', () {
+      final src = img.Image(width: 40, height: 40);
+      expect(ImagePipeline.downscaleStepwise(src, 40, 40).width, 40);
     });
   });
 

@@ -38,8 +38,14 @@ void main() {
       base.setPixelRgb(250, 230, 60, 40, 30); // 深色五官（非肤色）
       final out = PhotoEffects.apply(base, face, beauty: 1.0);
 
-      expect(_dist(out.getPixel(240, 220), 200, 180, 170), lessThan(12),
-          reason: '低幅细节（斑点/细纹）应被磨掉');
+      // 磨皮后瑕疵应与相邻皮肤趋于一致（整脸被提亮/暖肤，故与邻近处理后
+      // 的皮肤比，而不是与原始背景色比）
+      final neighbor = out.getPixel(232, 220);
+      final spot = out.getPixel(240, 220);
+      final d = (spot.r.toInt() - neighbor.r.toInt()).abs() +
+          (spot.g.toInt() - neighbor.g.toInt()).abs() +
+          (spot.b.toInt() - neighbor.b.toInt()).abs();
+      expect(d, lessThan(12), reason: '低幅细节（斑点/细纹）应被磨到与周围一致');
       expect(out.getPixel(250, 230).r.toInt(), lessThan(90),
           reason: '非肤色像素（眼/眉/唇）不参与磨皮');
     });
@@ -66,35 +72,46 @@ void main() {
 
     test('中频色斑必须被压制（「拉满也看不出效果」回归）', () {
       final (base, face) = _fixture();
-      // 半径 12 的色斑，幅度 38——正是早期实现会当成「五官结构」全额保留的
-      // 幅度区间，也是用户观感上最刺眼的瑕疵
-      for (var y = 200; y < 224; y++) {
-        for (var x = 228; x < 252; x++) {
+      // 直径 10px 的色斑（脸宽 150 的 ~7%，接近真实痘印比例），幅度 38
+      // ——正是早期频率分离实现会当成「五官结构」全额保留的幅度区间
+      for (var y = 207; y < 217; y++) {
+        for (var x = 235; x < 245; x++) {
           base.setPixelRgb(x, y, 162, 142, 132);
         }
       }
-      final before = _dist(base.getPixel(240, 212), 200, 180, 170);
       final out = PhotoEffects.apply(base, face, beauty: 1.0);
-      final after = _dist(out.getPixel(240, 212), 200, 180, 170);
-      expect(after, lessThan(before * 0.75),
-          reason: '幅度 38 的色斑属中频，单尺度高频磨皮碰不到它');
+      // 色斑中心与色斑外相邻皮肤的差异应被显著抹平
+      final spot = out.getPixel(240, 212);
+      final skin = out.getPixel(210, 212);
+      final d = (spot.r.toInt() - skin.r.toInt()).abs() +
+          (spot.g.toInt() - skin.g.toInt()).abs() +
+          (spot.b.toInt() - skin.b.toInt()).abs();
+      final rawD = (162 - 200).abs() + (142 - 180).abs() + (132 - 170).abs();
+      expect(d, lessThan(rawD * 0.6),
+          reason: '成片的色斑与周围皮肤应趋于一致');
     });
 
     test('美颜强度单调可感知：50% 的改动量介于 0 与 100% 之间', () {
-      double delta(double b) {
+      // 色斑相对周围皮肤的残差：强度越大残差越小（磨得越干净）
+      double residual(double b) {
         final (base, face) = _fixture();
-        for (var y = 200; y < 224; y++) {
-          for (var x = 228; x < 252; x++) {
+        for (var y = 207; y < 217; y++) {
+          for (var x = 235; x < 245; x++) {
             base.setPixelRgb(x, y, 168, 148, 138);
           }
         }
         final out = PhotoEffects.apply(base, face, beauty: b);
-        return _dist(out.getPixel(240, 212), 168, 148, 138).toDouble();
+        final spot = out.getPixel(240, 212);
+        final skin = out.getPixel(205, 212);
+        return ((spot.r.toInt() - skin.r.toInt()).abs() +
+                (spot.g.toInt() - skin.g.toInt()).abs() +
+                (spot.b.toInt() - skin.b.toInt()).abs())
+            .toDouble();
       }
 
-      final half = delta(0.5), full = delta(1.0);
-      expect(half, greaterThan(2), reason: '半强度就应看得出变化');
-      expect(full, greaterThan(half), reason: '滑杆全程必须单调可感知');
+      final none = residual(0.0), half = residual(0.5), full = residual(1.0);
+      expect(half, lessThan(none), reason: '半强度就应看得出变化');
+      expect(full, lessThan(half), reason: '滑杆全程必须单调可感知（残差递减）');
     });
 
     test('阴影中的皮肤也参与美颜（旧版 RGB 硬判据会整片跳过）', () {
@@ -184,6 +201,30 @@ void main() {
       // 肤色区色度增幅须远小于线性饱和（原始 94；线性 ×1.3 会到 122）
       expect(chroma(56), lessThan(112),
           reason: '已饱和的肤色必须自动收手，否则发橙');
+    });
+
+    test('resizeSharpen 拉回缩放损失的边缘，平坦区纹丝不动', () {
+      final src = img.Image(width: 40, height: 40);
+      img.fill(src, color: img.ColorRgb8(180, 180, 180));
+      // 一条被缩放软化过的边界（过渡带而非硬边）
+      for (var y = 0; y < 40; y++) {
+        for (var x = 20; x < 24; x++) {
+          final v = 180 - (x - 19) * 20;
+          src.setPixelRgb(x, y, v, v, v);
+        }
+        for (var x = 24; x < 40; x++) {
+          src.setPixelRgb(x, y, 100, 100, 100);
+        }
+      }
+      final out = PhotoEffects.resizeSharpen(src, 0.5);
+      // 过渡带被拉陡：亮侧更亮、暗侧更暗
+      expect(out.getPixel(20, 20).r.toInt(),
+          greaterThanOrEqualTo(src.getPixel(20, 20).r.toInt()));
+      expect(out.getPixel(23, 20).r.toInt(),
+          lessThanOrEqualTo(src.getPixel(23, 20).r.toInt()));
+      // 远离边界的平坦区必须零改动，否则会放大 JPEG 块噪
+      expect(out.getPixel(5, 20).r.toInt(), 180);
+      expect(out.getPixel(35, 20).r.toInt(), 100);
     });
 
     test('极端棋盘图锐化后不溢出回绕（始终钳在 0–255）', () {

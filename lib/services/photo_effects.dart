@@ -37,76 +37,79 @@ class PhotoEffects {
 
   // ─────────────────────────── 面部精修 ───────────────────────────
 
-  /// 面部精修：**双尺度**频率分离磨皮（细节层去毛孔细纹、中频层去色斑痘印）
-  /// + 匀肤 + 提亮 + 轻度瘦脸。
+  /// 面部精修：**边缘保护表面模糊**磨皮 + 匀肤 + 提亮 + 暖肤 + 轻度瘦脸。
   ///
-  /// 为什么是双尺度（这是「拉满了也看不出效果」的根因）：
-  /// 皮肤瑕疵分布在两个尺度上——毛孔、细纹属于**高频小幅**；色斑、痘印、
-  /// 眼袋、肤色不匀属于**中频中幅**（幅度常达 30–60）。早期只做单尺度高频
-  /// 压制，且把「>26 幅度」一律当作五官结构全额保留，结果最该去掉的色斑
-  /// 完全没被碰到，用户观感就是「磨了但脸还是那样」。
+  /// 采用姊妹项目 ImagePilot 验证过的「surface blur」思路（它三期迭代后的
+  /// 最终方案），比早期的频率分离更自然、也更可感知：
   ///
-  /// 现在分两层处理，且**判定阈值随强度放大**——强度越高，敢压的幅度越大，
-  /// 滑杆因此在全程都有可感知的变化；而五官结构靠「高幅度 + 非肤色」双重
-  /// 保护，仍然不会被糊。
+  /// 1. 对人脸区域做一次尺度自适应的模糊；
+  /// 2. 逐像素按 **边缘保护权重** 把原图向模糊图混合——平坦的皮肤放开混合
+  ///    （磨掉毛孔、细纹、色斑），而**边缘处（眼睑/唇线/鼻翼/发际）本身
+  ///    亮度落差大，混合权重压到 0**，五官因此始终锐利；
+  /// 3. 最大混合比 `maxBlend = 0.45 + 0.33×强度`（满强 0.78），足够明显；
+  /// 4. 叠加匀肤、提亮、暖肤——「气色」的主要来源，比一味加大磨皮更讨喜。
+  ///
+  /// **为什么放弃频率分离**：理论上它更精细，但要靠「幅度阈值」区分瑕疵与
+  /// 五官，阈值定高了漏掉色斑（用户反馈「拉满也没效果」），定低了糊五官，
+  /// 两次调参都没能同时满足。表面模糊用**局部亮度落差**判边缘，是连续量，
+  /// 不存在阈值悬崖，实测观感更稳。
   static Uint8List retouchFace(
       Uint8List rgba, int w, int h, Rect face, double intensity) {
     if (intensity <= 0 || face.width <= 2 || face.height <= 2) return rgba;
 
     final cx = face.left + face.width / 2;
     final cy = face.top + face.height / 2;
-    // 椭圆略大于人脸框，覆盖额头/下颌/两颊；外侧有羽化，不会出现硬边
-    final rx = math.max(4.0, face.width * 0.70);
-    final ry = math.max(4.0, face.height * 0.82);
+    final rx = math.max(4.0, face.width * 0.72);
+    final ry = math.max(4.0, face.height * 0.84);
 
-    // 两个尺度的模糊半径都随脸尺寸自适应，保证不同分辨率下观感一致
-    final rDetail = (face.width * 0.030).round().clamp(2, 30); // 毛孔/细纹
-    final rBlotch = (face.width * 0.105).round().clamp(4, 90); // 色斑/痘印
-    final blurD = _boxBlurRgba(rgba, w, h, rDetail);
-    final blurB = _boxBlurRgba(rgba, w, h, rBlotch);
+    // 模糊半径随脸尺寸自适应：够大才能抹平色斑/痘印（不止毛孔）
+    final radius = (face.width * 0.055).round().clamp(3, 48);
+    final blur = _boxBlurRgba(rgba, w, h, radius);
 
-    // 细节层：intensity=1 时保留 10%
-    final keepDetail = 1.0 - 0.90 * intensity;
-    // 中频层：intensity=1 时保留 42%。不能压太狠——中频承载脸部立体感，
-    // 压没了会变成一张纸片脸。
-    final keepBlotch = 1.0 - 0.58 * intensity;
-
-    // 判定阈值随强度放大：低强度只碰细腻瑕疵，高强度才敢动明显色斑
-    final tLo = 8.0 + 6.0 * intensity;
-    final tHi = 26.0 + 40.0 * intensity;
+    final maxBlend = 0.45 + 0.33 * intensity; // 满强 0.78
+    // 边缘保护阈值（**局部梯度**）：≤T1 全混合，≥T2 完全不混合，中间线性。
+    //
+    // 注意这里量的是「与邻近像素的亮度落差」，**不是**「与模糊图的落差」。
+    // 后者是个陷阱：一块色斑的内部与模糊图差异同样很大（它整体偏暗），
+    // 于是色斑会被误判成边缘而全额保留——这正是「美颜拉满也看不出效果」
+    // 反复复发的真正原因。改用局部梯度后：
+    //   · 色斑/痘印内部梯度≈0 → 全额混合，被周围皮肤色「填平」；
+    //   · 眼睑/唇线/鼻翼/发际这类结构梯度大 → 不混合，保持锐利；
+    //   · 眼球/眉毛内部虽然梯度也小，但它们非肤色，`_skinWeight` 已置 0。
+    // 两道判据正交互补，因此不存在「既要磨干净又不糊五官」的矛盾。
+    const edgeT1 = 10.0, edgeT2 = 36.0;
+    // 梯度采样步长：太小只能看到噪点级起伏，取模糊半径的 1/3 才对应
+    // 「五官轮廓」这一尺度
+    final gStep = math.max(1, radius ~/ 3);
 
     final x0 = math.max(0, (cx - rx).floor());
     final x1 = math.min(w - 1, (cx + rx).ceil());
     final y0 = math.max(0, (cy - ry).floor());
     final y1 = math.min(h - 1, (cy + ry).ceil());
 
-    // 匀肤目标色：椭圆内肤色像素均值（先扫一遍统计）
+    // 匀肤目标色：椭圆内肤色像素均值
     var sr = 0, sg = 0, sb = 0, sn = 0;
     for (var y = y0; y <= y1; y++) {
       for (var x = x0; x <= x1; x++) {
         final dx = (x - cx) / rx, dy = (y - cy) / ry;
         if (dx * dx + dy * dy > 1) continue;
         final i = (y * w + x) * 4;
-        final r = rgba[i], g = rgba[i + 1], bl = rgba[i + 2];
-        if (_skinWeight(r, g, bl) < 0.5) continue;
-        sr += r;
-        sg += g;
-        sb += bl;
+        if (_skinWeight(rgba[i], rgba[i + 1], rgba[i + 2]) < 0.5) continue;
+        sr += rgba[i];
+        sg += rgba[i + 1];
+        sb += rgba[i + 2];
         sn++;
       }
     }
-    // 肤色样本太少（侧脸/强逆光/误检）→ 放弃匀肤，只做磨皮，避免整片偏色
+    // 肤色样本太少（侧脸/强逆光/误检）→ 放弃匀肤，避免整片偏色
     final evenOut = sn > 64;
     final mr = evenOut ? sr / sn : 0.0;
     final mg = evenOut ? sg / sn : 0.0;
     final mb = evenOut ? sb / sn : 0.0;
     final mLum = evenOut ? _lum(mr, mg, mb) : 1.0;
-    final evenK = 0.26 * intensity;
-    // 提亮：证件照普遍偏暗，轻微抬亮部能显著改善「气色」，比单纯磨皮更可感知
-    final brighten = 7.0 * intensity;
-    // 暖肤：红通道微增。人对「气色好」的判断主要来自肤色暖度而非光滑度，
-    // 这一项的可感知收益比继续加大磨皮强度高得多，且不损失任何细节。
-    final warm = 4.0 * intensity;
+    final evenK = 0.28 * intensity;
+    final brighten = 10.0 * intensity;
+    final warm = 5.0 * intensity;
 
     final out = Uint8List.fromList(rgba);
     for (var y = y0; y <= y1; y++) {
@@ -116,69 +119,63 @@ class PhotoEffects {
         if (d2 > 1) continue;
         final i = (y * w + x) * 4;
         final r = rgba[i], g = rgba[i + 1], bl = rgba[i + 2];
-        // 肤色权重是**软的**：眼/眉/唇/发权重 0（完全不动），
-        // 阴影侧的皮肤仍能拿到部分权重（旧版硬判据把它整片排除，
-        // 导致侧脸、逆光照几乎看不出效果）
+        // 肤色权重是**软的**：眼/眉/唇/发权重 0，阴影侧皮肤仍能拿到部分权重
         final skin = _skinWeight(r, g, bl);
         if (skin <= 0) continue;
 
         // 边缘羽化：外圈 30% 线性淡出，杜绝「面具边」
         final dist = math.sqrt(d2);
         final feather = dist <= 0.70 ? 1.0 : (1 - dist) / 0.30;
-        final k = intensity * feather * skin;
-        if (k <= 0) continue;
+        if (feather <= 0) continue;
 
-        var nr = _twoScale(r, blurD[i], blurB[i], keepDetail, keepBlotch, tLo, tHi);
-        var ng = _twoScale(
-            g, blurD[i + 1], blurB[i + 1], keepDetail, keepBlotch, tLo, tHi);
-        var nb = _twoScale(
-            bl, blurD[i + 2], blurB[i + 2], keepDetail, keepBlotch, tLo, tHi);
+        // 边缘保护：四邻（按 gStep 取样）的最大亮度落差越大，越可能是
+        // 五官轮廓，越不混合
+        final l0 = _lum(r.toDouble(), g.toDouble(), bl.toDouble());
+        var grad = 0.0;
+        for (var k = 0; k < 4; k++) {
+          final nx = x + (k == 0 ? -gStep : (k == 1 ? gStep : 0));
+          final ny = y + (k == 2 ? -gStep : (k == 3 ? gStep : 0));
+          if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+          final j = (ny * w + nx) * 4;
+          final d = (l0 -
+                  _lum(rgba[j].toDouble(), rgba[j + 1].toDouble(),
+                      rgba[j + 2].toDouble()))
+              .abs();
+          if (d > grad) grad = d;
+        }
+        final edgeW = grad >= edgeT2
+            ? 0.0
+            : (grad <= edgeT1 ? 1.0 : (edgeT2 - grad) / (edgeT2 - edgeT1));
 
-        // 匀肤：仅拉齐色度，按当前像素亮度缩放目标色 → 保留立体光影
+        final blend = maxBlend * feather * skin * edgeW;
+        var nr = r + (blur[i] - r) * blend;
+        var ng = g + (blur[i + 1] - g) * blend;
+        var nb = bl + (blur[i + 2] - bl) * blend;
+
+        // 匀肤：仅拉齐色度，按当前亮度缩放目标色 → 保留立体光影
         if (evenOut) {
           final l = _lum(nr, ng, nb);
-          final s = l / mLum;
-          nr += (mr * s - nr) * evenK * feather;
-          ng += (mg * s - ng) * evenK * feather;
-          nb += (mb * s - nb) * evenK * feather;
+          final ss = l / mLum;
+          final ek = evenK * feather * skin;
+          nr += (mr * ss - nr) * ek;
+          ng += (mg * ss - ng) * ek;
+          nb += (mb * ss - nb) * ek;
         }
 
-        // 提亮：暗部抬得多、亮部几乎不动，避免高光溢出成死白
+        // 提亮（暗部多、亮部少，防高光死白）+ 暖肤（红通道单独加）
         final room = (255 - _lum(nr, ng, nb)) / 255;
-        final lift = brighten * room * feather;
-        nr += lift + warm * feather;
+        final lift = brighten * room * feather * skin;
+        nr += lift + warm * feather * skin;
         ng += lift;
         nb += lift;
 
-        out[i] = _u8(r + (nr - r) * k);
-        out[i + 1] = _u8(g + (ng - g) * k);
-        out[i + 2] = _u8(bl + (nb - bl) * k);
+        out[i] = _u8(nr);
+        out[i + 1] = _u8(ng);
+        out[i + 2] = _u8(nb);
       }
     }
 
     return _slimFace(out, w, h, cx, cy, rx, ry, intensity);
-  }
-
-  /// 双尺度频率重建。
-  ///
-  /// 把像素拆成三层：中频以下（`blurB`，脸部立体感与光影）、中频细节
-  /// （`blurB → blurD`，色斑/痘印/肤色不匀）、高频细节（`blurD → src`，
-  /// 毛孔/细纹/噪点）。两个细节层分别按 [keepBlotch] / [keepDetail] 压制，
-  /// 并按幅度在 [tLo]–[tHi] 之间平滑过渡到「全额保留」——保证眼睑、唇线、
-  /// 鼻翼这些高幅结构不被磨掉。
-  static double _twoScale(int src, int blurD, int blurB, double keepDetail,
-      double keepBlotch, double tLo, double tHi) {
-    final dHigh = src - blurD.toDouble(); // 高频
-    final dMid = blurD - blurB.toDouble(); // 中频
-    return blurB + dMid * _blend(dMid.abs(), keepBlotch, tLo, tHi) +
-        dHigh * _blend(dHigh.abs(), keepDetail, tLo, tHi);
-  }
-
-  /// 幅度 [ad] 越大越接近「原样保留」（返回 1），越小越接近 [keep]。
-  static double _blend(double ad, double keep, double tLo, double tHi) {
-    if (ad <= tLo) return keep;
-    if (ad >= tHi) return 1.0;
-    return keep + (1 - keep) * ((ad - tLo) / (tHi - tLo));
   }
 
   /// 轻度瘦脸：仅下半脸（颧骨→下颌）水平向中线收缩，最大 4.5%。
@@ -213,6 +210,39 @@ class PhotoEffects {
       }
     }
     return out;
+  }
+
+  // ─────────────────────────── 缩放补偿锐化 ───────────────────────────
+
+  /// 缩放补偿锐化：半径 1 的亮度通道 USM，[amount] 建议 0.3–0.6。
+  ///
+  /// 与 [enhanceClarity] 的分工：这一步**不是风格**，而是修复降采样必然
+  /// 造成的边缘软化（区域平均本质是低通）。因此：
+  /// - 半径固定为 1（成片只有几百像素，再大就成「HDR 感」了）；
+  /// - 只动亮度、不动色度，避免小图上格外扎眼的彩色描边；
+  /// - 带噪点阈值，平坦的底色区域完全不动，不放大 JPEG 块噪。
+  static img.Image resizeSharpen(img.Image src, double amount) {
+    if (amount <= 0) return src;
+    final w = src.width, h = src.height;
+    if (w < 3 || h < 3) return src;
+    final rgba = Uint8List.fromList(src.getBytes(order: img.ChannelOrder.rgba));
+    final blur = _boxBlurRgba(rgba, w, h, 1);
+    final out = Uint8List.fromList(rgba);
+    const noiseT = 2.0;
+    for (var px = 0; px < w * h; px++) {
+      final i = px * 4;
+      final dl = _lum(rgba[i].toDouble(), rgba[i + 1].toDouble(),
+              rgba[i + 2].toDouble()) -
+          _lum(blur[i].toDouble(), blur[i + 1].toDouble(),
+              blur[i + 2].toDouble());
+      if (dl.abs() <= noiseT) continue;
+      final add = dl * amount;
+      out[i] = _u8(rgba[i] + add);
+      out[i + 1] = _u8(rgba[i + 1] + add);
+      out[i + 2] = _u8(rgba[i + 2] + add);
+    }
+    return img.Image.fromBytes(
+        width: w, height: h, bytes: out.buffer, numChannels: 4);
   }
 
   // ─────────────────────────── 画质清晰度 ───────────────────────────
