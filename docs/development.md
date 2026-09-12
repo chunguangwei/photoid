@@ -9,7 +9,7 @@ doc mirrors them in Chinese.
 - 图像处理：`image` 包 + 自研原始缓冲区算子（`photo_effects.dart`）
 - 平台：Android 8.0+（minSdk 26）/ iOS 15.5+
 - 仓库：https://github.com/chunguangwei/photoid
-- 联系：chunguangwee@gmail.com
+- 联系：38256608@qq.com
 
 ---
 

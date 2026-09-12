@@ -414,7 +414,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsLicense => '个人使用免费，商业使用需获得作者授权';
 
   @override
-  String get settingsContact => '联系作者：chunguangwee@gmail.com';
+  String get settingsContact => '联系作者：38256608@qq.com';
 
   @override
   String get cameraSwitch => '切换摄像头';

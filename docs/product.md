@@ -6,7 +6,7 @@
 - 当前版本：`0.8.0+42`（Android，GitHub Release tag `v0.8.0`）
 - 平台：Android 8.0+（minSdk 26）/ iOS 15.5+
 - 仓库：https://github.com/chunguangwei/photoid
-- 联系：chunguangwee@gmail.com
+- 联系：38256608@qq.com
 
 ---
 

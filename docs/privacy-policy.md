@@ -62,7 +62,7 @@ a new effective date.
 
 ### Contact
 
-Questions: **chunguangwee@sina.com**
+Questions: **38256608@qq.com**
 
 ---
 
@@ -109,4 +109,4 @@ App 内置 Google ML Kit（人脸检测）与 ONNX Runtime（抠图分割），�
 
 ### 联系方式
 
-如有疑问请联系：**chunguangwee@sina.com**
+如有疑问请联系：**38256608@qq.com**

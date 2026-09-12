@@ -46,8 +46,8 @@ title: App Store 上架
 
 ## 3. 待办（App Store Connect 侧）
 
-- [ ] Apple Developer Program 账号（$99/年）；**Xcode → Settings → Accounts
-      登录该 Apple ID**——当前机器未登录，导致 `flutter build ipa` 无法导出
+- [ ] Apple Developer Program 账号（$99/年，Apple ID：`38256608@qq.com`）；
+      **Xcode → Settings → Accounts 登录该 Apple ID**——当前机器未登录，导致 `flutter build ipa` 无法导出
       签名 IPA（archive 已构建成功，登录后直接在 Xcode Organizer 分发即可）
 - [ ] App Store Connect 创建 App，**Availability 只勾选目标英语区**
 - [ ] 隐私政策 URL：`https://chunguangwei.github.io/photoid/privacy-policy`
