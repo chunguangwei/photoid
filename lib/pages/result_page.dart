@@ -48,11 +48,12 @@ class _ResultPageState extends State<ResultPage> {
   }
 
   Future<void> _save() async {
-    final permissionError = AppLocalizations.of(context).galleryPermissionDenied;
+    final permissionError =
+        AppLocalizations.of(context).galleryPermissionDenied;
     final eduId = _eduIdController.text.trim();
     if (eduId.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).eduIdRequired)));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).eduIdRequired)));
       return;
     }
     setState(() => _saving = true);
@@ -71,12 +72,13 @@ class _ResultPageState extends State<ResultPage> {
       });
       if (!mounted) return;
       setState(() => _saved = true);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).savedToGallery('$eduId.jpg'))));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content:
+              Text(AppLocalizations.of(context).savedToGallery('$eduId.jpg'))));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).saveFailed('$e'))));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context).saveFailed('$e'))));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -101,7 +103,7 @@ class _ResultPageState extends State<ResultPage> {
                 Container(
                   width: 96,
                   height: 128,
-                  color: Colors.black12,
+                  color: theme.colorScheme.surfaceContainerHighest,
                   child: Image.memory(widget.jpgBytes, fit: BoxFit.cover),
                 ),
                 const SizedBox(width: 12),
@@ -174,13 +176,14 @@ class _ResultPageState extends State<ResultPage> {
           padding: const EdgeInsets.all(16),
           child: _saved
               ? FilledButton.icon(
-                  onPressed: () => Navigator.of(context)
-                      .popUntil((route) => route.isFirst),
+                  onPressed: () =>
+                      Navigator.of(context).popUntil((route) => route.isFirst),
                   icon: const Icon(Icons.add_a_photo_outlined),
                   label: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     child: Text(l.doneRetake,
-                        style: const TextStyle(fontSize: 16)),
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
                   ),
                 )
               : FilledButton.icon(
@@ -195,7 +198,8 @@ class _ResultPageState extends State<ResultPage> {
                   label: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     child: Text(l.saveToGallery,
-                        style: const TextStyle(fontSize: 16)),
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
                   ),
                 ),
         ),
@@ -227,7 +231,6 @@ class _ResultPageState extends State<ResultPage> {
           : Text([tr.detail(item), tr.fix(item, widget.spec)]
               .whereType<String>()
               .join(l.referenceJoiner)),
-      trailing: item.detail != null && item.pass ? null : null,
     );
   }
 }

@@ -96,8 +96,7 @@ class _HomeTabState extends State<_HomeTab> {
     super.dispose();
   }
 
-  Future<void> _pickFromGallery(
-      BuildContext context, PhotoSpec spec) async {
+  Future<void> _pickFromGallery(BuildContext context, PhotoSpec spec) async {
     // imageQuality<100 才触发 image_picker 转码（Android quality=100 按字节
     // 拷贝原文件，HEIC 会原样漏入）；99 强制转 JPG 且质量损失可忽略
     final picked = await ImagePicker()
@@ -134,8 +133,7 @@ class _HomeTabState extends State<_HomeTab> {
               ? (snapshot.data ?? const <PhotoSpec>[])
               : [
                   studentPhotoSpec,
-                  ...?snapshot.data
-                      ?.where((s) => s.id != studentPhotoSpec.id),
+                  ...?snapshot.data?.where((s) => s.id != studentPhotoSpec.id),
                 ];
           return ListView(
             padding: EdgeInsets.zero,
@@ -182,7 +180,6 @@ class _HomeTabState extends State<_HomeTab> {
 
   /// 品牌头：渐变底 + App 名 + 隐私口号（对标参考图的蓝色横幅位）。
   Widget _brandHeader(BuildContext context, AppLocalizations l) {
-    final scheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
@@ -190,7 +187,10 @@ class _HomeTabState extends State<_HomeTab> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [scheme.primary, scheme.primary.withValues(alpha: 0.75)],
+          colors: [
+            const Color(0xFF2B6CB0),
+            const Color(0xFF2B6CB0).withValues(alpha: 0.75)
+          ],
         ),
       ),
       child: Column(
@@ -203,7 +203,10 @@ class _HomeTabState extends State<_HomeTab> {
                   fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           Text(l.privacySlogan,
-              style: const TextStyle(color: Colors.white70, fontSize: 13)),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: Colors.white70)),
         ],
       ),
     );
@@ -270,8 +273,9 @@ class _HomeTabState extends State<_HomeTab> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(label,
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w500)),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall),
                   ),
                 ],
               ),
@@ -341,9 +345,9 @@ class _HomeTabState extends State<_HomeTab> {
 
   Future<void> _confirmDeleteCustom(PhotoSpec spec) async {
     final l = AppLocalizations.of(context);
-    final ok = await showDialog<bool>(
+    final ok = await showAdaptiveDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => AlertDialog.adaptive(
         title: Text(l.customDeleteTitle),
         content: Text(l.customDeleteConfirm(spec.name)),
         actions: [
@@ -378,20 +382,18 @@ class _HomeTabState extends State<_HomeTab> {
             children: [
               Icon(icon, size: 22),
               const SizedBox(height: 4),
-              Text(label, style: const TextStyle(fontSize: 11)),
+              Text(label, style: Theme.of(context).textTheme.labelSmall),
             ],
           ),
         ),
       );
-
 
   Widget _hotHeader(AppLocalizations l) => Padding(
         key: _hotHeaderKey,
         padding: const EdgeInsets.only(bottom: 8),
         child: Row(
           children: [
-            Text(l.hotNow,
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(l.hotNow, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(width: 6),
             Icon(Icons.local_fire_department,
                 size: 18, color: Colors.orange.shade700),
@@ -406,8 +408,7 @@ class _HomeTabState extends State<_HomeTab> {
       clipBehavior: Clip.antiAlias,
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         title: Text(tr.specName(spec)),
         subtitle: Text('${spec.pixelWidth} × ${spec.pixelHeight} px'),
         trailing: const Icon(Icons.chevron_right),

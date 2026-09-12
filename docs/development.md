@@ -17,7 +17,8 @@ doc mirrors them in Chinese.
 
 ```
 lib/
-├── main.dart                 # 入口：MaterialApp + 本地化 + 更新检查
+├── main.dart                 # 入口：MaterialApp（亮/暗双主题 + textScaler
+│   │                         #   0.85–1.3 clamp）+ 本地化 + 更新检查
 ├── models/
 │   └── photo_spec.dart       # PhotoSpec / SpecBackground 模型、五色底常量、学生报名照规格
 ├── services/                 # 纯逻辑层，不依赖 BuildContext（可单测）
@@ -60,7 +61,7 @@ lib/
 assets/                       # 只放**运行时真正 load** 的资源
 ├── photo_specs.json          # 33+ 条内置规格
 └── models/hivision_modnet.onnx  # MODNet 抠图模型（约 26MB）
-logo/                         # 图标设计源与构建期产物（不打进包体，见 §6）
+logo/                         # 图标设计源与构建期产物（不打进包体，见 §7）
 test/                         # 服务层与关键 UI 单测
 ```
 
@@ -623,7 +624,36 @@ Tr（lib/l10n/l10n_helpers.dart）
 新增条目追加到数组即可，`SpecLibrary.load()` 启动时自动加载。若规格需要
 双语名称，在 `Tr` 中按 `spec.id` 增加映射。
 
-## 6. 构建与运行
+## 6. UI 规范（2026-09 走查基线）
+
+双端（iOS HIG / Material 3）排版与交互约定，新增 UI 时遵循：
+
+- **字号用语义 textTheme，不硬编码 `fontSize`**：页面/卡片标题
+  `titleMedium`(16)、正文与按钮 `bodyMedium`/`labelLarge`(14)、辅助说明
+  `bodySmall`(12)、最小标签 `labelSmall`(11)，不再下探。例外仅两处刻意
+  设计：首页品牌头 24、splash Canvas 品牌字。
+- **主 CTA 统一 14 + w600**（FilledButton/TextButton 皆然），同级按钮
+  不允许 16/14 混用。
+- **全局 `textScaler` clamp 0.85–1.3**（`main.dart` 的 builder）：系统大
+  字体可放大但受控，固定尺寸容器内文字不溢出。新写的固定宽/高容器内
+  文字需自行评估缩放场景，必要时 `Flexible` / `maxLines` / `ellipsis`。
+- **触控目标 ≥ 44pt（iOS）/ 48dp（Android）**：自定义 GestureDetector
+  裸包小控件时必须加 `HitTestBehavior.opaque` + Padding 撑足热区。
+- **确认型弹窗用 `showAdaptiveDialog` + `AlertDialog.adaptive`**（iOS 自动
+  渲染 Cupertino 风格）；输入型弹窗保持 Material 并加 `scrollable: true`
+  防键盘顶出。
+- **暗色主题**：亮/暗双主题由 `ColorScheme.fromSeed` 派生，禁止写死
+  `Colors.black12/black26` 这类亮色假设，占位/描边用
+  `surfaceContainerHighest` / `outlineVariant`；品牌色（品牌头渐变
+  `0xFF2B6CB0`）与刻意深色页（相机/启动页/相册查看器）可固定色。
+- **深色背景页必须设 `AnnotatedRegion<SystemUiOverlayStyle>`**（浅色状态
+  栏图标），否则 Android 深色图标盖在深色底上看不清。
+- **数字键盘页**（custom_spec / kb_tool）：外层 GestureDetector 点击空白
+  收起键盘（iOS 数字键盘无「完成」键）。
+- 用户可见的名称类输入需 `maxLength` 限长，展示处 `overflow: ellipsis`
+  兜底。
+
+## 7. 构建与运行
 
 ```bash
 flutter pub get
@@ -664,7 +694,7 @@ dart run flutter_launcher_icons # PNG → 各平台图标
 - 自适应图标前景必须是透明底且标记落在安全区内。曾经前景直接复用了
   全幅图（背景烤在里面），结果被系统圆形遮罩切掉取景框四角。
 
-## 7. 测试
+## 8. 测试
 
 ```bash
 flutter test            # 全部单测
@@ -697,9 +727,9 @@ dart analyze            # 静态检查
 **画质类改动无法靠单测保证**：抠图边缘、构图松紧、磨皮观感必须真机回归，
 建议固定一组样张（顶天立地、深色头发、浅色背景、侧脸、戴眼镜）。
 
-## 8. 发布流程（GitHub Release 自升级）
+## 9. 发布流程（GitHub Release 自升级）
 
-### 8.1 release 正式签名（Android）
+### 9.1 release 正式签名（Android）
 
 release 构建的签名由 `android/key.properties` 控制（`build.gradle.kts`）：
 
@@ -719,7 +749,7 @@ keyPassword=******
   误用 debug 包发布）= 老用户无法升级，只能卸载重装，相册数据一并丢失。
 - 换签名（新 keystore）对存量用户等效于签名断裂：**需用户卸载重装一次**。
 
-### 8.2 发布步骤
+### 9.2 发布步骤
 
 Android 端应用内自升级完全依赖 GitHub Release。⚠️ **铁律：`pubspec.yaml`
 的 `version`（应用内显示与比较基准）必须与 Release tag 严格对齐**——tag 是

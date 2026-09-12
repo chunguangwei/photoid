@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
 import '../l10n/app_localizations.dart';
@@ -27,9 +28,9 @@ class _MyAlbumPageState extends State<MyAlbumPage> {
 
   Future<void> _confirmDelete(File file) async {
     final l = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAdaptiveDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => AlertDialog.adaptive(
         title: Text(p.basename(file.path)),
         content: Text(l.albumDelete),
         actions: [
@@ -83,7 +84,16 @@ class _MyAlbumPageState extends State<MyAlbumPage> {
                     child: Hero(
                       tag: file.path,
                       child: Image.file(file,
-                          fit: BoxFit.cover, cacheWidth: 360),
+                          fit: BoxFit.cover,
+                          cacheWidth: 360,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest,
+                                child: const Center(
+                                    child: Icon(Icons.broken_image_outlined)),
+                              )),
                     ),
                   ),
               ],
@@ -103,19 +113,30 @@ class _AlbumViewerPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.white,
-        title: Text(p.basename(file.path)),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
       ),
-      body: InteractiveViewer(
-        maxScale: 8,
-        child: Center(
-          child: Hero(
-            tag: file.path,
-            child: Image.file(file),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.white,
+          title: Text(p.basename(file.path)),
+        ),
+        body: InteractiveViewer(
+          maxScale: 8,
+          child: Center(
+            child: Hero(
+              tag: file.path,
+              child: Image.file(file,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.broken_image_outlined,
+                      color: Colors.white54,
+                      size: 64)),
+            ),
           ),
         ),
       ),

@@ -140,132 +140,137 @@ class _CustomSpecPageState extends State<CustomSpecPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l.customTitle),
-        actions: [
-          TextButton(onPressed: _reset, child: Text(l.customReset)),
-        ],
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            TextField(
-              controller: _name,
-              decoration: InputDecoration(
-                labelText: l.customName,
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _width,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: _unitPx ? l.customWidth : l.customWidthMm,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _height,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: _unitPx ? l.customHeight : l.customHeightMm,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // 单位切换（PX ⇄ mm）
-                Tooltip(
-                  message: l.customTapToSwitch,
-                  child: InkWell(
-                    onTap: _switchUnit,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Row(children: [
-                        Text(_unitPx ? l.customUnitPx : l.customUnitMm,
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.primary)),
-                        const Icon(Icons.swap_horiz, size: 18),
-                      ]),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _dpi,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: InputDecoration(
-                labelText: l.customDpi,
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _minKb,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: InputDecoration(
-                      labelText: l.customMinKb,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _maxKb,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: InputDecoration(
-                      labelText: l.customMaxKb,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<SpecBackground>(
-              initialValue: _bg,
-              decoration: InputDecoration(
-                labelText: l.specBgColor,
-                border: const OutlineInputBorder(),
-              ),
-              items: [
-                for (final bg in idPhotoBackgrounds)
-                  DropdownMenuItem(
-                    value: bg,
-                    child: Text(localizedBgName(context, bg)),
-                  ),
-              ],
-              onChanged: (v) => setState(() => _bg = v ?? _bg),
-            ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _create,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                child: Text(l.customCreate),
-              ),
-            ),
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l.customTitle),
+          actions: [
+            TextButton(onPressed: _reset, child: Text(l.customReset)),
           ],
+        ),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              TextField(
+                controller: _name,
+                maxLength: 20,
+                decoration: InputDecoration(
+                  labelText: l.customName,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _width,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: _unitPx ? l.customWidth : l.customWidthMm,
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _height,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: _unitPx ? l.customHeight : l.customHeightMm,
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // 单位切换（PX ⇄ mm）
+                  Tooltip(
+                    message: l.customTapToSwitch,
+                    child: InkWell(
+                      onTap: _switchUnit,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Row(children: [
+                          Text(_unitPx ? l.customUnitPx : l.customUnitMm,
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      Theme.of(context).colorScheme.primary)),
+                          const Icon(Icons.swap_horiz, size: 18),
+                        ]),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _dpi,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: InputDecoration(
+                  labelText: l.customDpi,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _minKb,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: InputDecoration(
+                        labelText: l.customMinKb,
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _maxKb,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: InputDecoration(
+                        labelText: l.customMaxKb,
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<SpecBackground>(
+                initialValue: _bg,
+                decoration: InputDecoration(
+                  labelText: l.specBgColor,
+                  border: const OutlineInputBorder(),
+                ),
+                items: [
+                  for (final bg in idPhotoBackgrounds)
+                    DropdownMenuItem(
+                      value: bg,
+                      child: Text(localizedBgName(context, bg)),
+                    ),
+                ],
+                onChanged: (v) => setState(() => _bg = v ?? _bg),
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: _create,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Text(l.customCreate),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -49,6 +49,7 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
       builder: (_) => EditPage(sourcePath: picked.path, spec: _spec),
     ));
   }
+
   @override
   Widget build(BuildContext context) {
     final spec = _spec;
@@ -57,7 +58,8 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
     final tr = Tr.of(context);
     final requirements = tr.requirements(spec);
     return Scaffold(
-      appBar: AppBar(title: Text(tr.specName(spec))),
+      appBar: AppBar(
+          title: Text(tr.specName(spec), overflow: TextOverflow.ellipsis)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -70,8 +72,8 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
                     // 冲印尺寸按 300 DPI 换算（px ÷ 300 × 25.4mm）
                     _paramColumn(context, l.specPrintSize,
                         '${(spec.pixelWidth / 300 * 25.4).round()}×${(spec.pixelHeight / 300 * 25.4).round()}mm'),
-                    _paramColumn(
-                        context, l.specPixelSize, '${spec.pixelWidth}×${spec.pixelHeight}px'),
+                    _paramColumn(context, l.specPixelSize,
+                        '${spec.pixelWidth}×${spec.pixelHeight}px'),
                     _paramColumn(context, l.specDpi, '300 DPI'),
                   ],
                 ),
@@ -87,8 +89,7 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
                     // 背景色行：色块直选（右侧）
                     Row(
                       children: [
-                        Text(l.specBgColor,
-                            style: theme.textTheme.bodyMedium),
+                        Text(l.specBgColor, style: theme.textTheme.bodyMedium),
                         const Spacer(),
                         for (final bg in idPhotoBackgrounds)
                           _bgSwatch(spec, bg),
@@ -98,14 +99,13 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
                     // 文件大小行：可设置大小
                     Row(
                       children: [
-                        Text(l.specFileSize,
-                            style: theme.textTheme.bodyMedium),
+                        Text(l.specFileSize, style: theme.textTheme.bodyMedium),
                         const SizedBox(width: 12),
                         OutlinedButton.icon(
                           onPressed: _editKbRange,
                           icon: const Icon(Icons.edit, size: 14),
                           label: Text(l.specKbEditable,
-                              style: const TextStyle(fontSize: 12)),
+                              style: theme.textTheme.bodySmall),
                           style: OutlinedButton.styleFrom(
                             visualDensity: VisualDensity.compact,
                           ),
@@ -114,8 +114,8 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
                         Text(
                           spec.minFileKb == 0
                               ? l.specNoLimit
-                              : l.specKbRange('${spec.minFileKb}',
-                                  '${spec.maxFileKb}'),
+                              : l.specKbRange(
+                                  '${spec.minFileKb}', '${spec.maxFileKb}'),
                           style: theme.textTheme.bodyMedium,
                         ),
                       ],
@@ -163,7 +163,8 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
                   icon: const Icon(Icons.file_upload_outlined),
                   label: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Text(l.specUpload),
+                    child: Text(l.specUpload,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ),
               ),
@@ -176,7 +177,8 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
                   icon: const Icon(Icons.photo_camera),
                   label: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Text(l.specShoot),
+                    child: Text(l.specShoot,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ),
               ),
@@ -193,10 +195,8 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
           children: [
             Text(
               label,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 4),
             Text(value, style: Theme.of(context).textTheme.titleMedium),
@@ -208,28 +208,31 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
   Widget _bgSwatch(PhotoSpec spec, SpecBackground bg) {
     final selected = bg.name == _spec.background.name;
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () => setState(() => _spec = _spec.copyWith(background: bg)),
-      child: Container(
-        width: 26,
-        height: 26,
-        margin: const EdgeInsets.only(left: 8),
-        decoration: BoxDecoration(
-          color: Color.fromARGB(255, bg.r, bg.g, bg.b),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: selected
-                ? Theme.of(context).colorScheme.primary
-                : Colors.black26,
-            width: selected ? 2 : 1,
+      child: Padding(
+        padding: const EdgeInsets.all(9),
+        child: Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(
+            color: Color.fromARGB(255, bg.r, bg.g, bg.b),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: selected
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.outlineVariant,
+              width: selected ? 2 : 1,
+            ),
           ),
+          child: selected
+              ? Icon(Icons.check,
+                  size: 14,
+                  color: bg.r > 200 && bg.g > 200
+                      ? Theme.of(context).colorScheme.primary
+                      : Colors.white)
+              : null,
         ),
-        child: selected
-            ? Icon(Icons.check,
-                size: 14,
-                color: bg.r > 200 && bg.g > 200
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.white)
-            : null,
       ),
     );
   }
@@ -244,6 +247,7 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         title: Text(l.specKbDialogTitle),
         content: Row(
           children: [
@@ -293,8 +297,6 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
               : l.customInvalid)));
       return;
     }
-    setState(() =>
-        _spec = _spec.copyWith(minFileKb: minKb, maxFileKb: maxKb));
+    setState(() => _spec = _spec.copyWith(minFileKb: minKb, maxFileKb: maxKb));
   }
-
 }

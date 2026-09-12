@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:ui' show PathMetric;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/modnet_segmenter.dart';
@@ -36,8 +37,7 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage>
-    with TickerProviderStateMixin {
+class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   static const _totalSeconds = 6;
 
   Timer? _countdownTimer;
@@ -94,46 +94,53 @@ class _SplashPageState extends State<SplashPage>
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return Scaffold(
-      backgroundColor: const Color(0xFF2E3A63),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // 背景：深蓝紫渐变 + 流动柔光 + 极淡网格（独立图层，低频重绘）
-          RepaintBoundary(
-            child: CustomPaint(painter: _BackdropPainter(_ambient)),
-          ),
-          // 主体：取景框 + 人像剪影 + 徽章 + 扫描光带 + 品牌名 + 进度
-          RepaintBoundary(
-            child: CustomPaint(
-              painter: _BrandPainter(
-                stage: _stage,
-                ambient: _ambient,
-                progress: _progress,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: const Color(0xFF2E3A63),
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            // 背景：深蓝紫渐变 + 流动柔光 + 极淡网格（独立图层，低频重绘）
+            RepaintBoundary(
+              child: CustomPaint(painter: _BackdropPainter(_ambient)),
+            ),
+            // 主体：取景框 + 人像剪影 + 徽章 + 扫描光带 + 品牌名 + 进度
+            RepaintBoundary(
+              child: CustomPaint(
+                painter: _BrandPainter(
+                  stage: _stage,
+                  ambient: _ambient,
+                  progress: _progress,
+                ),
               ),
             ),
-          ),
-          // 广告位槽（本版留空不展示，接 SDK 时填充）
-          const Positioned(
-              left: 16, right: 16, bottom: 24, child: SizedBox(height: 60)),
-          // 跳过 + 倒计时
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 12,
-            right: 16,
-            child: TextButton(
-              onPressed: _leave,
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.white.withValues(alpha: 0.16),
-                shape: const StadiumBorder(),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            // 广告位槽（本版留空不展示，接 SDK 时填充）
+            const Positioned(
+                left: 16, right: 16, bottom: 24, child: SizedBox(height: 60)),
+            // 跳过 + 倒计时
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 12,
+              right: 16,
+              child: TextButton(
+                onPressed: _leave,
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: 0.16),
+                  shape: const StadiumBorder(),
+                  minimumSize: const Size(64, 44),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                ),
+                child: Text(l.splashSkip(_remain),
+                    style: const TextStyle(color: Color(0xFFE8EEFF))),
               ),
-              child: Text(l.splashSkip(_remain),
-                  style: const TextStyle(
-                      fontSize: 13, color: Color(0xFFE8EEFF))),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -175,8 +182,7 @@ class _BackdropPainter extends CustomPainter {
       ..strokeWidth = 1;
     const gap = 58.0;
     for (var x = -size.height; x < size.width; x += gap) {
-      canvas.drawLine(
-          Offset(x, 0), Offset(x + size.height, size.height), grid);
+      canvas.drawLine(Offset(x, 0), Offset(x + size.height, size.height), grid);
     }
 
     // 两团柔光斑：缓慢反向漂移，制造呼吸般的空气感
@@ -390,8 +396,7 @@ class _BrandPainter extends CustomPainter {
                 Colors.white.withValues(alpha: 0),
                 Colors.white.withValues(alpha: 0.42),
               ],
-            ).createShader(
-                Rect.fromLTRB(_fl, edge - band, _fr, edge)),
+            ).createShader(Rect.fromLTRB(_fl, edge - band, _fr, edge)),
         );
         canvas.drawLine(
           Offset(bandRect.left, edge),
@@ -530,8 +535,7 @@ class _BrandPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
     // 随淡入轻微上浮 16 单位，避免「凭空出现」
-    tp.paint(canvas,
-        Offset((_dw - tp.width) / 2, 1596 + 16 * (1 - t)));
+    tp.paint(canvas, Offset((_dw - tp.width) / 2, 1596 + 16 * (1 - t)));
   }
 
   // ── 底部加载指示 ──

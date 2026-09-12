@@ -112,90 +112,107 @@ class _KbToolPageState extends State<KbToolPage> {
     final picked = _pickedPath;
     final result = _resultBytes;
     final image = _resultImage;
-    return Scaffold(
-      appBar: AppBar(title: Text(l.kbToolTitle)),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            if (picked == null)
-              FilledButton.icon(
-                onPressed: _pick,
-                icon: const Icon(Icons.photo_library_outlined),
-                label: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Text(l.kbToolPick, style: const TextStyle(fontSize: 16)),
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Scaffold(
+        appBar: AppBar(title: Text(l.kbToolTitle)),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              if (picked == null)
+                FilledButton.icon(
+                  onPressed: _pick,
+                  icon: const Icon(Icons.photo_library_outlined),
+                  label: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: Text(l.kbToolPick,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
+                  ),
+                )
+              else ...[
+                AspectRatio(
+                  aspectRatio: 4 / 3,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(File(picked),
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
+                              child: const Center(
+                                  child: Icon(Icons.broken_image_outlined)),
+                            )),
+                  ),
                 ),
-              )
-            else ...[
-              AspectRatio(
-                aspectRatio: 4 / 3,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.file(File(picked), fit: BoxFit.contain),
+                const SizedBox(height: 8),
+                Text(
+                  '${((_originalBytes ?? 0) / 1024).toStringAsFixed(0)}KB',
+                  style: Theme.of(context).textTheme.bodySmall,
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${((_originalBytes ?? 0) / 1024).toStringAsFixed(0)}KB',
-                style: Theme.of(context).textTheme.bodySmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _targetController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: l.kbToolTargetKb,
-                  border: const OutlineInputBorder(),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _targetController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: l.kbToolTargetKb,
+                    border: const OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: _busy ? null : _compress,
-                icon: _busy
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.compress),
-                label: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Text(l.kbToolCompress, style: const TextStyle(fontSize: 16)),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: _busy ? null : _compress,
+                  icon: _busy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.compress),
+                  label: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: Text(l.kbToolCompress,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
+                  ),
                 ),
-              ),
+              ],
+              if (result != null && image != null) ...[
+                const SizedBox(height: 24),
+                Text(
+                  l.kbToolResult(
+                    (result.lengthInBytes / 1024).toStringAsFixed(0),
+                    '${image.width}',
+                    '${image.height}',
+                  ),
+                  style: Theme.of(context).textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                AspectRatio(
+                  aspectRatio: 4 / 3,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.memory(result, fit: BoxFit.contain),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                FilledButton.tonalIcon(
+                  onPressed: _busy ? null : _save,
+                  icon: const Icon(Icons.save_alt),
+                  label: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: Text(l.kbToolSave,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
             ],
-            if (result != null && image != null) ...[
-              const SizedBox(height: 24),
-              Text(
-                l.kbToolResult(
-                  (result.lengthInBytes / 1024).toStringAsFixed(0),
-                  '${image.width}',
-                  '${image.height}',
-                ),
-                style: Theme.of(context).textTheme.titleMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              AspectRatio(
-                aspectRatio: 4 / 3,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.memory(result, fit: BoxFit.contain),
-                ),
-              ),
-              const SizedBox(height: 16),
-              FilledButton.tonalIcon(
-                onPressed: _busy ? null : _save,
-                icon: const Icon(Icons.save_alt),
-                label: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Text(l.kbToolSave, style: const TextStyle(fontSize: 16)),
-                ),
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );

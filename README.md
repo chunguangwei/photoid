@@ -19,6 +19,7 @@ PhotoID is an AI-powered ID photo maker that runs **entirely on-device**. Take a
 - 🗜️ **KB resize tool** — recompress any photo into a target file-size range
 - 🖼️ **My Album** — browse and manage saved ID photos locally
 - 🌐 **Bilingual UI** — 中文 / English, switchable in-app
+- 🌙 **Dark mode & adaptive UI** — full light/dark themes follow the system; confirmation dialogs render Cupertino-style on iOS; global text scaling is clamped (0.85–1.3) so large-font accessibility settings never break layouts
 - 🔄 **In-app self-update (Android)** — GitHub Release based OTA update check; iOS international release is being prepared
 - 🔒 **100% local processing** — no account, no upload, no watermark, works offline
 
@@ -91,6 +92,7 @@ PhotoID 是一款**纯端侧**的 AI 证件照制作应用。支持拍摄或从�
 - 🗜️ **改 KB 工具**——任意照片重新压缩到目标大小范围
 - 🖼️ **我的相册**——本地浏览与管理已保存的证件照
 - 🌐 **中英双语**——中文 / English，应用内切换
+- 🌙 **深色模式与双端适配**——亮/暗主题跟随系统；iOS 确认弹窗自动切换 Cupertino 风格；全局字体缩放受控（0.85–1.3），系统大字体不撑破布局
 - 🔄 **Android 自升级**——基于 GitHub Release 的更新检查；iOS 海外版筹备中
 - 🔒 **全部本地处理**——无需账号、不上传、无水印，离线可用
 

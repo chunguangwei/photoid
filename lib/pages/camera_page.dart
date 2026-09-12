@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'package:image_picker/image_picker.dart';
 
@@ -109,8 +110,7 @@ class _CameraPageState extends State<CameraPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content:
-                Text(AppLocalizations.of(context).captureFailed('$e'))));
+            content: Text(AppLocalizations.of(context).captureFailed('$e'))));
       }
     } finally {
       if (mounted) setState(() => _capturing = false);
@@ -146,41 +146,48 @@ class _CameraPageState extends State<CameraPage> {
     final controller = _controller;
     final l = AppLocalizations.of(context);
     final captured = _capturedPath;
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _topBar(l),
-            Expanded(
-              child: _error != null
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(_error!,
-                            style: const TextStyle(color: Colors.white),
-                            textAlign: TextAlign.center),
-                      ),
-                    )
-                  : captured != null
-                      ? _buildFrozenPreview(captured, l)
-                      : controller == null
-                          ? const Center(child: CircularProgressIndicator())
-                          : Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                Center(child: CameraPreview(controller)),
-                                CustomPaint(
-                                  painter: _GuidePainter(
-                                      aspect: widget.spec.aspect),
-                                ),
-                              ],
-                            ),
-            ),
-            captured != null
-                ? _buildConfirmBar(l)
-                : _buildCaptureBar(l, controller),
-          ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: SafeArea(
+          child: Column(
+            children: [
+              _topBar(l),
+              Expanded(
+                child: _error != null
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(_error!,
+                              style: const TextStyle(color: Colors.white),
+                              textAlign: TextAlign.center),
+                        ),
+                      )
+                    : captured != null
+                        ? _buildFrozenPreview(captured, l)
+                        : controller == null
+                            ? const Center(child: CircularProgressIndicator())
+                            : Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  Center(child: CameraPreview(controller)),
+                                  CustomPaint(
+                                    painter: _GuidePainter(
+                                        aspect: widget.spec.aspect),
+                                  ),
+                                ],
+                              ),
+              ),
+              captured != null
+                  ? _buildConfirmBar(l)
+                  : _buildCaptureBar(l, controller),
+            ],
+          ),
         ),
       ),
     );
@@ -266,7 +273,11 @@ class _CameraPageState extends State<CameraPage> {
         children: [
           Container(color: Colors.black87),
           Center(
-            child: Image.file(File(path), fit: BoxFit.contain),
+            child: _lens == CameraLensDirection.front
+                ? Transform.flip(
+                    flipX: true,
+                    child: Image.file(File(path), fit: BoxFit.contain))
+                : Image.file(File(path), fit: BoxFit.contain),
           ),
         ],
       );
@@ -296,7 +307,9 @@ class _CameraPageState extends State<CameraPage> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 onPressed: _confirm,
-                child: Text(l.confirm, style: const TextStyle(fontSize: 16)),
+                child: Text(l.confirm,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600)),
               ),
             ),
           ],
@@ -353,29 +366,21 @@ class _GuidePainter extends CustomPainter {
     final half = Path();
     // 右半：头顶 → 太阳穴 → 耳廓微凸 → 下颌内收 → 下巴
     half.moveTo(cx, headTop);
-    half.cubicTo(
-        cx + headW * 0.52, headTop + headH * 0.02,
-        cx + headW * 0.50, headTop + headH * 0.30,
-        cx + headW * 0.47, headTop + headH * 0.48);
+    half.cubicTo(cx + headW * 0.52, headTop + headH * 0.02, cx + headW * 0.50,
+        headTop + headH * 0.30, cx + headW * 0.47, headTop + headH * 0.48);
     // 耳廓（微凸后回收）
-    half.cubicTo(
-        cx + headW * 0.53, headTop + headH * 0.56,
-        cx + headW * 0.50, headTop + headH * 0.64,
-        cx + headW * 0.40, headTop + headH * 0.72);
+    half.cubicTo(cx + headW * 0.53, headTop + headH * 0.56, cx + headW * 0.50,
+        headTop + headH * 0.64, cx + headW * 0.40, headTop + headH * 0.72);
     // 下颌 → 下巴（圆润）
-    half.cubicTo(
-        cx + headW * 0.30, headTop + headH * 0.86,
-        cx + headW * 0.16, chinY - headH * 0.02,
-        cx, chinY);
+    half.cubicTo(cx + headW * 0.30, headTop + headH * 0.86, cx + headW * 0.16,
+        chinY - headH * 0.02, cx, chinY);
     // 颈部
     half.moveTo(cx + neckW / 2, chinY - headH * 0.10);
     half.lineTo(cx + neckW / 2, chinY + headH * 0.16);
     // 肩部 S 曲线：颈根 → 斜方肌 → 肩峰 → 出框
     half.moveTo(cx + neckW / 2, chinY + headH * 0.16);
-    half.cubicTo(
-        cx + headW * 0.62, chinY + headH * 0.28,
-        cx + headW * 0.98, chinY + headH * 0.42,
-        frame.right - shoulderEndX, shoulderY);
+    half.cubicTo(cx + headW * 0.62, chinY + headH * 0.28, cx + headW * 0.98,
+        chinY + headH * 0.42, frame.right - shoulderEndX, shoulderY);
 
     // 镜像左半（Matrix4.storage 为 Float64List）
     final mirror = Matrix4.identity()

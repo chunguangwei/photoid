@@ -1,6 +1,5 @@
 import 'dart:async';
 
-
 import 'package:flutter/material.dart';
 
 import 'l10n/app_localizations.dart';
@@ -74,8 +73,21 @@ class _PhotoIdAppState extends State<PhotoIdApp> {
           return const Locale('zh');
         },
         debugShowCheckedModeBanner: false,
+        builder: (context, child) {
+          final scaler = MediaQuery.textScalerOf(context)
+              .clamp(minScaleFactor: 0.85, maxScaleFactor: 1.3);
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: scaler),
+            child: child!,
+          );
+        },
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2B6CB0)),
+          useMaterial3: true,
+        ),
+        darkTheme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF2B6CB0), brightness: Brightness.dark),
           useMaterial3: true,
         ),
         home: const SplashPage(),

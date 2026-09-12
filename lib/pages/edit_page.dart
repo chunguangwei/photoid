@@ -235,7 +235,8 @@ class _EditPageState extends State<EditPage> {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2))
                 : Text(AppLocalizations.of(context).saveAction,
-                    style: const TextStyle(fontSize: 16)),
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(width: 8),
         ],
@@ -284,8 +285,7 @@ class _EditPageState extends State<EditPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content:
-                Text(AppLocalizations.of(context).processFailed('$e'))));
+            content: Text(AppLocalizations.of(context).processFailed('$e'))));
       }
     } finally {
       if (mounted) setState(() => _exporting = false);
@@ -407,15 +407,20 @@ class _EditPageState extends State<EditPage> {
                     size: 14,
                     color: Theme.of(context).colorScheme.onSurfaceVariant),
                 const SizedBox(width: 4),
-                Text(l.editZoomHint,
-                    style: Theme.of(context).textTheme.bodySmall),
-                const SizedBox(width: 12),
+                Flexible(
+                  child: Text(l.editZoomHint,
+                      style: Theme.of(context).textTheme.bodySmall),
+                ),
                 GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: () => _editorKey.currentState?.reset(),
-                  child: Text(l.editCropReset,
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).colorScheme.primary)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    child: Text(l.editCropReset,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.primary)),
+                  ),
                 ),
               ],
             ),
@@ -548,15 +553,15 @@ class _EditPageState extends State<EditPage> {
       child: Column(
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
               color: Color.fromARGB(255, bg.r, bg.g, bg.b),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: selected
                     ? Theme.of(context).colorScheme.primary
-                    : Colors.black26,
+                    : Theme.of(context).colorScheme.outlineVariant,
                 width: selected ? 2.5 : 1,
               ),
             ),
