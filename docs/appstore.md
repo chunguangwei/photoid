@@ -225,10 +225,15 @@ flutter build ipa --release
 # 上传：open -a Transporter，或 Xcode → Organizer → Distribute App
 ```
 
-**当前状态**：archive 已构建成功（`build/ios/archive/Runner.xcarchive`），
-但本机 Xcode 未登录 Apple 账号、无 iOS Distribution 证书，导出 IPA 失败。
-处理：Xcode → Settings → Accounts 登录开发者账号后，Xcode → Organizer →
-Distribute App 直接分发该 archive，或重跑 `flutter build ipa --release`。
+**当前状态**：✅ IPA 已导出成功（`build/ios/ipa/photoid.ipa`，67MB，
+Apple Distribution 云证书签名，Team `CCTFP9X3SW`，v0.8.1 build 43）。
+上传走 Xcode Organizer：选中 archive → Distribute App → App Store
+Connect → Upload；也可安装 Transporter 拖入 IPA。
+
+历史记录：首次导出时本机未登录 Apple 账号（exportArchive 失败）；登录
+后原 Bundle ID `cn.wcg.photoid` 因被旧账号（Team `L35RLT89XN`）占用
+无法注册，已更换为 `cn.wcg.idphoto` 并在 Xcode Signing & Capabilities
+中选定新团队（pbxproj 自动改写）。
 
 真机联调安装（开发证书，**7 天过期**，长期测试请用 TestFlight）：
 
