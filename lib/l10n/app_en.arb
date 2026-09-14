@@ -64,9 +64,10 @@
   "checkItemsTitle": "Checks",
   "verdictPass": "Meets school requirements",
   "verdictFail": "Some checks failed",
-  "eduIdLabel": "Education ID (used as file name)",
-  "eduIdHint": "e.g. 2026010101",
-  "eduIdRequired": "Enter your Education ID as the file name first",
+  "fileNameLabel": "File name",
+  "fileNameHint": "Enter a file name",
+  "fileNameRequired": "Enter a file name first",
+  "fileNameRegenerate": "Generate a random name",
   "galleryPermissionDenied": "Photo library write permission not granted",
   "savedToGallery": "Saved to gallery: {fileName}",
   "@savedToGallery": {

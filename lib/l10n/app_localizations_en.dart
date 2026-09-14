@@ -133,13 +133,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get verdictFail => 'Some checks failed';
 
   @override
-  String get eduIdLabel => 'Education ID (used as file name)';
+  String get fileNameLabel => 'File name';
 
   @override
-  String get eduIdHint => 'e.g. 2026010101';
+  String get fileNameHint => 'Enter a file name';
 
   @override
-  String get eduIdRequired => 'Enter your Education ID as the file name first';
+  String get fileNameRequired => 'Enter a file name first';
+
+  @override
+  String get fileNameRegenerate => 'Generate a random name';
 
   @override
   String get galleryPermissionDenied =>

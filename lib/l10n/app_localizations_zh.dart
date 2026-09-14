@@ -125,13 +125,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get verdictFail => '存在不合规项';
 
   @override
-  String get eduIdLabel => '教育ID（用作文件名）';
+  String get fileNameLabel => '文件名';
 
   @override
-  String get eduIdHint => '如 2026010101';
+  String get fileNameHint => '请输入文件名';
 
   @override
-  String get eduIdRequired => '请先输入教育ID作为文件名';
+  String get fileNameRequired => '请先输入文件名';
+
+  @override
+  String get fileNameRegenerate => '随机生成文件名';
 
   @override
   String get galleryPermissionDenied => '未授予相册写入权限';

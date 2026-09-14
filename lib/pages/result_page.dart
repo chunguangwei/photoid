@@ -24,7 +24,18 @@ class ResultPage extends StatefulWidget {
 }
 
 class _ResultPageState extends State<ResultPage> {
-  final _eduIdController = TextEditingController();
+  final TextEditingController _nameController =
+      TextEditingController(text: _genFileName());
+
+  /// 默认文件名：时间戳+毫秒，连点「重新生成」也不会重名
+  static String _genFileName() {
+    final t = DateTime.now();
+    String two(int v) => v.toString().padLeft(2, '0');
+    return 'photoid_${t.year}${two(t.month)}${two(t.day)}_'
+        '${two(t.hour)}${two(t.minute)}${two(t.second)}_'
+        '${t.millisecond.toString().padLeft(3, '0')}';
+  }
+
   ComplianceReport? _report;
   String? _reportError;
   bool _saving = false;
@@ -43,38 +54,38 @@ class _ResultPageState extends State<ResultPage> {
 
   @override
   void dispose() {
-    _eduIdController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     final permissionError =
         AppLocalizations.of(context).galleryPermissionDenied;
-    final eduId = _eduIdController.text.trim();
-    if (eduId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).eduIdRequired)));
+    final fileName = _nameController.text.trim();
+    if (fileName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context).fileNameRequired)));
       return;
     }
     setState(() => _saving = true);
     try {
       final hasAccess = await Gal.requestAccess();
       if (!hasAccess) throw Exception(permissionError);
-      // 通过文件名传递教育ID：Android MediaStore / iOS Photos 均保留文件名
+      // 通过文件名传递用户命名：Android MediaStore / iOS Photos 均保留文件名
       final dir = await getTemporaryDirectory();
-      final file = File(p.join(dir.path, '$eduId.jpg'));
+      final file = File(p.join(dir.path, '$fileName.jpg'));
       await file.writeAsBytes(widget.jpgBytes, flush: true);
       await Gal.putImage(file.path);
       file.delete().ignore();
       // 同步双写 App 相册；失败仅记录，不影响主保存流程
-      AlbumService.save(widget.jpgBytes, eduId).then((_) {}, onError: (e) {
+      AlbumService.save(widget.jpgBytes, fileName).then((_) {}, onError: (e) {
         debugPrint('AlbumService.save failed: $e');
       });
       if (!mounted) return;
       setState(() => _saved = true);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content:
-              Text(AppLocalizations.of(context).savedToGallery('$eduId.jpg'))));
+          content: Text(
+              AppLocalizations.of(context).savedToGallery('$fileName.jpg'))));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -156,13 +167,21 @@ class _ResultPageState extends State<ResultPage> {
               ...report.items.map(_buildCheckTile),
             const SizedBox(height: 16),
             TextField(
-              controller: _eduIdController,
+              controller: _nameController,
               enabled: !_saved,
               decoration: InputDecoration(
-                labelText: l.eduIdLabel,
-                hintText: l.eduIdHint,
+                labelText: l.fileNameLabel,
+                hintText: l.fileNameHint,
                 border: const OutlineInputBorder(),
                 suffixText: '.jpg',
+                suffixIcon: IconButton(
+                  tooltip: l.fileNameRegenerate,
+                  icon: const Icon(Icons.autorenew),
+                  onPressed: _saved
+                      ? null
+                      : () =>
+                          setState(() => _nameController.text = _genFileName()),
+                ),
               ),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9_-]')),

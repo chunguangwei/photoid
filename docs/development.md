@@ -98,7 +98,7 @@ ComplianceService（result_page 触发）
         ▼
 保存（result_page / my_album）
   AlbumService 写应用私有目录；gal 可选保存到系统相册；
-  学生报名照按教育 ID 命名文件
+  保存时文件名默认自动生成，可自定义（如学号）
 ```
 
 错误与进度同样以语义标识传递：`PipelineException.code`（readPhoto / noPerson /
@@ -465,7 +465,7 @@ UI 文案经 `Tr` 按目标色名输出：`checkBgColor({bg})` / `fixBgMismatch(
 
 ### AlbumService（lib/services/album_service.dart）
 本地相册：成片双写一份到应用私有目录（`<documents>/album`），文件名
-`{yyyyMMdd_HHmmss}_{baseName}.jpg`，`baseName` 通常为教育 ID 或原图名；
+`{yyyyMMdd_HHmmss}_{baseName}.jpg`，`baseName` 为用户自定义文件名（默认 `photoid_时间戳`）；
 `list()` 按修改时间倒序，`delete(path)` 按路径删除。系统相册写入由
 `gal` 完成（在 result_page 中调用）。
 

@@ -314,23 +314,29 @@ abstract class AppLocalizations {
   /// **'Some checks failed'**
   String get verdictFail;
 
-  /// No description provided for @eduIdLabel.
+  /// No description provided for @fileNameLabel.
   ///
   /// In en, this message translates to:
-  /// **'Education ID (used as file name)'**
-  String get eduIdLabel;
+  /// **'File name'**
+  String get fileNameLabel;
 
-  /// No description provided for @eduIdHint.
+  /// No description provided for @fileNameHint.
   ///
   /// In en, this message translates to:
-  /// **'e.g. 2026010101'**
-  String get eduIdHint;
+  /// **'Enter a file name'**
+  String get fileNameHint;
 
-  /// No description provided for @eduIdRequired.
+  /// No description provided for @fileNameRequired.
   ///
   /// In en, this message translates to:
-  /// **'Enter your Education ID as the file name first'**
-  String get eduIdRequired;
+  /// **'Enter a file name first'**
+  String get fileNameRequired;
+
+  /// No description provided for @fileNameRegenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate a random name'**
+  String get fileNameRegenerate;
 
   /// No description provided for @galleryPermissionDenied.
   ///
