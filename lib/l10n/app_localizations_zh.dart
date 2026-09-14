@@ -24,7 +24,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get requirementsTitle => '照片要求';
 
   @override
-  String get reqEduIdName => '照片文件用教育ID命名（jpg 格式）';
+  String get reqEduIdName => '文件可自定义命名（jpg 格式）';
 
   @override
   String get reqFileSize => '文件大小在 10KB–500KB 之间';
@@ -119,7 +119,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get checkItemsTitle => '检测项';
 
   @override
-  String get verdictPass => '符合学校要求';
+  String get verdictPass => '符合要求';
 
   @override
   String get verdictFail => '存在不合规项';

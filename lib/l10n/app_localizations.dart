@@ -131,7 +131,7 @@ abstract class AppLocalizations {
   /// No description provided for @reqEduIdName.
   ///
   /// In en, this message translates to:
-  /// **'Name the file with your Education ID (JPG format)'**
+  /// **'File name is customizable (JPG format)'**
   String get reqEduIdName;
 
   /// No description provided for @reqFileSize.
@@ -305,7 +305,7 @@ abstract class AppLocalizations {
   /// No description provided for @verdictPass.
   ///
   /// In en, this message translates to:
-  /// **'Meets school requirements'**
+  /// **'Meets requirements'**
   String get verdictPass;
 
   /// No description provided for @verdictFail.

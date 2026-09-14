@@ -12,7 +12,7 @@ import '../models/photo_spec.dart';
 import '../services/album_service.dart';
 import '../services/compliance_service.dart';
 
-/// 检测与保存页：合规报告 + 教育ID命名 + 保存到相册。
+/// 检测与保存页：合规报告 + 自定义文件命名 + 保存到相册。
 class ResultPage extends StatefulWidget {
   const ResultPage({super.key, required this.jpgBytes, required this.spec});
 

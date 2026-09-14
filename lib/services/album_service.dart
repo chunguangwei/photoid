@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 
 /// App 内相册：成片双写一份到私有文档目录，供「我的相册」浏览/删除。
-/// 文件名 {yyyyMMdd_HHmmss}_{baseName}.jpg，baseName 通常为教育ID或原图名。
+/// 文件名 {yyyyMMdd_HHmmss}_{baseName}.jpg，baseName 为用户自定义文件名。
 class AlbumService {
   AlbumService._();
 

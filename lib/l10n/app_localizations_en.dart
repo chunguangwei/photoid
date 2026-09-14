@@ -25,8 +25,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get requirementsTitle => 'Photo requirements';
 
   @override
-  String get reqEduIdName =>
-      'Name the file with your Education ID (JPG format)';
+  String get reqEduIdName => 'File name is customizable (JPG format)';
 
   @override
   String get reqFileSize => 'File size between 10KB and 500KB';
@@ -127,7 +126,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkItemsTitle => 'Checks';
 
   @override
-  String get verdictPass => 'Meets school requirements';
+  String get verdictPass => 'Meets requirements';
 
   @override
   String get verdictFail => 'Some checks failed';

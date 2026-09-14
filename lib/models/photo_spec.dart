@@ -156,7 +156,7 @@ const backgroundL10nKeys = {
   '深蓝底': 'bgDarkBlue',
 };
 
-/// 学校通知的学生报名照要求（教育ID命名）。
+/// 学校通知的学生报名照要求（文件可自定义命名）。
 const studentPhotoSpec = PhotoSpec(
   id: 'student_edu_id',
   name: '学生报名照',
@@ -172,7 +172,7 @@ const studentPhotoSpec = PhotoSpec(
   maxRatio: 1.4,
   background: idPhotoBlue,
   requirements: [
-    '照片文件用教育ID命名（jpg 格式）',
+    '文件可自定义命名（jpg 格式）',
     '文件大小在 10KB–500KB 之间',
     '照片底色为蓝底',
     '最佳尺寸 480×640 像素（宽 380–580，高 540–740）',
