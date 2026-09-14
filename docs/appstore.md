@@ -5,8 +5,9 @@ title: App Store 上架
 
 # iOS 海外上架准备（App Store）
 
-面向**英语系国家**（美、加、英、澳、新西兰、新加坡等）上架，不含中国大陆区
-——大陆区需要软著与 ICP 备案号，海外区不需要，这是选择海外先行的主要原因。
+面向**英语系国家**（美、加、英、澳、新西兰、新加坡等）上架，**不含中国
+大陆与欧盟**——大陆区需要软著与 ICP 备案号；欧盟需 DSA 交易者身份并
+公开展示地址/电话，个人开发者均不划算，这是选择英语区先行的主要原因。
 
 - Bundle ID：`cn.wcg.idphoto`（原 `cn.wcg.photoid` 被旧账号 Team
   `L35RLT89XN` 占用，新账号无法注册，2026-09 更换为现值）
@@ -52,7 +53,10 @@ title: App Store 上架
 - [ ] Apple Developer Program 账号（$99/年，Apple ID：`38256608@qq.com`）；
       **Xcode → Settings → Accounts 登录该 Apple ID**——当前机器未登录，导致 `flutter build ipa` 无法导出
       签名 IPA（archive 已构建成功，登录后直接在 Xcode Organizer 分发即可）
-- [ ] App Store Connect 创建 App，**Availability 只勾选目标英语区**
+- [ ] App Store Connect 创建 App，**Availability 排除中国大陆与欧盟**
+      （已决策 2026-09-14）：大陆需要软著+ICP 备案；欧盟需 DSA 交易者身份
+      并公开个人地址/电话，个人开发者不划算。主选美/加/英/澳/新西兰/
+      新加坡等英语区，可附带港澳台上架（界面会回退英文，可用）。
 - [ ] 隐私政策 URL：`https://chunguangwei.github.io/photoid/privacy-policy`
       （GitHub Pages 已启用，见 §5）
 - [ ] **支持 URL（必填）**：`https://chunguangwei.github.io/photoid/`
