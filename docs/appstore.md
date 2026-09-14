@@ -67,6 +67,13 @@ title: App Store 上架
 
 ## 4. 截图规格
 
+✅ **已完成（2026-09-14）**：`assets/screenshots/store/{zh,en}/{69,65}/01–05.png`
+共 20 张（中英 × 6.9"/6.5" × 5 画面），真机实拍后经
+`test/tools/compose_screenshots.py` 合成（标题 + 品牌渐变底 + 圆角卡片）。
+重拍流程：数据线连 iPhone → `pymobiledevice3 developer dvt screenshot`
+抓原始帧到 `assets/screenshots/raw/` → 跑合成脚本（标题文案在脚本顶部
+SETS 里改）。
+
 App Store 要求按**当前 App Store Connect 页面提示为准**（Apple 会调整）。
 截至目前，iPhone 必交的是这两档，其余尺寸由 Apple 自动缩放：
 
