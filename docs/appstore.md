@@ -13,7 +13,7 @@ title: App Store 上架
 - Team：以 App Store Connect 上架账号（Apple ID `38256608@qq.com`）在 Xcode
   Signing & Capabilities 中选择的团队为准
 - 最低系统：iOS 15.5
-- 上架版本：v0.8.1（build 43）
+- 上架版本：v0.8.2（build 44）
 - 包体：Runner.app 约 106MB（含 26MB MODNet 模型）
 
 ---
@@ -226,15 +226,15 @@ flutter build ipa --release
 # 上传：open -a Transporter，或 Xcode → Organizer → Distribute App
 ```
 
-**当前状态**：✅ IPA 已导出成功（`build/ios/ipa/photoid.ipa`，67MB，
-Apple Distribution 云证书签名，Team `CCTFP9X3SW`，v0.8.1 build 43）。
-上传走 Xcode Organizer：选中 archive → Distribute App → App Store
-Connect → Upload；也可安装 Transporter 拖入 IPA。
+**当前状态**：✅ **v0.8.2 (build 44) 已上传 App Store Connect**
+（`xcodebuild -exportArchive -exportOptionsPlist` + `destination: upload`，
+用 Xcode 登录态直传，无需 Organizer/Transporter）。上一版 0.8.1 (43)
+已被此构建取代——ASC 版本号请填 0.8.2，构建选 build 44。
 
 历史记录：首次导出时本机未登录 Apple 账号（exportArchive 失败）；登录
 后原 Bundle ID `cn.wcg.photoid` 因被旧账号（Team `L35RLT89XN`）占用
 无法注册，已更换为 `cn.wcg.idphoto` 并在 Xcode Signing & Capabilities
-中选定新团队（pbxproj 自动改写）。
+中选定新团队 `CCTFP9X3SW`（pbxproj 自动改写）。
 
 真机联调安装（开发证书，**7 天过期**，长期测试请用 TestFlight）：
 
