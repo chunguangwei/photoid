@@ -53,8 +53,8 @@ title: App Store 上架
 - [ ] Apple Developer Program 账号（$99/年，Apple ID：`38256608@qq.com`）；
       **Xcode → Settings → Accounts 登录该 Apple ID**——当前机器未登录，导致 `flutter build ipa` 无法导出
       签名 IPA（archive 已构建成功，登录后直接在 Xcode Organizer 分发即可）
-- [ ] App Store Connect 创建 App，**Availability 排除中国大陆与欧盟**
-      （已决策 2026-09-14）：大陆需要软著+ICP 备案；欧盟需 DSA 交易者身份
+- [x] App Store Connect 创建 App，**Availability 排除中国大陆与欧盟**
+      （已决策并执行 2026-09-14）：大陆需要软著+ICP 备案；欧盟需 DSA 交易者身份
       并公开个人地址/电话，个人开发者不划算。主选美/加/英/澳/新西兰/
       新加坡等英语区，可附带港澳台上架（界面会回退英文，可用）。
 - [ ] 隐私政策 URL：`https://chunguangwei.github.io/photoid/privacy-policy`
