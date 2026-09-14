@@ -19,7 +19,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get specStudentName => 'Student Enrollment Photo';
 
   @override
-  String get bgBlue => 'Blue background';
+  String get bgBlue => 'Blue';
 
   @override
   String get requirementsTitle => 'Photo requirements';

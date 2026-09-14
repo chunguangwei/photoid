@@ -119,7 +119,7 @@ abstract class AppLocalizations {
   /// No description provided for @bgBlue.
   ///
   /// In en, this message translates to:
-  /// **'Blue background'**
+  /// **'Blue'**
   String get bgBlue;
 
   /// No description provided for @requirementsTitle.

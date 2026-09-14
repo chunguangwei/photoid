@@ -3,7 +3,7 @@
   "appTitle": "Smart ID Photo",
   "privacyNote": "All processing happens on this device. Photos are never uploaded to a server.",
   "specStudentName": "Student Enrollment Photo",
-  "bgBlue": "Blue background",
+  "bgBlue": "Blue",
   "requirementsTitle": "Photo requirements",
   "reqEduIdName": "File name is customizable (JPG format)",
   "reqFileSize": "File size between 10KB and 500KB",
