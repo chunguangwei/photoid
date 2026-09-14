@@ -857,7 +857,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsContact.
   ///
   /// In en, this message translates to:
-  /// **'Contact: 38256608@qq.com'**
+  /// **'Contact: chunguangwee@gmail.com'**
   String get settingsContact;
 
   /// No description provided for @cameraSwitch.

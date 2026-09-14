@@ -431,7 +431,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Free for personal use. Commercial use requires the author\'s permission.';
 
   @override
-  String get settingsContact => 'Contact: 38256608@qq.com';
+  String get settingsContact => 'Contact: chunguangwee@gmail.com';
 
   @override
   String get cameraSwitch => 'Switch camera';
