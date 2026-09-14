@@ -42,9 +42,10 @@ title: App Store 上架
 
 ## 2. 待办（代码侧）
 
-- [ ] 确认 App 名称在目标区域未被占用（`PhotoID` 是常见词，很可能已被注册）。
-      App Store Connect 创建 App 时若提示重名，需换显示名，例如
-      `PhotoID - ID Photo Maker`。**Bundle ID 一经创建不可更改**，名称可改。
+- [x] ~~确认 App 名称未被占用~~ → 已解决（2026-09-14）：`PhotoID` 与
+      `PhotoID - ID Photo Maker` 均被占用，最终上架名定为 **`PhotoID Studio`**。
+      **Bundle ID 一经创建不可更改**，名称可改（应用内/桌面显示名仍用
+      `PhotoID`，InfoPlist.strings 不动）。
 
 ## 3. 待办（App Store Connect 侧）
 
@@ -118,7 +119,7 @@ https://chunguangwei.github.io/photoid/privacy-policy
 
 ### 7.1 en-US（主语言）
 
-- **Name**（≤30 字符）: `PhotoID - ID Photo Maker`
+- **Name**（≤30 字符）: `PhotoID Studio`（已确认可用并创建）
 - **Subtitle**（≤30）: `Passport photos, fully offline`
 - **Promotional Text**（≤170，可随时改无需过审）:
   `Every photo is processed on your device — cutout, retouching, framing and compliance checks all run offline. Nothing is ever uploaded.`

@@ -7,7 +7,7 @@ permalink: /privacy-policy
 # Privacy Policy / 隐私政策
 
 **Effective date / 生效日期：2026-09-11**
-**App: PhotoID（智能证件照）**
+**App: PhotoID Studio（智能证件照）**
 
 ---
 
