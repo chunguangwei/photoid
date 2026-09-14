@@ -16,9 +16,12 @@ class Tr {
 
   // ── 规格模型（photo_spec 常量为中文数据）─────────────────────────
 
-  /// 规格名。目前仅内置学生规格有译文；其余（如未来 JSON 规格）原样显示。
-  String specName(PhotoSpec spec) =>
-      spec.id == 'student_edu_id' ? _l.specStudentName : spec.name;
+  /// 规格名。学生规格走 ARB 键；JSON 规格库带 nameEn 时英文环境用英文。
+  String specName(PhotoSpec spec) {
+    if (spec.id == 'student_edu_id') return _l.specStudentName;
+    if (_l.localeName == 'en' && spec.nameEn != null) return spec.nameEn!;
+    return spec.name;
+  }
   /// 底色本地化名（五色经 backgroundL10nKeys 映射，未知原样显示）。
   String bgName(SpecBackground bg) {
     switch (backgroundL10nKeys[bg.name]) {
@@ -38,15 +41,20 @@ class Tr {
   }
 
   List<String> requirements(PhotoSpec spec) {
-    if (spec.id != 'student_edu_id') return spec.requirements;
-    return [
-      _l.reqEduIdName,
-      _l.reqFileSize,
-      _l.reqBlueBg,
-      _l.reqBestSize,
-      _l.reqRatio,
-      _l.reqClothing,
-    ];
+    if (spec.id == 'student_edu_id') {
+      return [
+        _l.reqEduIdName,
+        _l.reqFileSize,
+        _l.reqBlueBg,
+        _l.reqBestSize,
+        _l.reqRatio,
+        _l.reqClothing,
+      ];
+    }
+    if (_l.localeName == 'en' && spec.requirementsEn != null) {
+      return spec.requirementsEn!;
+    }
+    return spec.requirements;
   }
 
   // ── ImagePipeline 进度步骤 / 异常 ────────────────────────────────

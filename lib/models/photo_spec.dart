@@ -23,6 +23,7 @@ class PhotoSpec {
   const PhotoSpec({
     required this.id,
     required this.name,
+    this.nameEn,
     required this.pixelWidth,
     required this.pixelHeight,
     required this.minFileKb,
@@ -35,10 +36,14 @@ class PhotoSpec {
     required this.maxRatio,
     required this.background,
     this.requirements = const [],
+    this.requirementsEn,
   });
 
   final String id;
   final String name;
+
+  /// 英文名（JSON 规格库带 nameEn/requirementsEn；空则回退中文）
+  final String? nameEn;
 
   /// 最佳像素尺寸
   final int pixelWidth;
@@ -63,6 +68,9 @@ class PhotoSpec {
   /// 面向用户的要求清单（原样展示）
   final List<String> requirements;
 
+  /// 英文要求清单（空则回退中文）
+  final List<String>? requirementsEn;
+
   /// 宽/高
   double get aspect => pixelWidth / pixelHeight;
 
@@ -78,6 +86,7 @@ class PhotoSpec {
       PhotoSpec(
         id: id,
         name: name ?? this.name,
+        nameEn: nameEn,
         pixelWidth: pixelWidth ?? this.pixelWidth,
         pixelHeight: pixelHeight ?? this.pixelHeight,
         minFileKb: minFileKb ?? this.minFileKb,
@@ -90,10 +99,12 @@ class PhotoSpec {
         maxRatio: maxRatio,
         background: background ?? this.background,
         requirements: requirements,
+        requirementsEn: requirementsEn,
       );
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
+        if (nameEn != null) 'nameEn': nameEn,
         'pixelWidth': pixelWidth,
         'pixelHeight': pixelHeight,
         'minFileKb': minFileKb,
@@ -106,11 +117,13 @@ class PhotoSpec {
         'maxRatio': maxRatio,
         'background': background.toJson(),
         'requirements': requirements,
+        if (requirementsEn != null) 'requirementsEn': requirementsEn,
       };
 
   factory PhotoSpec.fromJson(Map<String, dynamic> json) => PhotoSpec(
         id: json['id'] as String,
         name: json['name'] as String,
+        nameEn: json['nameEn'] as String?,
         pixelWidth: json['pixelWidth'] as int,
         pixelHeight: json['pixelHeight'] as int,
         minFileKb: json['minFileKb'] as int,
@@ -125,6 +138,9 @@ class PhotoSpec {
             (json['background'] as Map).cast<String, dynamic>()),
         requirements: (json['requirements'] as List? ?? const [])
             .map((e) => e as String)
+            .toList(),
+        requirementsEn: (json['requirementsEn'] as List?)
+            ?.map((e) => e as String)
             .toList(),
       );
 }
