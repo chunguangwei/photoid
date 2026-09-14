@@ -8,8 +8,10 @@ title: App Store 上架
 面向**英语系国家**（美、加、英、澳、新西兰、新加坡等）上架，不含中国大陆区
 ——大陆区需要软著与 ICP 备案号，海外区不需要，这是选择海外先行的主要原因。
 
-- Bundle ID：`cn.wcg.photoid`
-- Team：`L35RLT89XN`
+- Bundle ID：`cn.wcg.idphoto`（原 `cn.wcg.photoid` 被旧账号 Team
+  `L35RLT89XN` 占用，新账号无法注册，2026-09 更换为现值）
+- Team：以 App Store Connect 上架账号（Apple ID `38256608@qq.com`）在 Xcode
+  Signing & Capabilities 中选择的团队为准
 - 最低系统：iOS 15.5
 - 上架版本：v0.8.1（build 43）
 - 包体：Runner.app 约 106MB（含 26MB MODNet 模型）
