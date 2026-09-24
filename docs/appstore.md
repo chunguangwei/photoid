@@ -142,6 +142,11 @@ https://chunguangwei.github.io/photoid/privacy-policy
 - 若二次被拒仍提 1.1.6，下一步考虑应用内加「关于」页免责声明并出新
   构建。
 
+**2026-09-24 重新提交**：截图 01×4（去"官方"）、中英描述（去 compliant
++ 非政府声明）已在 ASC 更新；英文申诉信（`docs/review-reply-en.txt`
+存档）已在 Resolution Center 回复；沿用 build 47 重新送审，状态
+「等待审核」。
+
 ## 7. 上架文案（v0.8.1 正式版）
 
 ### 7.1 en-US（主语言）
