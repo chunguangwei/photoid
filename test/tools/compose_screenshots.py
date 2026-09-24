@@ -23,7 +23,7 @@ SETS = {
     'zh': {
         'shots': ['01_home.png', '02_edit_result.png', '03_sliders.png',
                   '04_result.png', '05_edit_red.png'],
-        'titles': ['33+ 官方规格，开箱即用', 'AI 抠图换底，全在本机完成',
+        'titles': ['33+ 内置规格，开箱即用', 'AI 抠图换底，全在本机完成',
                    '美颜与清晰度，随手微调', '保存前逐项合规检测',
                    '蓝白红灰，底色秒切'],
         'font': ('/System/Library/Fonts/Hiragino Sans GB.ttc', 2),  # W6
@@ -31,7 +31,7 @@ SETS = {
     'en': {
         'shots': ['en_01_home.png', 'en_02_edit.png', 'en_03_sliders.png',
                   'en_04_result.png', 'en_05_red.png'],
-        'titles': ['33+ official specs, ready to use',
+        'titles': ['33+ built-in specs, ready to use',
                    'AI cutout and recolor, on your device',
                    'Fine-tune skin and sharpness',
                    'Checked before you save',

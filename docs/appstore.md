@@ -93,7 +93,7 @@ App Store 要求按**当前 App Store Connect 页面提示为准**（Apple 会�
 
 | # | 画面 | en-US 标题 | zh-Hans 标题 |
 |---|---|---|---|
-| 1 | 首页规格列表 | 33+ official specs, ready to use | 33+ 官方规格，开箱即用 |
+| 1 | 首页规格列表 | 33+ built-in specs, ready to use | 33+ 内置规格，开箱即用 |
 | 2 | 处理中/成片对比 | AI cutout and recolor, on your device | AI 抠图换底，全在本机完成 |
 | 3 | 美颜与清晰度双滑杆 | Fine-tune skin and sharpness | 美颜与清晰度，随手微调 |
 | 4 | 合规检测报告 | Checked before you save | 保存前逐项合规检测 |
@@ -126,6 +126,22 @@ https://chunguangwei.github.io/photoid/privacy-policy
 | **包体较大** | 106MB，含 26MB 模型 | 低于蜂窝下载限制，无需处理；模型随包不走网络下载，反而有利于「无数据上传」的隐私主张 |
 | **启动页广告位** | 启动页预留了广告位槽（当前为空） | 上架版本**不要**接入广告 SDK，否则隐私问卷与年龄分级都要重填 |
 
+### 6.1 审核记录
+
+**2026-09-16 首次提交被拒**（iPad Air 11" M3 审核，版本 1.0 build 47）：
+
+- **Guideline 1.1.6（误导内容）**：触发点是商店截图第 1 张标题
+  「33+ 官方规格 / official specs」——"官方" 暗示与政府权威关联。
+  应对：截图标题改为「内置规格 / built-in specs」（4 张 01.png 已重新
+  合成），en/zh 描述首句去掉 "compliant/合规"，结尾新增「与政府无关、
+  不出具官方证件、采用与否由接收机构决定」声明；二进制不变。
+- **Guideline 4.3(a)（Spam/雷同）**：证件照品类模板 App 泛滥的品类性
+  判定。应对：Resolution Center 回复申诉——独立开发的 Flutter 应用，
+  完整开发历史开源（github.com/chunguangwei/photoid），非模板非购买
+  代码；差异化卖点为全端侧离线 AI、无账号无广告、自定义规格、KB 控制。
+- 若二次被拒仍提 1.1.6，下一步考虑应用内加「关于」页免责声明并出新
+  构建。
+
 ## 7. 上架文案（v0.8.1 正式版）
 
 ### 7.1 en-US（主语言）
@@ -139,9 +155,9 @@ https://chunguangwei.github.io/photoid/privacy-policy
 - **Description**（≤4000）:
 
 ```
-PhotoID makes compliant ID photos entirely on your device. Cutout, framing,
-retouching and file-size control all run locally — your photos are never
-uploaded, and the app works fully offline.
+PhotoID is an ID photo maker that runs entirely on your device. Cutout,
+framing, retouching and file-size control all run locally — your photos are
+never uploaded, and the app works fully offline.
 
 FIVE BACKGROUNDS, HAIR-LEVEL CUTOUT
 Switch between blue, white, red, gray and dark blue instantly, with a
@@ -174,6 +190,12 @@ Chinese.
 PRIVATE BY DESIGN
 No account. No analytics. No ads. No network access for photo processing.
 Your photos never leave your phone.
+
+NOTE
+PhotoID is a photo preparation tool. It is not affiliated with any
+government agency and does not issue official documents. Output follows
+commonly published size and format requirements; final acceptance is always
+decided by the receiving organization.
 ```
 
 - **What's New**（首次上架）:
@@ -194,7 +216,7 @@ retouching.
 - **描述**:
 
 ```
-智能证件照把合规证件照的全部流程放在你的设备本地完成：抠图、换底、
+智能证件照把证件照制作的全部流程放在你的设备本地完成：抠图、换底、
 构图、美颜、文件大小控制，全程离线，照片永不上传。
 
 发丝级抠图 · 五色换底
@@ -222,6 +244,10 @@ KB 大小控制
 
 隐私优先
 无账号、无统计、无广告、照片处理不联网，你的照片不会离开手机。
+
+说明
+本应用是照片准备工具，与任何政府机构无关，不出具任何官方证件。
+输出遵循公开的尺寸与格式要求，照片是否被采用由接收机构最终决定。
 ```
 
 - **新增内容**: `首次上架 App Store。`
