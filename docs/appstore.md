@@ -147,6 +147,12 @@ https://chunguangwei.github.io/photoid/privacy-policy
 存档）已在 Resolution Center 回复；沿用 build 47 重新送审，状态
 「等待审核」。
 
+**2026-10-14 进度**：「等待审核」持续 20 天未进入审核——首拒信中
+"Extended Review" 警告意味着已被标记进加长审核通道（通常 2–4 周）。
+**不要取消提交重送**（队列位置会清零）。已在 Resolution Center 追加
+进度询问（存档于 `docs/review-reply-en.txt` 末尾）；若一周内仍无动静，
+走 ASC「Contact Us → App Review → App review status」表单问询。
+
 ## 7. 上架文案（v0.8.1 正式版）
 
 ### 7.1 en-US（主语言）
