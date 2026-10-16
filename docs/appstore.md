@@ -163,6 +163,12 @@ app-review/ → Appeal），申诉信存档于 `docs/review-reply-en.txt` 末尾
 备选方案是做一次定位级差异化改版（证件照 + 照片工具箱方向）后出
 新构建再送审。
 
+**2026-10-16 申诉已提交**：App Review Board 申诉表单
+（developer.apple.com/contact/app-store/?topic=appeal，注意路径是
+app-store 不是 app-review；reason 勾 4.3 - Spam、topic 选 App
+Rejection，正文 ≤2000 字符）+ Resolution Center 同日回复同一封信。
+等待期间 ASC 保持现状，不重新提交版本。
+
 ## 7. 上架文案（v0.8.1 正式版）
 
 ### 7.1 en-US（主语言）
