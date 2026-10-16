@@ -151,7 +151,17 @@ https://chunguangwei.github.io/photoid/privacy-policy
 "Extended Review" 警告意味着已被标记进加长审核通道（通常 2–4 周）。
 **不要取消提交重送**（队列位置会清零）。已在 Resolution Center 追加
 进度询问（存档于 `docs/review-reply-en.txt` 末尾）；若一周内仍无动静，
-走 ASC「Contact Us → App Review → App review status」表单问询。
+走 ASC「Contact Us → App Review → App review status」表单问询（已发送，
+附 Submission ID）。
+
+**2026-10-16 二次被拒**：仅余 **4.3(a)**——1.1.6 已解除（截图/描述
+整改有效）。4.3(a) 咬的是「concept 雷同」，改文案无解。应对：
+1) 向 App Review Board 提交正式申诉（developer.apple.com/contact/
+app-review/ → Appeal），申诉信存档于 `docs/review-reply-en.txt` 末尾，
+核心论据为开源仓库完整提交历史 + 端侧离线 AI/KB 控制/自定义规格
+三项差异化；2) 同步在 Resolution Center 回复同一封信。若申诉失败，
+备选方案是做一次定位级差异化改版（证件照 + 照片工具箱方向）后出
+新构建再送审。
 
 ## 7. 上架文案（v0.8.1 正式版）
 

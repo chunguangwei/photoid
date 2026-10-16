@@ -2,3 +2,23 @@
 --- Follow-up sent 2026-10-14 (status inquiry) ---
 
 Hello, we resubmitted version 1.0 (build 47) on September 24 after addressing both issues (screenshots and description updated as described above). The submission has remained in "Waiting for Review" for about three weeks. Could you please let us know its current status, or whether any further information or changes are needed from our side? We are happy to cooperate. Thank you very much for your time.
+
+--- Appeal draft for App Review Board (2026-10-16, 2nd rejection, 4.3(a) only) ---
+
+Hello App Review Board,
+
+We are appealing the Guideline 4.3(a) rejection of PhotoID Studio (App ID: 6811734521, Submission ID: 490a7db7-2fcc-4468-9b22-1f50b7276ff0).
+
+1. Original, independently developed code. This app was written from scratch in Flutter by an individual developer. The complete source code and full commit history are public at https://github.com/chunguangwei/photoid. It is not a template, not purchased code, and shares no code or assets with any other app on the App Store. This is the only app on this account.
+
+2. Distinct functionality not commonly found in this category:
+   - Fully on-device AI processing: the portrait segmentation model (MODNet, bundled in the app) runs locally via ONNX Runtime. The app performs zero network requests for photo processing — no upload, no account, no ads, no analytics. Most apps in this category process photos on servers.
+   - KB-range file size control: users can target a specific JPEG file-size range required by online application systems — a feature we have not found in comparable apps.
+   - User-defined photo specifications: beyond 33+ built-in specs, users can define custom dimensions, aspect ratios, and head proportions.
+   - Bilingual (English/Chinese) interface with full light/dark themes.
+
+3. The Guideline 1.1.6 concern from the first review has been fully resolved (screenshots and description corrected), which we hope demonstrates our good-faith cooperation.
+
+We understand the ID photo category is crowded, but we believe originality of implementation and meaningful functional differences are what guideline 4.3(a) protects. We kindly ask the Board to reconsider. If there is anything further we can change or demonstrate (e.g., a demo video), please let us know.
+
+Thank you for your time.
