@@ -8,6 +8,9 @@ PhotoID is an AI-powered ID photo maker that runs **entirely on-device**. Take a
 
 ### Features
 
+The 1.1 development update adds [application tasks and file delivery](docs/release/1.1-build49/README.md): read-only checks for existing files, saved requirements and references, up to five outputs from one source photo, and ZIP export with a readable checklist. All existing photo tools remain available. The public Android release link below remains v1.0.0 until a new release is explicitly published.
+
+
 Version 1.0.0 adds a custom-requirements workspace, accessible glass navigation, original JPEG + JSON file checks export, and reliability fixes. [Download Android](https://github.com/chunguangwei/photoid/releases/latest) · [Review and release preparation](docs/release/1.0-build48/README.md).
 
 
@@ -88,6 +91,9 @@ Compliance results are advisory only. The final acceptance of an ID photo is alw
 PhotoID 是一款**纯端侧**的 AI 证件照制作应用。支持拍摄或从相册导入照片，自动完成智能抠图换底、基于人脸检测的自动构图裁剪、合规检测，并以自定义文件名保存（默认自动生成）——**全部在本地处理，照片不会上传到任何服务器**。
 
 ### 功能特性
+
+1.1 开发更新新增[报名任务与文件交付](docs/release/1.1-build49/README.md)：已有文件只读检查、要求与来源记录、共用原图分别制作最多五份成片，以及附可读清单的 ZIP 导出。所有原有工具保留。下方公开 Android 下载仍指向已发布的 v1.0.0，新功能以本次构建与验证记录为准。
+
 
 v1.0.0 新增自定义规格工作台、玻璃导航、JPEG + JSON 文件交付及稳定性修复。[下载 Android](https://github.com/chunguangwei/photoid/releases/latest) · [送审与发布准备](docs/release/1.0-build48/README.md)。
 

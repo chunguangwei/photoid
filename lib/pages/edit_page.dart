@@ -19,7 +19,12 @@ class EditPage extends StatefulWidget {
       {super.key,
       required this.sourcePath,
       required this.spec,
-      this.flipHorizontal = false});
+      this.flipHorizontal = false,
+      this.onDelivered,
+      this.fixedRequirements = false});
+
+  final Future<void> Function(Uint8List, PhotoSpec)? onDelivered;
+  final bool fixedRequirements;
 
   final String sourcePath;
   final PhotoSpec spec;
@@ -137,6 +142,7 @@ class _EditPageState extends State<EditPage> {
   /// MODNet 推理（最贵的一步）。这里只在 isolate 里做一次 alpha 混合，
   /// 几十毫秒返回；用户已调好的取景框与效果强度全部原样保留。
   Future<void> _switchBackground(SpecBackground bg) async {
+    if (widget.fixedRequirements) return;
     final r = _result;
     if (bg.name == _spec.background.name || r == null) return;
     final seq = ++_backgroundSeq;
@@ -289,7 +295,8 @@ class _EditPageState extends State<EditPage> {
       );
       if (!mounted) return;
       await Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) => ResultPage(jpgBytes: jpg, spec: spec),
+        builder: (_) => ResultPage(
+            jpgBytes: jpg, spec: spec, onDelivered: widget.onDelivered),
       ));
     } catch (e) {
       if (mounted) {
@@ -465,7 +472,10 @@ class _EditPageState extends State<EditPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             children: [
-              Text(l.editSwitchBg,
+              Text(
+                  widget.fixedRequirements
+                      ? l.taskFixedRequirements
+                      : l.editSwitchBg,
                   style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 8),
               SingleChildScrollView(
@@ -564,7 +574,9 @@ class _EditPageState extends State<EditPage> {
   Widget _bgSwatch(SpecBackground bg) {
     final selected = bg.name == _spec.background.name;
     return GestureDetector(
-      onTap: _exporting || (_result == null && _error == null)
+      onTap: widget.fixedRequirements ||
+              _exporting ||
+              (_result == null && _error == null)
           ? null
           : () => _switchBackground(bg),
       child: Column(

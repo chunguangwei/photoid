@@ -12,6 +12,11 @@ import 'package:photoid/l10n/app_localizations.dart';
 import 'package:photoid/models/photo_spec.dart';
 import 'package:photoid/pages/custom_spec_page.dart';
 import 'package:photoid/pages/home_page.dart';
+import 'package:photoid/pages/application_tasks_page.dart';
+import 'package:photoid/pages/application_task_page.dart';
+import 'package:photoid/pages/photo_check_page.dart';
+import 'package:photoid/services/application_task_store.dart';
+import '../application_workflow_test.dart' show settleFiles;
 import 'package:photoid/pages/kb_tool_page.dart';
 import 'package:photoid/pages/settings_page.dart';
 import 'package:photoid/pages/spec_detail_page.dart';
@@ -46,10 +51,26 @@ void main() {
       await loader.load();
     }
     final out = Directory('build/audit-ui')..createSync(recursive: true);
+    final taskDir = await tester
+        .runAsync(() => Directory.systemTemp.createTemp('photoid_ui_render_'));
+    addTearDown(() async => taskDir!.delete(recursive: true));
+    final store = ApplicationTaskStore(taskDir!);
+    final task = (await tester.runAsync(() => store.create(
+        name: 'Sample application',
+        notes: 'Example requirements for demonstration only.')))!;
+    await tester.runAsync(
+        () => store.addOutput(task.id, studentPhotoSpec, 'application_photo'));
+    await tester.runAsync(() => store.addOutput(task.id,
+        studentPhotoSpec.copyWith(name: 'Second file'), 'profile_photo'));
+
     for (final locale in ['en', 'zh']) {
       for (final dark in [false, true]) {
         for (final (name, page) in <(String, Widget)>[
           ('home', const HomePage()),
+          ('tasks', ApplicationTasksPage(store: store)),
+          ('task', ApplicationTaskPage(taskId: task.id, store: store)),
+          ('task_files', ApplicationTaskPage(taskId: task.id, store: store)),
+          ('file_check', const PhotoCheckPage()),
           ('detail', const SpecDetailPage(spec: studentPhotoSpec)),
           ('custom', const CustomSpecPage()),
           ('kb', const KbToolPage()),
@@ -64,6 +85,9 @@ void main() {
             supportedLocales: AppLocalizations.supportedLocales,
             theme: photoIdTheme(dark ? Brightness.dark : Brightness.light)
                 .copyWith(
+              filledButtonTheme: FilledButtonThemeData(style: photoIdTheme(dark ? Brightness.dark : Brightness.light).filledButtonTheme.style?.copyWith(textStyle: const WidgetStatePropertyAll(TextStyle(fontFamily:'AuditCJK',fontSize:14,fontWeight:FontWeight.w600)))),
+              outlinedButtonTheme: OutlinedButtonThemeData(style: OutlinedButton.styleFrom(textStyle:const TextStyle(fontFamily:'AuditCJK',fontSize:14,fontWeight:FontWeight.w600))),
+              textButtonTheme: TextButtonThemeData(style:TextButton.styleFrom(textStyle:const TextStyle(fontFamily:'AuditCJK',fontSize:14,fontWeight:FontWeight.w600))),
               textTheme: photoIdTheme(dark ? Brightness.dark : Brightness.light)
                   .textTheme
                   .apply(
@@ -72,7 +96,12 @@ void main() {
             ),
             home: RepaintBoundary(key: key, child: page),
           ));
-          await tester.pumpAndSettle();
+          await settleFiles(tester);
+          if (name == 'task_files') {
+            await tester.scrollUntilVisible(
+                find.byKey(const Key('add-output')), 200, scrollable: find.byType(Scrollable).first);
+            await tester.pumpAndSettle();
+          }
           expect(tester.takeException(), isNull);
           final boundary =
               key.currentContext!.findRenderObject()! as RenderRepaintBoundary;

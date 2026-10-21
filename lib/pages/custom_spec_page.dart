@@ -8,7 +8,10 @@ import 'spec_detail_page.dart';
 
 /// 自定义规格表单：命名/像素/文件大小/底色 → 构造 PhotoSpec 进详情页。
 class CustomSpecPage extends StatefulWidget {
-  const CustomSpecPage({super.key});
+  const CustomSpecPage({super.key, this.returnSpec = false, this.initialSpec});
+
+  final bool returnSpec;
+  final PhotoSpec? initialSpec;
 
   @override
   State<CustomSpecPage> createState() => _CustomSpecPageState();
@@ -22,6 +25,26 @@ class _CustomSpecPageState extends State<CustomSpecPage> {
   final _maxKb = TextEditingController();
   final _dpi = TextEditingController(text: '300');
   SpecBackground _bg = idPhotoBackgrounds.first;
+
+  @override
+  void initState() {
+    super.initState();
+    final spec = widget.initialSpec;
+    if (spec != null) {
+      _name.text = spec.name;
+      _width.text = '${spec.pixelWidth}';
+      _height.text = '${spec.pixelHeight}';
+      _minKb.text = '${spec.minFileKb}';
+      _maxKb.text = '${spec.maxFileKb}';
+      _bg = idPhotoBackgrounds.firstWhere(
+        (bg) =>
+            bg.r == spec.background.r &&
+            bg.g == spec.background.g &&
+            bg.b == spec.background.b,
+        orElse: () => idPhotoBackgrounds.first,
+      );
+    }
+  }
 
   /// 尺寸输入单位：true=PX，false=mm（mm 经 DPI 换算 px）
   bool _unitPx = true;
@@ -132,6 +155,10 @@ class _CustomSpecPageState extends State<CustomSpecPage> {
       maxRatio: ratio + 0.05,
       background: _bg,
     );
+    if (widget.returnSpec) {
+      Navigator.of(context).pop(spec);
+      return;
+    }
     // 持久化保存（首页可复用/删除）
     await CustomSpecStore.save(spec);
     if (!mounted) return;

@@ -262,7 +262,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeMyAlbum => '我的相册';
 
   @override
-  String get homeCustomSpec => '自定义规格';
+  String get homeCustomSpec => '填写照片要求';
 
   @override
   String get homeHotSpecs => '热门规格';
@@ -615,7 +615,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get privacyPolicyBody =>
-      '更新日期：2026年10月21日\n\n照片与人脸检测结果在设备本地处理，不为处理而上传。无需账号，不含广告 SDK。\n\n相机权限用于拍照；照片库权限用于选择照片和保存成片，仅在使用相应功能时请求。\n\n保存的成片也保留在 App 私有相册，可在「我的相册」删除。导出的系统照片库副本需单独删除。系统照片同步与备份遵循设备设置。语言与自定义规格保存在本地。\n\nGoogle ML Kit 在本机检测人脸，但可向 Google 发送技术诊断与使用指标，包括设备和应用信息、安装级标识符、API 事件、性能与错误数据。这些指标不包含输入照片或检测结果。ONNX Runtime 在本机运行内置抠图模型。\n\nAndroid 会检查 GitHub 更新，并按用户选择下载；iOS 通过 App Store 更新。打开在线政策会使用系统浏览器。\n\n联系：chunguangwee@gmail.com。在线政策提供详细说明及 Google SDK 数据披露链接。\n\n为便于接收应用读取，临时导出副本会保留在 App 缓存中。超过一天的副本会在下次启动或导出时清理。';
+      '更新日期：2026年10月21日\n\n照片与人脸检测结果在设备本地处理，不为处理而上传。无需账号，不含广告 SDK。\n\n相机权限用于拍照；照片库权限用于选择照片和保存成片，仅在使用相应功能时请求。\n\n保存的成片也保留在 App 私有相册，可在「我的相册」删除。导出的系统照片库副本需单独删除。系统照片同步与备份遵循设备设置。语言与自定义规格保存在本地。\n\nGoogle ML Kit 在本机检测人脸，但可向 Google 发送技术诊断与使用指标，包括设备和应用信息、安装级标识符、API 事件、性能与错误数据。这些指标不包含输入照片或检测结果。ONNX Runtime 在本机运行内置抠图模型。\n\nAndroid 会检查 GitHub 更新，并按用户选择下载；iOS 通过 App Store 更新。打开在线政策会使用系统浏览器。\n\n联系：chunguangwee@gmail.com。在线政策提供详细说明及 Google SDK 数据披露链接。\n\n为便于接收应用读取，临时导出副本会保留在 App 缓存中。超过一天的副本会在下次启动或导出时清理。\n\n报名任务及其中的备注、要求来源、可选截图、原图和各版本成片保存在本机。你记录的来源未经应用独立验证。删除任务会删除应用内副本，系统原图及已导出的文件会保留。已有照片检查只读取所选字节，不改写文件。ZIP 交付包包含照片与要求/检查报告，请仅分享给你选择的接收方。';
 
   @override
   String get linkOpenFailed => '无法打开链接，可复制后在浏览器中访问。';
@@ -637,10 +637,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get kbLimitUnreachable => '在保留像素尺寸的情况下无法达到此 KB 上限，请增大目标值。';
 
   @override
-  String get homeHeroTitle => '照片准备，\n按你的要求来。';
+  String get homeHeroTitle => '把照片准备成\n报名需要的文件。';
 
   @override
-  String get homeEyebrow => '本地照片交付工作台';
+  String get homeEyebrow => '报名照片工作台';
 
   @override
   String get homeCustomDesc => '先设定像素、底色与 KB 范围';
@@ -651,4 +651,220 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get deliveryExportHint =>
       '导出原始 JPEG 与 JSON 检测报告。报名上传建议在系统面板选择「存储到文件」；其他接收方式可能修改图片。';
+
+  @override
+  String get tasksTitle => '报名任务';
+
+  @override
+  String get tasksDesc => '保存要求、制作多个版本，一次导出';
+
+  @override
+  String get taskNew => '新建任务';
+
+  @override
+  String get taskEmpty => '从下一份报名要求开始';
+
+  @override
+  String get taskEmptyHint => '保存报名要求，再准备需要的各份照片文件。';
+
+  @override
+  String get taskDetails => '任务信息';
+
+  @override
+  String get taskName => '任务名称';
+
+  @override
+  String get taskNotes => '要求与备注';
+
+  @override
+  String get taskSourceReference => '要求来源（链接或出处）';
+
+  @override
+  String get taskVerifiedDate => '你核对要求的日期';
+
+  @override
+  String get taskReferenceNote => '来源仅供你留存参考，应用不验证其内容。';
+
+  @override
+  String get taskSave => '保存任务';
+
+  @override
+  String get taskRequiredName => '请填写任务名称';
+
+  @override
+  String get taskOriginal => '共用一张原图';
+
+  @override
+  String get taskChooseSource => '选择原图';
+
+  @override
+  String get taskReplaceSource => '更换原图';
+
+  @override
+  String get taskReplaceWarning => '更换原图后，各版本需重新制作。不会删除系统原图。';
+
+  @override
+  String get taskEvidence => '要求截图';
+
+  @override
+  String get taskAttachEvidence => '附上截图';
+
+  @override
+  String get taskViewEvidence => '查看截图';
+
+  @override
+  String get taskOutputs => '需要交付的文件';
+
+  @override
+  String get taskAddOutput => '添加文件要求';
+
+  @override
+  String get taskFilename => '输出文件名';
+
+  @override
+  String get taskFilenameHelp => '1–80 位字母、数字、下划线或连字符，每份文件名称须不同。';
+
+  @override
+  String get taskOutputLimit => '每个任务最多五份文件';
+
+  @override
+  String get taskPrepare => '制作文件';
+
+  @override
+  String get taskRedo => '重新制作';
+
+  @override
+  String get taskEditRequirement => '编辑要求';
+
+  @override
+  String get taskRemoveOutput => '移除文件要求';
+
+  @override
+  String get taskRequirementsChanged => '修改要求后，这份文件需重新制作。';
+
+  @override
+  String get taskExport => '导出交付包 ZIP';
+
+  @override
+  String get taskExportHint => '完成各版本后，一次导出 JPEG、逐份 JSON 报告及可读交付清单。';
+
+  @override
+  String get taskReady => '已制作';
+
+  @override
+  String get taskPending => '待制作';
+
+  @override
+  String get taskBusy => '处理中…';
+
+  @override
+  String get taskDelete => '删除任务';
+
+  @override
+  String get taskDeleteConfirm => '删除任务及其中保存的照片副本？已导出的文件和系统原图会保留。';
+
+  @override
+  String get taskChanged => '原图或要求已改变，请回到任务重新制作这个版本。';
+
+  @override
+  String get taskSaveOutput => '将成片存入任务';
+
+  @override
+  String get taskOutputSaved => '成片已存入任务';
+
+  @override
+  String get taskSaveOutputHint => '把这一版成片存入任务，再继续制作其他版本或导出交付包。';
+
+  @override
+  String get taskFixedRequirements => '底色与文件要求以任务为准，可回任务页修改。';
+
+  @override
+  String get taskNoSource => '先选一张原图，再制作各版本。';
+
+  @override
+  String get taskExportFailed => '无法导出，请检查各份成片是否存在并符合当前要求。';
+
+  @override
+  String get taskInvalidName => '请使用不重复的字母、数字、下划线或连字符作为文件名。';
+
+  @override
+  String get taskInvalidFile => '请选择可读取、30 MB 及 2400 万像素以内的照片。';
+
+  @override
+  String get taskActionFailed => '操作未完成，请重试。';
+
+  @override
+  String get taskOutputMismatch => '这份文件未达到任务要求，请调整后再保存。';
+
+  @override
+  String get checkExistingTitle => '已有照片能否使用？';
+
+  @override
+  String get checkExistingDesc => '检查手里的照片文件，无需重新制作';
+
+  @override
+  String get checkChooseFile => '选择照片文件';
+
+  @override
+  String get checkRequirements => '照片要求';
+
+  @override
+  String get checkSetRequirements => '填写照片要求';
+
+  @override
+  String get checkRun => '检查所选文件';
+
+  @override
+  String get checkNoFile => '选择文件并填写要求后开始检查。';
+
+  @override
+  String get checkByteNote => '检查只读取、不修改所选文件。从“文件”读取所选字节；图库或相机可能由系统提供转换副本。';
+
+  @override
+  String get checkScope => '仅检查文件属性，不验证人像、底色、身份或机构是否接收。';
+
+  @override
+  String get checkMakeCopy => '制作新的副本';
+
+  @override
+  String get checkActual => '实际文件';
+
+  @override
+  String get checkRequired => '要求';
+
+  @override
+  String get checkPassed => '所检查的文件属性符合要求';
+
+  @override
+  String get checkFailed => '部分文件属性未符合要求';
+
+  @override
+  String get chooseFiles => '文件';
+
+  @override
+  String get choosePhotos => '图库';
+
+  @override
+  String get chooseCamera => '相机';
+
+  @override
+  String get taskChooseDate => '选择日期';
+
+  @override
+  String get taskClearDate => '清除日期';
+
+  @override
+  String get taskEdit => '编辑任务';
+
+  @override
+  String get taskRemoveConfirm => '移除此要求及对应的本地成片？';
+
+  @override
+  String get taskFilesCount => '份已制作';
+
+  @override
+  String get taskNoOutputs => '为需要的每份文件添加尺寸、KB 范围和文件名。';
+
+  @override
+  String get taskDeliveryTitle => '按报名要求准备文件';
 }

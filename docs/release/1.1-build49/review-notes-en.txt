@@ -1,0 +1,17 @@
+PhotoID Studio 1.1.0, candidate build 49 — revised workflow since rejected build 47.
+
+No login, purchases or subscription. Existing camera, background replacement, custom/built-in specifications, crop editor, KB compressor and album remain available.
+
+A. Existing-file checks
+Home > Check an existing photo > Set requirements. Use a named 480 x 640 px specification, 20–100 KB, then select a file from Files or Photos and tap Check selected file. Observe measured format, dimensions, byte count and ratio. Checks do not rewrite the selected bytes. Files preserves selected bytes; Photos may supply a converted copy. These checks do not verify identity, portrait suitability, background or acceptance.
+
+B. Application delivery
+Home > Application tasks > New task. Name it Application demo, add a note/source reference and optionally a screenshot/date. Reference records are user supplied, not independently verified.
+Choose one source photo. Add two file requirements with distinct names, e.g. applicant_main (480x640, 20–100 KB, blue) and applicant_profile (300x400, 10–100 KB, white).
+Tap Prepare file for each version. Adjust the crop in the editor, then open Photo checks and tap Save file to task. Background follows the task requirement; edit it from the task page if needed. Return to the same task to continue later.
+After both are prepared, tap Export delivery ZIP and Save to Files. It contains two unchanged delivered JPEGs, per-file JSON reports and CHECKLIST.txt in the current interface language. Each file is reread and checked before export. Changing a requirement resets that output; replacing the source resets all outputs. Reports are not certification and do not guarantee acceptance.
+
+The privacy policy discloses ML Kit diagnostics/usage metrics. Photo processing is local. Tasks and owned photo copies remain local unless the user shares; system backups follow device settings.
+
+The source repository is offered as development provenance, not proof that third-party components or the product concept are exclusive: https://github.com/chunguangwei/photoid
+Please assess the demonstrated application-file workflow and let us know which user-facing similarity remains if further changes are required.

@@ -274,7 +274,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeMyAlbum => 'My Photos';
 
   @override
-  String get homeCustomSpec => 'Custom';
+  String get homeCustomSpec => 'Set photo requirements';
 
   @override
   String get homeHotSpecs => 'Popular specs';
@@ -635,7 +635,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyPolicyBody =>
-      'Updated October 21, 2026\n\nPhotos and face detection results are processed on your device and are not uploaded for processing. No account is required, and the app has no advertising SDK.\n\nCamera access is used to take photos. Photo library access is used to choose photos and save finished images, only when you use those features.\n\nSaved results are also stored in the app’s private album. Delete them in My Photos. Exported copies must be deleted separately in the system photo library. System photo syncing and backups follow your device settings. Language and custom specifications are stored locally.\n\nGoogle ML Kit performs face detection locally, but can send technical diagnostics and usage metrics to Google, including device/app information, per-installation identifiers, API events, performance and errors. These metrics do not include your input photos or detection results. ONNX Runtime runs the bundled background-removal model locally.\n\nAndroid checks GitHub for app updates and downloads updates on request. iOS updates come from the App Store. Opening the online policy uses your browser.\n\nQuestions: chunguangwee@gmail.com. The online policy provides further details and links to Google’s SDK disclosures.\n\nTemporary export copies are kept in the app cache so receiving apps can read them. Copies older than one day are removed at the next app launch or export.';
+      'Updated October 21, 2026\n\nPhotos and face detection results are processed on your device and are not uploaded for processing. No account is required, and the app has no advertising SDK.\n\nCamera access is used to take photos. Photo library access is used to choose photos and save finished images, only when you use those features.\n\nSaved results are also stored in the app’s private album. Delete them in My Photos. Exported copies must be deleted separately in the system photo library. System photo syncing and backups follow your device settings. Language and custom specifications are stored locally.\n\nGoogle ML Kit performs face detection locally, but can send technical diagnostics and usage metrics to Google, including device/app information, per-installation identifiers, API events, performance and errors. These metrics do not include your input photos or detection results. ONNX Runtime runs the bundled background-removal model locally.\n\nAndroid checks GitHub for app updates and downloads updates on request. iOS updates come from the App Store. Opening the online policy uses your browser.\n\nQuestions: chunguangwee@gmail.com. The online policy provides further details and links to Google’s SDK disclosures.\n\nTemporary export copies are kept in the app cache so receiving apps can read them. Copies older than one day are removed at the next app launch or export.\n\nApplication tasks are stored locally with your notes, requirement references, optional screenshots, source photo and prepared versions. Sources you record are not independently verified. Delete a task to remove its app-owned copies; system originals and files you already exported are kept. Existing-file checks read the selected bytes without changing them. ZIP delivery packages contain photo files and requirement/check reports; only share them with recipients you choose.';
 
   @override
   String get linkOpenFailed =>
@@ -660,10 +660,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This KB limit cannot be reached while preserving the image dimensions. Choose a larger limit.';
 
   @override
-  String get homeHeroTitle => 'Your photo.\nYour requirements.';
+  String get homeHeroTitle => 'Prepare your photo\nfor your application.';
 
   @override
-  String get homeEyebrow => 'ON-DEVICE PHOTO WORKSPACE';
+  String get homeEyebrow => 'APPLICATION PHOTO WORKSPACE';
 
   @override
   String get homeCustomDesc => 'Set dimensions, background and KB limits';
@@ -674,4 +674,243 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deliveryExportHint =>
       'Export the unchanged JPEG and a JSON check report. Choose Save to Files in the system sheet for file upload. Other destinations may alter images.';
+
+  @override
+  String get tasksTitle => 'Application tasks';
+
+  @override
+  String get tasksDesc =>
+      'Keep requirements, prepare versions and export together';
+
+  @override
+  String get taskNew => 'New task';
+
+  @override
+  String get taskEmpty => 'Your next application starts here';
+
+  @override
+  String get taskEmptyHint =>
+      'Save the requirements once, then prepare every photo file you need.';
+
+  @override
+  String get taskDetails => 'Task details';
+
+  @override
+  String get taskName => 'Task name';
+
+  @override
+  String get taskNotes => 'Requirements and notes';
+
+  @override
+  String get taskSourceReference => 'Requirements source (link or reference)';
+
+  @override
+  String get taskVerifiedDate => 'Date you checked the requirements';
+
+  @override
+  String get taskReferenceNote =>
+      'Sources are saved as your reference; the app does not verify them.';
+
+  @override
+  String get taskSave => 'Save task';
+
+  @override
+  String get taskRequiredName => 'Enter a task name';
+
+  @override
+  String get taskOriginal => 'One source photo';
+
+  @override
+  String get taskChooseSource => 'Choose source photo';
+
+  @override
+  String get taskReplaceSource => 'Replace source photo';
+
+  @override
+  String get taskReplaceWarning =>
+      'Replacing the source resets all completed versions. Your system photo is not deleted.';
+
+  @override
+  String get taskEvidence => 'Requirements screenshot';
+
+  @override
+  String get taskAttachEvidence => 'Attach screenshot';
+
+  @override
+  String get taskViewEvidence => 'View screenshot';
+
+  @override
+  String get taskOutputs => 'Files to prepare';
+
+  @override
+  String get taskAddOutput => 'Add file requirements';
+
+  @override
+  String get taskFilename => 'Output file name';
+
+  @override
+  String get taskFilenameHelp =>
+      '1–80 letters, numbers, underscores or hyphens. Each name must be unique.';
+
+  @override
+  String get taskOutputLimit => 'Up to five files per task';
+
+  @override
+  String get taskPrepare => 'Prepare file';
+
+  @override
+  String get taskRedo => 'Prepare again';
+
+  @override
+  String get taskEditRequirement => 'Edit requirements';
+
+  @override
+  String get taskRemoveOutput => 'Remove file requirements';
+
+  @override
+  String get taskRequirementsChanged =>
+      'Changing requirements resets this completed file.';
+
+  @override
+  String get taskExport => 'Export delivery ZIP';
+
+  @override
+  String get taskExportHint =>
+      'Complete each version to export JPEGs, individual JSON reports and a readable checklist together.';
+
+  @override
+  String get taskReady => 'Prepared';
+
+  @override
+  String get taskPending => 'To prepare';
+
+  @override
+  String get taskBusy => 'Working…';
+
+  @override
+  String get taskDelete => 'Delete task';
+
+  @override
+  String get taskDeleteConfirm =>
+      'Delete this task and its local photo copies? Files already exported and system originals are kept.';
+
+  @override
+  String get taskChanged =>
+      'The source or requirements changed. Return to the task and prepare this version again.';
+
+  @override
+  String get taskSaveOutput => 'Save file to task';
+
+  @override
+  String get taskOutputSaved => 'File saved to task';
+
+  @override
+  String get taskSaveOutputHint =>
+      'Save this version to the task, then prepare the next file or export the delivery package.';
+
+  @override
+  String get taskFixedRequirements =>
+      'Background and file requirements are fixed by this task. Edit them on the task page.';
+
+  @override
+  String get taskNoSource =>
+      'Choose one source photo before preparing versions.';
+
+  @override
+  String get taskExportFailed =>
+      'Unable to export. Check that every output exists and still meets its requirements.';
+
+  @override
+  String get taskInvalidName =>
+      'Use a unique file name with letters, numbers, underscores or hyphens.';
+
+  @override
+  String get taskInvalidFile =>
+      'Choose a readable photo up to 30 MB and 24 megapixels.';
+
+  @override
+  String get taskActionFailed =>
+      'Unable to complete this action. Please retry.';
+
+  @override
+  String get taskOutputMismatch =>
+      'This file does not meet the task requirements. Adjust it before saving.';
+
+  @override
+  String get checkExistingTitle => 'Check an existing photo';
+
+  @override
+  String get checkExistingDesc =>
+      'Inspect the file you already have, without editing it';
+
+  @override
+  String get checkChooseFile => 'Choose photo file';
+
+  @override
+  String get checkRequirements => 'Photo requirements';
+
+  @override
+  String get checkSetRequirements => 'Set requirements';
+
+  @override
+  String get checkRun => 'Check selected file';
+
+  @override
+  String get checkNoFile =>
+      'Choose a file and enter the requirements to begin.';
+
+  @override
+  String get checkByteNote =>
+      'Checks read the selected file without changing it. Files preserves the selected bytes; Photos or Camera may supply a converted copy.';
+
+  @override
+  String get checkScope =>
+      'File properties only. Portrait, background, identity and institutional acceptance are not verified.';
+
+  @override
+  String get checkMakeCopy => 'Prepare a new copy';
+
+  @override
+  String get checkActual => 'Actual file';
+
+  @override
+  String get checkRequired => 'Required';
+
+  @override
+  String get checkPassed => 'Selected file properties match';
+
+  @override
+  String get checkFailed => 'Some file properties do not match';
+
+  @override
+  String get chooseFiles => 'Files';
+
+  @override
+  String get choosePhotos => 'Photos';
+
+  @override
+  String get chooseCamera => 'Camera';
+
+  @override
+  String get taskChooseDate => 'Choose date';
+
+  @override
+  String get taskClearDate => 'Clear date';
+
+  @override
+  String get taskEdit => 'Edit task';
+
+  @override
+  String get taskRemoveConfirm =>
+      'Remove this requirement and its prepared local copy?';
+
+  @override
+  String get taskFilesCount => 'files prepared';
+
+  @override
+  String get taskNoOutputs =>
+      'Add the dimensions, KB range and name for each file you need.';
+
+  @override
+  String get taskDeliveryTitle => 'Your application, ready to prepare';
 }

@@ -139,3 +139,14 @@ App 内置 Google ML Kit（人脸检测）与 ONNX Runtime（抠图分割），�
 ### 联系方式
 
 如有疑问请联系：**chunguangwee@gmail.com**
+
+
+### Application tasks / 报名任务
+
+Task names, notes, user-supplied requirement references and dates, optional requirement screenshots, source photos and prepared files are kept in the app’s Documents storage. References are not fetched or independently verified. Deleting a task removes its app-owned copies, not system originals or previously exported files. Device backups follow system settings.
+
+Existing-file checks read the selected bytes without modifying them. Files selection preserves the selected file bytes; the system photo library or camera may provide a converted copy. ZIP delivery packages include photos, requirements and check reports. They leave the app only through the sharing destination you select. Recent delivery copies use the temporary export cache described above.
+
+任务名称、备注、用户提供的要求来源与日期、可选要求截图、原图和成片保存在应用文档目录。应用不抓取或独立验证来源。删除任务会删除应用内副本，不影响系统原图及已导出文件；设备备份由系统设置决定。
+
+已有照片检查只读取、不改写所选字节。“文件”选取保留所选文件字节，图库或相机可能提供系统转换副本。ZIP 交付包包含照片、要求和检查报告，仅通过你选择的分享目标离开应用。近期交付副本按上述临时导出缓存规则保留。

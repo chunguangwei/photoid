@@ -563,7 +563,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeCustomSpec.
   ///
   /// In en, this message translates to:
-  /// **'Custom'**
+  /// **'Set photo requirements'**
   String get homeCustomSpec;
 
   /// No description provided for @homeHotSpecs.
@@ -1217,7 +1217,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyPolicyBody.
   ///
   /// In en, this message translates to:
-  /// **'Updated October 21, 2026\n\nPhotos and face detection results are processed on your device and are not uploaded for processing. No account is required, and the app has no advertising SDK.\n\nCamera access is used to take photos. Photo library access is used to choose photos and save finished images, only when you use those features.\n\nSaved results are also stored in the app’s private album. Delete them in My Photos. Exported copies must be deleted separately in the system photo library. System photo syncing and backups follow your device settings. Language and custom specifications are stored locally.\n\nGoogle ML Kit performs face detection locally, but can send technical diagnostics and usage metrics to Google, including device/app information, per-installation identifiers, API events, performance and errors. These metrics do not include your input photos or detection results. ONNX Runtime runs the bundled background-removal model locally.\n\nAndroid checks GitHub for app updates and downloads updates on request. iOS updates come from the App Store. Opening the online policy uses your browser.\n\nQuestions: chunguangwee@gmail.com. The online policy provides further details and links to Google’s SDK disclosures.\n\nTemporary export copies are kept in the app cache so receiving apps can read them. Copies older than one day are removed at the next app launch or export.'**
+  /// **'Updated October 21, 2026\n\nPhotos and face detection results are processed on your device and are not uploaded for processing. No account is required, and the app has no advertising SDK.\n\nCamera access is used to take photos. Photo library access is used to choose photos and save finished images, only when you use those features.\n\nSaved results are also stored in the app’s private album. Delete them in My Photos. Exported copies must be deleted separately in the system photo library. System photo syncing and backups follow your device settings. Language and custom specifications are stored locally.\n\nGoogle ML Kit performs face detection locally, but can send technical diagnostics and usage metrics to Google, including device/app information, per-installation identifiers, API events, performance and errors. These metrics do not include your input photos or detection results. ONNX Runtime runs the bundled background-removal model locally.\n\nAndroid checks GitHub for app updates and downloads updates on request. iOS updates come from the App Store. Opening the online policy uses your browser.\n\nQuestions: chunguangwee@gmail.com. The online policy provides further details and links to Google’s SDK disclosures.\n\nTemporary export copies are kept in the app cache so receiving apps can read them. Copies older than one day are removed at the next app launch or export.\n\nApplication tasks are stored locally with your notes, requirement references, optional screenshots, source photo and prepared versions. Sources you record are not independently verified. Delete a task to remove its app-owned copies; system originals and files you already exported are kept. Existing-file checks read the selected bytes without changing them. ZIP delivery packages contain photo files and requirement/check reports; only share them with recipients you choose.'**
   String get privacyPolicyBody;
 
   /// No description provided for @linkOpenFailed.
@@ -1259,13 +1259,13 @@ abstract class AppLocalizations {
   /// No description provided for @homeHeroTitle.
   ///
   /// In en, this message translates to:
-  /// **'Your photo.\nYour requirements.'**
+  /// **'Prepare your photo\nfor your application.'**
   String get homeHeroTitle;
 
   /// No description provided for @homeEyebrow.
   ///
   /// In en, this message translates to:
-  /// **'ON-DEVICE PHOTO WORKSPACE'**
+  /// **'APPLICATION PHOTO WORKSPACE'**
   String get homeEyebrow;
 
   /// No description provided for @homeCustomDesc.
@@ -1285,6 +1285,438 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Export the unchanged JPEG and a JSON check report. Choose Save to Files in the system sheet for file upload. Other destinations may alter images.'**
   String get deliveryExportHint;
+
+  /// No description provided for @tasksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Application tasks'**
+  String get tasksTitle;
+
+  /// No description provided for @tasksDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep requirements, prepare versions and export together'**
+  String get tasksDesc;
+
+  /// No description provided for @taskNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New task'**
+  String get taskNew;
+
+  /// No description provided for @taskEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Your next application starts here'**
+  String get taskEmpty;
+
+  /// No description provided for @taskEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the requirements once, then prepare every photo file you need.'**
+  String get taskEmptyHint;
+
+  /// No description provided for @taskDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Task details'**
+  String get taskDetails;
+
+  /// No description provided for @taskName.
+  ///
+  /// In en, this message translates to:
+  /// **'Task name'**
+  String get taskName;
+
+  /// No description provided for @taskNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Requirements and notes'**
+  String get taskNotes;
+
+  /// No description provided for @taskSourceReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Requirements source (link or reference)'**
+  String get taskSourceReference;
+
+  /// No description provided for @taskVerifiedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date you checked the requirements'**
+  String get taskVerifiedDate;
+
+  /// No description provided for @taskReferenceNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Sources are saved as your reference; the app does not verify them.'**
+  String get taskReferenceNote;
+
+  /// No description provided for @taskSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save task'**
+  String get taskSave;
+
+  /// No description provided for @taskRequiredName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a task name'**
+  String get taskRequiredName;
+
+  /// No description provided for @taskOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'One source photo'**
+  String get taskOriginal;
+
+  /// No description provided for @taskChooseSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose source photo'**
+  String get taskChooseSource;
+
+  /// No description provided for @taskReplaceSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace source photo'**
+  String get taskReplaceSource;
+
+  /// No description provided for @taskReplaceWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Replacing the source resets all completed versions. Your system photo is not deleted.'**
+  String get taskReplaceWarning;
+
+  /// No description provided for @taskEvidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Requirements screenshot'**
+  String get taskEvidence;
+
+  /// No description provided for @taskAttachEvidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach screenshot'**
+  String get taskAttachEvidence;
+
+  /// No description provided for @taskViewEvidence.
+  ///
+  /// In en, this message translates to:
+  /// **'View screenshot'**
+  String get taskViewEvidence;
+
+  /// No description provided for @taskOutputs.
+  ///
+  /// In en, this message translates to:
+  /// **'Files to prepare'**
+  String get taskOutputs;
+
+  /// No description provided for @taskAddOutput.
+  ///
+  /// In en, this message translates to:
+  /// **'Add file requirements'**
+  String get taskAddOutput;
+
+  /// No description provided for @taskFilename.
+  ///
+  /// In en, this message translates to:
+  /// **'Output file name'**
+  String get taskFilename;
+
+  /// No description provided for @taskFilenameHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'1–80 letters, numbers, underscores or hyphens. Each name must be unique.'**
+  String get taskFilenameHelp;
+
+  /// No description provided for @taskOutputLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to five files per task'**
+  String get taskOutputLimit;
+
+  /// No description provided for @taskPrepare.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare file'**
+  String get taskPrepare;
+
+  /// No description provided for @taskRedo.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare again'**
+  String get taskRedo;
+
+  /// No description provided for @taskEditRequirement.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit requirements'**
+  String get taskEditRequirement;
+
+  /// No description provided for @taskRemoveOutput.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove file requirements'**
+  String get taskRemoveOutput;
+
+  /// No description provided for @taskRequirementsChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing requirements resets this completed file.'**
+  String get taskRequirementsChanged;
+
+  /// No description provided for @taskExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export delivery ZIP'**
+  String get taskExport;
+
+  /// No description provided for @taskExportHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete each version to export JPEGs, individual JSON reports and a readable checklist together.'**
+  String get taskExportHint;
+
+  /// No description provided for @taskReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepared'**
+  String get taskReady;
+
+  /// No description provided for @taskPending.
+  ///
+  /// In en, this message translates to:
+  /// **'To prepare'**
+  String get taskPending;
+
+  /// No description provided for @taskBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'Working…'**
+  String get taskBusy;
+
+  /// No description provided for @taskDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete task'**
+  String get taskDelete;
+
+  /// No description provided for @taskDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this task and its local photo copies? Files already exported and system originals are kept.'**
+  String get taskDeleteConfirm;
+
+  /// No description provided for @taskChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The source or requirements changed. Return to the task and prepare this version again.'**
+  String get taskChanged;
+
+  /// No description provided for @taskSaveOutput.
+  ///
+  /// In en, this message translates to:
+  /// **'Save file to task'**
+  String get taskSaveOutput;
+
+  /// No description provided for @taskOutputSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'File saved to task'**
+  String get taskOutputSaved;
+
+  /// No description provided for @taskSaveOutputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Save this version to the task, then prepare the next file or export the delivery package.'**
+  String get taskSaveOutputHint;
+
+  /// No description provided for @taskFixedRequirements.
+  ///
+  /// In en, this message translates to:
+  /// **'Background and file requirements are fixed by this task. Edit them on the task page.'**
+  String get taskFixedRequirements;
+
+  /// No description provided for @taskNoSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose one source photo before preparing versions.'**
+  String get taskNoSource;
+
+  /// No description provided for @taskExportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to export. Check that every output exists and still meets its requirements.'**
+  String get taskExportFailed;
+
+  /// No description provided for @taskInvalidName.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a unique file name with letters, numbers, underscores or hyphens.'**
+  String get taskInvalidName;
+
+  /// No description provided for @taskInvalidFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a readable photo up to 30 MB and 24 megapixels.'**
+  String get taskInvalidFile;
+
+  /// No description provided for @taskActionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to complete this action. Please retry.'**
+  String get taskActionFailed;
+
+  /// No description provided for @taskOutputMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'This file does not meet the task requirements. Adjust it before saving.'**
+  String get taskOutputMismatch;
+
+  /// No description provided for @checkExistingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check an existing photo'**
+  String get checkExistingTitle;
+
+  /// No description provided for @checkExistingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect the file you already have, without editing it'**
+  String get checkExistingDesc;
+
+  /// No description provided for @checkChooseFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose photo file'**
+  String get checkChooseFile;
+
+  /// No description provided for @checkRequirements.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo requirements'**
+  String get checkRequirements;
+
+  /// No description provided for @checkSetRequirements.
+  ///
+  /// In en, this message translates to:
+  /// **'Set requirements'**
+  String get checkSetRequirements;
+
+  /// No description provided for @checkRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Check selected file'**
+  String get checkRun;
+
+  /// No description provided for @checkNoFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a file and enter the requirements to begin.'**
+  String get checkNoFile;
+
+  /// No description provided for @checkByteNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Checks read the selected file without changing it. Files preserves the selected bytes; Photos or Camera may supply a converted copy.'**
+  String get checkByteNote;
+
+  /// No description provided for @checkScope.
+  ///
+  /// In en, this message translates to:
+  /// **'File properties only. Portrait, background, identity and institutional acceptance are not verified.'**
+  String get checkScope;
+
+  /// No description provided for @checkMakeCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare a new copy'**
+  String get checkMakeCopy;
+
+  /// No description provided for @checkActual.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual file'**
+  String get checkActual;
+
+  /// No description provided for @checkRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get checkRequired;
+
+  /// No description provided for @checkPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected file properties match'**
+  String get checkPassed;
+
+  /// No description provided for @checkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Some file properties do not match'**
+  String get checkFailed;
+
+  /// No description provided for @chooseFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get chooseFiles;
+
+  /// No description provided for @choosePhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get choosePhotos;
+
+  /// No description provided for @chooseCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get chooseCamera;
+
+  /// No description provided for @taskChooseDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose date'**
+  String get taskChooseDate;
+
+  /// No description provided for @taskClearDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear date'**
+  String get taskClearDate;
+
+  /// No description provided for @taskEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit task'**
+  String get taskEdit;
+
+  /// No description provided for @taskRemoveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this requirement and its prepared local copy?'**
+  String get taskRemoveConfirm;
+
+  /// No description provided for @taskFilesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'files prepared'**
+  String get taskFilesCount;
+
+  /// No description provided for @taskNoOutputs.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the dimensions, KB range and name for each file you need.'**
+  String get taskNoOutputs;
+
+  /// No description provided for @taskDeliveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your application, ready to prepare'**
+  String get taskDeliveryTitle;
 }
 
 class _AppLocalizationsDelegate

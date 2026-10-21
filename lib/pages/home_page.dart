@@ -8,6 +8,8 @@ import '../services/custom_spec_store.dart';
 import '../services/spec_library.dart';
 import '../widgets/glass_surface.dart';
 import 'custom_spec_page.dart';
+import 'application_tasks_page.dart';
+import 'photo_check_page.dart';
 import 'edit_page.dart';
 import 'kb_tool_page.dart';
 import 'my_album_page.dart';
@@ -158,6 +160,8 @@ class _HomeTabState extends State<_HomeTab> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
+                    _applicationEntries(context, l),
+                    const SizedBox(height: 16),
                     _secondaryTools(context, l),
                     const SizedBox(height: 16),
                     _primaryGrid(context, l),
@@ -235,6 +239,45 @@ class _HomeTabState extends State<_HomeTab> {
       ),
     );
   }
+
+  Widget _applicationEntries(BuildContext context, AppLocalizations l) =>
+      Column(
+        children: [
+          Card(
+              child: ListTile(
+            key: const Key('home-tasks'),
+            contentPadding: const EdgeInsets.all(16),
+            leading: Icon(Icons.folder_copy_outlined,
+                color: Theme.of(context).colorScheme.primary),
+            title: Text(l.tasksTitle,
+                style: Theme.of(context).textTheme.titleMedium),
+            subtitle: Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(l.tasksDesc)),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const ApplicationTasksPage())),
+          )),
+          const SizedBox(height: 12),
+          Card(
+              child: ListTile(
+            key: const Key('home-check'),
+            contentPadding: const EdgeInsets.all(16),
+            leading: Icon(Icons.fact_check_outlined,
+                color: Theme.of(context).colorScheme.primary),
+            title: Text(l.checkExistingTitle,
+                style: Theme.of(context).textTheme.titleMedium),
+            subtitle: Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(l.checkExistingDesc)),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const PhotoCheckPage())),
+          )),
+        ],
+      );
 
   /// 2×2 主功能大卡：拍证件照 / 换底色 / 改KB / 我的相册。
   Widget _primaryGrid(BuildContext context, AppLocalizations l) {

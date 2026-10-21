@@ -1,0 +1,23 @@
+{
+  "version": "1.1.0",
+  "candidateBuild": "49",
+  "bundleId": "cn.wcg.idphoto",
+  "privacyPolicyUrl": "https://chunguangwei.github.io/photoid/privacy-policy",
+  "supportUrl": "https://chunguangwei.github.io/photoid/",
+  "en-US": {
+    "name": "PhotoID Studio",
+    "subtitle": "Photo files for applications",
+    "promotionalText": "Keep your application requirements, check an existing photo, prepare several versions from one source and export JPEGs with a readable checklist.",
+    "keywords": "photo,resize,file size,JPEG,background,crop,application,portrait,offline",
+    "description": "Prepare the photo files your application asks for, using a workflow built around your own requirements.\n\nCHECK A FILE YOU ALREADY HAVE\nSelect a photo from Files or Photos, enter the dimensions and KB range, then inspect JPEG format, readability, pixel dimensions, file size and aspect ratio. Checks read the selected bytes without rewriting them. Files preserves the selected bytes; Photos may supply a system conversion. File checks do not verify portrait suitability, background, identity or acceptance.\n\nKEEP YOUR APPLICATION TOGETHER\nCreate a local task with a name, notes, a requirement reference, your verification date and an optional screenshot. References are saved for your records and are not independently verified.\n\nONE SOURCE, SEVERAL FILES\nAdd up to five sets of dimensions, background, KB limits and unique file names. Choose one source photo, then use the editor to prepare and crop each version separately. Completed versions are saved to the task. Changing requirements or replacing the source resets affected completed versions.\n\nEXPORT THE DELIVERY PACKAGE\nWhen all versions are prepared, export a ZIP containing the JPEGs, individual JSON reports and a readable checklist in your interface language. Each output is reread and checked before export. The reports record actual dimensions and byte counts; they are not certificates. Choose Save to Files in the system share sheet to keep the package for your workflow.\n\nYOUR EXISTING PHOTO TOOLS\nCamera, on-device background removal, background replacement, cropping, optional retouching, the built-in and custom specification library, KB compression and local album remain available. Retouching starts at zero.\n\nLOCAL PHOTO PROCESSING\nPhotos and face detection results are processed locally and are not uploaded for processing. No account, subscription or advertising SDK is included. Google ML Kit may send technical diagnostics and usage metrics, as explained in the privacy policy. Tasks remain on your device unless you choose to share files; system backups follow device settings.\n\nPhotoID Studio is an independent photo-preparation tool. It is not affiliated with a government agency, does not issue official documents and does not guarantee acceptance. Verify the receiving organization’s current photo and editing rules before use.",
+    "whatsNew": "Application tasks with saved requirements and source references; existing-file checks; up to five photo outputs from one source; ZIP delivery with JPEGs, JSON reports and a readable checklist. Existing photo tools remain available."
+  },
+  "zh-Hans": {
+    "name": "智能证件照",
+    "subtitle": "按报名要求制作、检查和导出照片",
+    "promotionalText": "保存报名要求，检查已有照片，用一张原图分别制作多个版本，再把 JPEG 和可读清单一起导出。",
+    "keywords": "证件照,报名照,照片压缩,像素,KB,裁剪,换底,照片文件,离线",
+    "description": "拿到报名照片要求后，在本机记录要求、检查已有文件、制作多个版本，再按需要命名并导出。\n\n已有照片先检查\n从“文件”或图库选择照片，填写尺寸与 KB 范围，检查 JPEG 格式、可读取性、实际像素、大小和比例。检查只读取、不改写所选字节；图库可能提供系统转换副本。文件属性检查不验证人像、底色、身份或机构是否接收。\n\n把要求保存在报名任务里\n记录任务名称、备注、要求来源、你核对要求的日期，也可附上截图。来源仅作留存参考，未经应用独立验证。任务保存在本机，可退出后继续。\n\n一张原图，分别制作多个版本\n每个任务最多添加五份文件要求，分别设置尺寸、底色、KB 范围和不重复的文件名。共用一张原图，分别进入编辑器调整裁剪、制作并存入任务。更换原图或修改要求后，受影响的成片需重新制作。\n\n导出完整交付包\n各版本制作完成后，一次导出包含 JPEG、逐份 JSON 报告和当前界面语言可读清单的 ZIP。导出前重新读取每份成片并检查实际属性，报告记录像素与字节数，不是认证证明。可在系统分享面板选择“存储到文件”。\n\n原有工具继续保留\n拍照、端侧抠图换底、裁剪、默认关闭的可选美颜、内置与自定义规格、KB 压缩和本地相册均可继续使用。\n\n本地处理与隐私\n照片与人脸检测结果不为处理而上传，无需账号或订阅，不含广告 SDK。Google ML Kit 可发送技术诊断与使用指标，详见隐私政策。任务保存在设备上，由你选择是否分享文件；系统备份遵循设备设置。\n\n本应用与政府机构无关，不出具官方证件，不保证照片被接收。请核对接收机构最新照片要求与编辑限制。",
+    "whatsNew": "新增可恢复的报名任务、已有照片文件检查、共用原图的多版本制作，以及 JPEG＋报告＋可读清单的 ZIP 交付。保留原有拍照、换底、裁剪、压缩及相册功能。"
+  }
+}

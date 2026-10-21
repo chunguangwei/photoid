@@ -15,10 +15,17 @@ import '../services/compliance_service.dart';
 import '../services/delivery_report.dart';
 import '../services/delivery_export_cache.dart';
 import '../widgets/glass_surface.dart';
+import '../widgets/photo_input.dart';
 
 /// 检测与保存页：合规报告 + 自定义文件命名 + 保存到相册。
 class ResultPage extends StatefulWidget {
-  const ResultPage({super.key, required this.jpgBytes, required this.spec});
+  const ResultPage(
+      {super.key,
+      required this.jpgBytes,
+      required this.spec,
+      this.onDelivered});
+
+  final Future<void> Function(Uint8List, PhotoSpec)? onDelivered;
 
   final Uint8List jpgBytes;
   final PhotoSpec spec;
@@ -68,6 +75,22 @@ class _ResultPageState extends State<ResultPage> {
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _saveToTask() async {
+    if (_saving || widget.onDelivered == null) return;
+    setState(() => _saving = true);
+    try {
+      await widget.onDelivered!(widget.jpgBytes, widget.spec);
+      if (!mounted) return;
+      final navigator = Navigator.of(context);
+      navigator.pop();
+      navigator.pop();
+    } catch (e) {
+      if (mounted) showPhotoActionError(context, e);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   Future<void> _save() async {
@@ -270,6 +293,15 @@ class _ResultPageState extends State<ResultPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (widget.onDelivered != null) ...[
+                    FilledButton.icon(
+                      key: const Key('save-output-to-task'),
+                      onPressed: _saving || report == null ? null : _saveToTask,
+                      icon: const Icon(Icons.playlist_add_check),
+                      label: Text(l.taskSaveOutput),
+                    ),
+                    const SizedBox(height: 4),
+                  ],
                   if (!_saved) ...[
                     FilledButton.icon(
                         onPressed:
