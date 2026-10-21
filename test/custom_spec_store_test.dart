@@ -54,4 +54,13 @@ void main() {
     SharedPreferences.setMockInitialValues({'custom_specs': '{broken'});
     expect(await CustomSpecStore.load(), isEmpty);
   });
+
+  test('并发保存不会丢失任一规格', () async {
+    await Future.wait([
+      CustomSpecStore.save(_spec('c1', '甲')),
+      CustomSpecStore.save(_spec('c2', '乙')),
+    ]);
+    expect((await CustomSpecStore.load()).map((s) => s.id),
+        unorderedEquals(['c1', 'c2']));
+  });
 }

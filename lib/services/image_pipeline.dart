@@ -14,7 +14,14 @@ import 'photo_effects.dart';
 
 /// 抠图引擎：两档均使用 MODNet，`modnet`（高精修）额外做一道轻锐化。
 /// 流水线处理步骤（UI 层据此映射 l10n 键，文案改动不影响翻译）。
-enum PipelineStep { preparing, reading, segmenting, compositing, framing, compressing }
+enum PipelineStep {
+  preparing,
+  reading,
+  segmenting,
+  compositing,
+  framing,
+  compressing
+}
 
 class PipelineException implements Exception {
   PipelineException(this.code);
@@ -272,7 +279,8 @@ class ImagePipeline {
     final left = math.max(0.0, cx - face.width * sideFaces);
     final right = math.min(srcW.toDouble(), cx + face.width * sideFaces);
     final top = math.max(0.0, face.top - face.height * upFaces);
-    final bottom = math.min(srcH.toDouble(), face.bottom + face.height * downFaces);
+    final bottom =
+        math.min(srcH.toDouble(), face.bottom + face.height * downFaces);
     if (right - left < 64 || bottom - top < 64) return null;
 
     final roi = Rect.fromLTRB(left.roundToDouble(), top.roundToDouble(),
@@ -285,26 +293,32 @@ class ImagePipeline {
   /// 人脸检测（最大脸），返回 work 坐标系人脸框；未检出抛 `noFace`。
   Future<Rect> _detectFace(File mlFile, _LoadedWork loaded) async {
     final detector = FaceDetector(
-        options: FaceDetectorOptions(performanceMode: FaceDetectorMode.accurate));
-    final List<Face> faces;
+        options:
+            FaceDetectorOptions(performanceMode: FaceDetectorMode.accurate));
+    final List<Rect> faces;
     try {
-      faces = await _withMlKitFallback(detector.processImage, mlFile, loaded);
+      faces = await _withMlKitFallback((input) async {
+        final detected = await detector.processImage(input);
+        // Android NV21 uses full work pixels; the fallback JPEG is downscaled.
+        // Derive the scale per attempt so the fallback cannot reuse NV21 scale.
+        final scale = input.metadata == null && loaded.mlScale < 1
+            ? 1 / loaded.mlScale
+            : 1.0;
+        return detected
+            .map((face) => Rect.fromLTRB(
+                  face.boundingBox.left * scale,
+                  face.boundingBox.top * scale,
+                  face.boundingBox.right * scale,
+                  face.boundingBox.bottom * scale,
+                ))
+            .toList();
+      }, mlFile, loaded);
     } finally {
-      detector.close();
+      await detector.close();
     }
     if (faces.isEmpty) throw PipelineException('noFace');
-    final face = faces.reduce((a, b) =>
-        a.boundingBox.width * a.boundingBox.height >=
-                b.boundingBox.width * b.boundingBox.height
-            ? a
-            : b);
-    // 人脸框从 ML 输入坐标映射回 work 坐标
-    final s = loaded.mlScale < 1 ? 1 / loaded.mlScale : 1.0;
-    return Rect.fromLTRB(
-        face.boundingBox.left * s,
-        face.boundingBox.top * s,
-        face.boundingBox.right * s,
-        face.boundingBox.bottom * s);
+    return faces
+        .reduce((a, b) => a.width * a.height >= b.width * b.height ? a : b);
   }
 
   /// 以「头顶 → 下巴」的真实头部高度计算构图裁剪框。
@@ -337,8 +351,7 @@ class ImagePipeline {
     // 的比例在 1.2–1.8 之间。掩码测出的 crown 若因抠图误判（帽子、举手、
     // 背景残留连着头发）而过高，headH 会被严重高估，导致画幅按比例放大、
     // 人物在成片里又小又偏。这里无条件把头高压回可信区间。
-    final headH =
-        (chin - crown).clamp(face.height * 1.15, face.height * 1.85);
+    final headH = (chin - crown).clamp(face.height * 1.15, face.height * 1.85);
     var cropH = headH / headRatio;
     var cropW = cropH * aspect;
 
@@ -366,39 +379,46 @@ class ImagePipeline {
     // 横向：以下巴中线居中，两侧越界由底色补齐（纯背景，不可见）
     final left = (face.left + face.width / 2) - cropWi / 2;
 
-    return Rect.fromLTWH(
-        left.roundToDouble(), top.roundToDouble(), cropWi.toDouble(), cropHi.toDouble());
+    return Rect.fromLTWH(left.roundToDouble(), top.roundToDouble(),
+        cropWi.toDouble(), cropHi.toDouble());
   }
 
   /// 二分 JPEG 质量压到 maxKb 以下（优先接近上限的最高质量）。
-  /// 契约：minKb 仅尽力而为——极小像素图（如 144×192）即使 q98 也可能
-  /// 达不到下限，此时输出最高可用质量；规格数据的下限须符合可达性。
+  /// maxKb=0 表示无上限；正上限无法满足时明确失败，保留像素尺寸。
+  /// 下限不足时用 JPEG 尾部填充补齐；这不代表任何接收机构保证接受。
   static Uint8List encodeToKbRange(img.Image image, int minKb, int maxKb) {
+    if (minKb < 0 || maxKb < 0 || (maxKb > 0 && minKb > maxKb)) {
+      throw ArgumentError('Invalid JPEG KB range');
+    }
+    final ceiling = maxKb == 0 ? double.infinity : maxKb.toDouble();
     Uint8List best = img.encodeJpg(image, quality: 85);
     var lo = 20, hi = 98;
     for (var i = 0; i < 10 && lo <= hi; i++) {
       final q = (lo + hi) ~/ 2;
       final out = img.encodeJpg(image, quality: q);
       final kb = out.lengthInBytes / 1024;
-      if (kb > maxKb) {
+      if (kb > ceiling) {
         hi = q - 1;
       } else {
         if (out.lengthInBytes >= best.lengthInBytes ||
-            best.lengthInBytes / 1024 > maxKb) {
+            best.lengthInBytes / 1024 > ceiling) {
           best = out;
         }
-        if (kb >= maxKb * 0.92) break; // 已接近上限
+        if (kb >= ceiling * 0.92) break; // 已接近上限
         lo = q + 1;
       }
     }
     // 仍超上限（极端情况）→ 降到目标质量以下重编码由调用方保证尺寸合理
     var guard = 0;
-    while (best.lengthInBytes / 1024 > maxKb && guard++ < 6) {
+    while (best.lengthInBytes / 1024 > ceiling && guard++ < 7) {
       best = img.encodeJpg(image, quality: math.max(10, 85 - guard * 12));
+    }
+    if (best.lengthInBytes / 1024 > ceiling) {
+      throw StateError('JPEG cannot fit the requested KB limit at this size');
     }
     // min 达不到（纯色背景图即使 q98 也很小）→ EOI 后填充补齐。
     // JPEG 解码器读到 FFD9 即止，尾部填充字节不破坏解析，
-    // 各类报名系统均接受（行业通行做法），合规检测不再报不可修复的 fileTooSmall
+    // 接收系统仍可能重新编码或检查尾部，不能据此承诺被接受。
     // 目标钳制在 [min, max]：min>max 的异常输入也不能撑破上限
     final floorKb = maxKb > 0 ? math.min(minKb, maxKb) : minKb;
     if (floorKb > 0 && best.lengthInBytes < floorKb * 1024) {
@@ -455,8 +475,10 @@ class ImagePipeline {
   static img.Image downscaleStepwise(img.Image src, int targetW, int targetH) {
     var cur = src;
     // 留一档给最后的 cubic：只要还大于目标 2 倍就继续减半
-    while (cur.width >= targetW * 2 && cur.height >= targetH * 2 &&
-        cur.width > 2 && cur.height > 2) {
+    while (cur.width >= targetW * 2 &&
+        cur.height >= targetH * 2 &&
+        cur.width > 2 &&
+        cur.height > 2) {
       cur = img.copyResize(cur,
           width: cur.width ~/ 2,
           height: math.max(1, cur.height ~/ 2),
@@ -475,8 +497,8 @@ class ImagePipeline {
   static img.Image resizeToSpecUniform(
       img.Image src, int targetW, int targetH, img.Color bg) {
     final f = targetW / src.width;
-    final out = downscaleStepwise(
-        src, targetW, math.max(1, (src.height * f).round()));
+    final out =
+        downscaleStepwise(src, targetW, math.max(1, (src.height * f).round()));
     if (out.height == targetH) return out;
     if (out.height > targetH) {
       return img.copyCrop(out, x: 0, y: 0, width: targetW, height: targetH);
@@ -620,8 +642,8 @@ _Composited _compositeWork(Map<String, Object> args) {
   }
 
   // 自动构图：优先用掩码测得的真实发际线定位头顶
-  final crop =
-      ImagePipeline.cropRectFor(w, h, face, aspect, headTop: detectHeadTop(alpha, w, h));
+  final crop = ImagePipeline.cropRectFor(w, h, face, aspect,
+      headTop: detectHeadTop(alpha, w, h));
 
   // 按构图框越界量补底色边，并把坐标系整体平移
   final padL = math.max(0, -crop.left.round());
@@ -629,8 +651,8 @@ _Composited _compositeWork(Map<String, Object> args) {
   final padR = math.max(0, crop.right.round() - w);
   final padB = math.max(0, crop.bottom.round() - h);
 
-  final original =
-      img.Image.fromBytes(width: w, height: h, bytes: rgba.buffer, numChannels: 4);
+  final original = img.Image.fromBytes(
+      width: w, height: h, bytes: rgba.buffer, numChannels: 4);
 
   Uint8List outRgba = comp;
   var outW = w, outH = h;
@@ -728,8 +750,8 @@ RecolorResult recolorWorker(RecolorRequest req) {
     out[i + 2] = (fg[i + 2] * a + bb * inv) ~/ 255;
     out[i + 3] = 255;
   }
-  final image =
-      img.Image.fromBytes(width: w, height: h, bytes: out.buffer, numChannels: 4);
+  final image = img.Image.fromBytes(
+      width: w, height: h, bytes: out.buffer, numChannels: 4);
   return RecolorResult(rgba: out, jpg: img.encodeJpg(image, quality: 90));
 }
 
@@ -976,8 +998,8 @@ Uint8List deliverWorker(DeliveryRequest req) {
         (req.faceRect.top - req.crop.top) * sy,
         (req.faceRect.right - req.crop.left) * sx,
         (req.faceRect.bottom - req.crop.top) * sy);
-    out = PhotoEffects.apply(out, face,
-        beauty: req.beauty, clarity: req.clarity);
+    out =
+        PhotoEffects.apply(out, face, beauty: req.beauty, clarity: req.clarity);
   }
 
   // 缩放补偿锐化（resize sharpening）：**无条件执行、固定强度**。
@@ -1059,7 +1081,8 @@ _LoadedWork? _loadWork(Map<String, Object> args) {
     final f = work.width >= work.height
         ? maxSide / work.width
         : maxSide / work.height;
-    work = ImagePipeline.downscaleStepwise(work,
+    work = ImagePipeline.downscaleStepwise(
+        work,
         math.max(1, (work.width * f).round()),
         math.max(1, (work.height * f).round()));
   }
@@ -1068,7 +1091,8 @@ _LoadedWork? _loadWork(Map<String, Object> args) {
   final mlScale =
       work.width >= work.height ? 960 / work.width : 960 / work.height;
   if (mlScale < 1) {
-    mlImage = ImagePipeline.downscaleStepwise(work,
+    mlImage = ImagePipeline.downscaleStepwise(
+        work,
         math.max(1, (work.width * mlScale).round()),
         math.max(1, (work.height * mlScale).round()));
   }

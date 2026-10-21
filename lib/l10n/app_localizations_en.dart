@@ -117,19 +117,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chipOriginal => 'Original';
 
   @override
-  String get complianceCheckSave => 'Run compliance check & save';
+  String get complianceCheckSave => 'Check photo & save';
 
   @override
-  String get resultTitle => 'Compliance check';
+  String get resultTitle => 'Photo checks';
 
   @override
   String get checkItemsTitle => 'Checks';
 
   @override
-  String get verdictPass => 'Meets requirements';
+  String get verdictPass => 'File checks passed';
 
   @override
-  String get verdictFail => 'Some checks failed';
+  String get verdictFail => 'Review failed checks';
 
   @override
   String get fileNameLabel => 'File name';
@@ -447,10 +447,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabMine => 'Mine';
 
   @override
-  String get privacySlogan => 'Photos never leave your device';
+  String get privacySlogan => 'Photo processing stays on your device';
 
   @override
-  String get hotNow => 'Trending';
+  String get hotNow => 'Common specifications';
 
   @override
   String checkBgColor(String bg) {
@@ -629,4 +629,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get customDelete => 'Delete';
+
+  @override
+  String get privacyPolicyTitle => 'Privacy policy';
+
+  @override
+  String get privacyPolicyBody =>
+      'Updated October 21, 2026\n\nPhotos and face detection results are processed on your device and are not uploaded for processing. No account is required, and the app has no advertising SDK.\n\nCamera access is used to take photos. Photo library access is used to choose photos and save finished images, only when you use those features.\n\nSaved results are also stored in the app’s private album. Delete them in My Photos. Exported copies must be deleted separately in the system photo library. System photo syncing and backups follow your device settings. Language and custom specifications are stored locally.\n\nGoogle ML Kit performs face detection locally, but can send technical diagnostics and usage metrics to Google, including device/app information, per-installation identifiers, API events, performance and errors. These metrics do not include your input photos or detection results. ONNX Runtime runs the bundled background-removal model locally.\n\nAndroid checks GitHub for app updates and downloads updates on request. iOS updates come from the App Store. Opening the online policy uses your browser.\n\nQuestions: chunguangwee@gmail.com. The online policy provides further details and links to Google’s SDK disclosures.\n\nTemporary export copies are kept in the app cache so receiving apps can read them. Copies older than one day are removed at the next app launch or export.';
+
+  @override
+  String get linkOpenFailed =>
+      'Unable to open this link. You can copy it and open it in your browser.';
+
+  @override
+  String get photoChecksNote =>
+      'These checks cover selected file properties and general framing estimates. They do not certify compliance or guarantee acceptance. Check the receiving organization’s current requirements.';
+
+  @override
+  String get checkFailedRetry => 'Checks could not be completed. Please retry.';
+
+  @override
+  String get homeNoResults =>
+      'No matching specifications. Try another name or create a custom spec.';
+
+  @override
+  String get loadFailed => 'Unable to load. Please retry.';
+
+  @override
+  String get kbLimitUnreachable =>
+      'This KB limit cannot be reached while preserving the image dimensions. Choose a larger limit.';
+
+  @override
+  String get homeHeroTitle => 'Your photo.\nYour requirements.';
+
+  @override
+  String get homeEyebrow => 'ON-DEVICE PHOTO WORKSPACE';
+
+  @override
+  String get homeCustomDesc => 'Set dimensions, background and KB limits';
+
+  @override
+  String get deliveryExport => 'Export JPEG + report';
+
+  @override
+  String get deliveryExportHint =>
+      'Export the unchanged JPEG and a JSON check report. Choose Save to Files in the system sheet for file upload. Other destinations may alter images.';
 }

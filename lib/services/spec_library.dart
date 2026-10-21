@@ -26,6 +26,10 @@ class SpecLibrary {
     final all = await load();
     final k = keyword.trim().toLowerCase();
     if (k.isEmpty) return all;
-    return all.where((s) => s.name.toLowerCase().contains(k)).toList();
+    return all
+        .where((s) =>
+            s.name.toLowerCase().contains(k) ||
+            (s.nameEn?.toLowerCase().contains(k) ?? false))
+        .toList();
   }
 }

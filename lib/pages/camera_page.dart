@@ -32,6 +32,7 @@ class _CameraPageState extends State<CameraPage> {
 
   /// 拍后确认态：已拍照片路径（显示重拍/确认）
   String? _capturedPath;
+  bool _capturedMirrored = false;
 
   @override
   void initState() {
@@ -47,12 +48,14 @@ class _CameraPageState extends State<CameraPage> {
   Future<void> _init() async {
     try {
       _cameras = await availableCameras();
+      if (!mounted) return;
       if (_cameras.isEmpty) {
         setState(() => _error = AppLocalizations.of(context).cameraNotFound);
         return;
       }
       await _startController();
     } on CameraException catch (e) {
+      if (!mounted) return;
       setState(() => _error = AppLocalizations.of(context)
           .cameraInitFailed(e.description ?? e.code));
     }
@@ -65,7 +68,12 @@ class _CameraPageState extends State<CameraPage> {
       enableAudio: false,
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
-    await controller.initialize();
+    try {
+      await controller.initialize();
+    } catch (_) {
+      await controller.dispose();
+      rethrow;
+    }
     if (!mounted) {
       controller.dispose();
       return;
@@ -74,7 +82,7 @@ class _CameraPageState extends State<CameraPage> {
   }
 
   Future<void> _switchCamera() async {
-    if (_cameras.length < 2 || _switching) return;
+    if (_cameras.length < 2 || _switching || _capturing) return;
     _switching = true;
     final old = _controller;
     setState(() {
@@ -87,6 +95,7 @@ class _CameraPageState extends State<CameraPage> {
     try {
       await _startController();
     } on CameraException catch (e) {
+      if (!mounted) return;
       setState(() => _error = AppLocalizations.of(context)
           .cameraInitFailed(e.description ?? e.code));
     } finally {
@@ -102,8 +111,13 @@ class _CameraPageState extends State<CameraPage> {
       final file = await controller.takePicture();
       if (!mounted) return;
       // 拍后进入确认态（重拍/确认），而非直接跳转
-      setState(() => _capturedPath = file.path);
+      setState(() {
+        _capturedPath = file.path;
+        _capturedMirrored =
+            controller.description.lensDirection == CameraLensDirection.front;
+      });
     } on CameraException catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(AppLocalizations.of(context)
               .captureFailed(e.description ?? e.code))));
@@ -121,7 +135,11 @@ class _CameraPageState extends State<CameraPage> {
     final picked = await ImagePicker()
         .pickImage(source: ImageSource.gallery, imageQuality: 99);
     if (picked == null || !mounted) return;
-    setState(() => _capturedPath = picked.path);
+    setState(() {
+      _capturedPath = picked.path;
+      _capturedMirrored = false;
+      _error = null;
+    });
   }
 
   void _confirm() {
@@ -131,7 +149,7 @@ class _CameraPageState extends State<CameraPage> {
       builder: (_) => EditPage(
           sourcePath: path,
           spec: widget.spec,
-          flipHorizontal: _lens == CameraLensDirection.front),
+          flipHorizontal: _capturedMirrored),
     ));
   }
 
@@ -273,7 +291,7 @@ class _CameraPageState extends State<CameraPage> {
         children: [
           Container(color: Colors.black87),
           Center(
-            child: _lens == CameraLensDirection.front
+            child: _capturedMirrored
                 ? Transform.flip(
                     flipX: true,
                     child: Image.file(File(path), fit: BoxFit.contain))

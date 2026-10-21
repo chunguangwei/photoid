@@ -1,0 +1,23 @@
+{
+  "version": "1.0.0",
+  "candidateBuild": "48",
+  "bundleId": "cn.wcg.idphoto",
+  "privacyPolicyUrl": "https://chunguangwei.github.io/photoid/privacy-policy",
+  "supportUrl": "https://chunguangwei.github.io/photoid/",
+  "en-US": {
+    "name": "PhotoID Studio",
+    "subtitle": "Custom photo files, offline",
+    "promotionalText": "Set your dimensions and KB limits, prepare a portrait on your device, then export the original JPEG and a check report for your application workflow.",
+    "keywords": "photo,resize,file size,JPEG,background,crop,application,portrait,offline",
+    "description": "Prepare portrait files for the requirements you have been given. PhotoID Studio combines reusable custom specifications, on-device portrait preparation and file delivery in one workflow.\n\nSTART WITH YOUR REQUIREMENTS\nName a specification, enter pixel dimensions and a KB range, and choose a background. Save your settings to reuse them. A built-in specification library offers convenient starting points; always confirm the receiving organization’s current requirements.\n\nPREPARE THE PORTRAIT\nChoose a photo or use the camera. Background removal, cropping and optional retouching run on your device. Retouching starts at zero. Adjust the crop and compare with the original.\n\nCHECK THE FILE, THEN EXPORT\nInspect dimensions, aspect ratio, background and file size. General head-position and eyes-open estimates are advisory. Export the original JPEG together with a JSON check report containing the exact byte count, requested specification and individual results. Choose a file name suited to your application. Save to Files from the system sheet to keep a file ready for upload; other sharing destinations may alter images. You can also save to Photos.\n\nKB TOOL\nCompress another photo to a chosen KB ceiling while preserving pixel dimensions. If that ceiling cannot be reached, the app tells you instead of silently exporting an oversized file.\n\nLOCAL PHOTO PROCESSING\nPhotos and face-detection results are not uploaded for processing. No account or advertising SDK is included. Google ML Kit may send technical diagnostics and usage metrics to Google, as explained in the privacy policy. The interface supports English and Chinese, light and dark appearances, and accessibility-aware translucent navigation.\n\nPhotoID Studio is an independent photo-preparation tool. It is not affiliated with a government agency, does not issue official documents, and does not guarantee acceptance. Check the current photo and editing rules of the receiving organization before use.",
+    "whatsNew": "A revised custom-specification workspace, JPEG + check-report export, refined navigation, and fixes for search, KB limits, cropping and asynchronous image updates."
+  },
+  "zh-Hans": {
+    "name": "智能证件照",
+    "subtitle": "按要求准备照片，导出报名文件",
+    "promotionalText": "自定义像素与 KB 范围，在本机处理照片，再导出原始 JPEG 和检测报告，便于按报名要求交付文件。",
+    "keywords": "证件照,报名照,照片压缩,像素,KB,裁剪,换底,照片文件,离线",
+    "description": "按你拿到的要求准备照片文件。智能证件照把可复用规格、本地人像处理和文件交付放在同一条流程中。\n\n从要求开始\n为规格命名，填写像素尺寸与 KB 范围，选择底色。设置可保存复用，内置规格也可作为起点。请以接收机构最新要求为准。\n\n准备照片\n从相册选择或现场拍摄，本机完成抠图、换底和裁剪。美颜与清晰度默认关闭，由你选择是否使用；严格证件场景请先核对编辑限制。\n\n检测与交付\n查看尺寸、比例、底色与文件大小，头部位置和睁眼估计为参考项。可自定义文件名，导出原始 JPEG 与 JSON 检测报告，报告记录准确字节数、所选规格及各检测结果。报名上传建议在系统面板选择「存储到文件」，其他接收方式可能修改图片；也支持保存到系统相册。\n\n通用 KB 工具\n按目标 KB 上限压缩其他照片并保留像素尺寸。无法达到上限时明确提示，不会把超限结果当作成功交付。\n\n本地处理与隐私\n照片与人脸检测结果不为处理而上传，无需账号，不含广告 SDK。Google ML Kit 可向 Google 发送技术诊断与使用指标，详见隐私政策。支持中英文、深浅主题及根据辅助功能设置调整的半透明导航。\n\n本应用是独立照片准备工具，与政府机构无关，不出具官方证件，不保证照片被接收。使用前请核对接收机构的最新照片规格与编辑限制。",
+    "whatsNew": "新增 JPEG 与检测报告导出，突出自定义规格交付流程，优化导航、主题和小屏布局，修复搜索、KB 边界、裁剪与异步换底问题。"
+  }
+}

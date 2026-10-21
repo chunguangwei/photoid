@@ -1,16 +1,16 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show compute;
+import 'package:flutter/services.dart';
 import 'package:gal/gal.dart';
-import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/album_service.dart';
-import '../services/image_pipeline.dart';
+import '../services/kb_compressor.dart';
 
 /// 通用改 KB 工具：任选照片，按目标大小（5–2048KB）二分压缩后保存。
 class KbToolPage extends StatefulWidget {
@@ -25,7 +25,7 @@ class _KbToolPageState extends State<KbToolPage> {
   String? _pickedPath;
   int? _originalBytes;
   Uint8List? _resultBytes;
-  img.Image? _resultImage;
+  (int, int)? _resultSize;
   bool _busy = false;
 
   @override
@@ -35,43 +35,57 @@ class _KbToolPageState extends State<KbToolPage> {
   }
 
   Future<void> _pick() async {
-    final picked = await ImagePicker()
-        .pickImage(source: ImageSource.gallery, imageQuality: 99);
-    if (picked == null || !mounted) return;
-    final size = await File(picked.path).length();
-    setState(() {
-      _pickedPath = picked.path;
-      _originalBytes = size;
-      _resultBytes = null;
-      _resultImage = null;
-    });
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final picked = await ImagePicker()
+          .pickImage(source: ImageSource.gallery, imageQuality: 99);
+      if (picked == null) return;
+      final size = await File(picked.path).length();
+      if (!mounted) return;
+      setState(() {
+        _pickedPath = picked.path;
+        _originalBytes = size;
+        _resultBytes = null;
+        _resultSize = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context).processFailed('$e'))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Future<void> _compress() async {
     final l = AppLocalizations.of(context);
     final path = _pickedPath;
-    if (path == null) return;
+    if (path == null || _busy) return;
     final target = double.tryParse(_targetController.text.trim());
-    if (target == null || target < 5 || target > 2048) {
+    if (target == null || !target.isFinite || target < 5 || target > 2048) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l.kbToolInvalidKb)));
       return;
     }
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _resultBytes = null;
+      _resultSize = null;
+    });
     try {
-      final decoded = img.decodeImage(await File(path).readAsBytes());
-      if (decoded == null) throw Exception('decode failed');
-      final oriented = img.bakeOrientation(decoded);
-      final bytes = ImagePipeline.encodeToKbRange(oriented, 5, target.round());
+      final result = await compute(
+          compressPhotoWorker, (path: path, maxKb: target.floor()));
       if (!mounted) return;
       setState(() {
-        _resultBytes = bytes;
-        _resultImage = oriented;
+        _resultBytes = result.bytes;
+        _resultSize = (result.width, result.height);
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l.kbToolFailed('$e'))));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+              e is StateError ? l.kbLimitUnreachable : l.kbToolFailed('$e'))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -81,7 +95,7 @@ class _KbToolPageState extends State<KbToolPage> {
     final l = AppLocalizations.of(context);
     final bytes = _resultBytes;
     final path = _pickedPath;
-    if (bytes == null || path == null) return;
+    if (bytes == null || path == null || _busy) return;
     setState(() => _busy = true);
     try {
       final hasAccess = await Gal.requestAccess();
@@ -89,11 +103,18 @@ class _KbToolPageState extends State<KbToolPage> {
       final dir = await getTemporaryDirectory();
       final baseName = p.basenameWithoutExtension(path);
       final tmp = File(p.join(dir.path, 'kb_tool_$baseName.jpg'));
-      await tmp.writeAsBytes(bytes, flush: true);
-      await Gal.putImage(tmp.path);
-      tmp.delete().ignore();
+      try {
+        await tmp.writeAsBytes(bytes, flush: true);
+        await Gal.putImage(tmp.path);
+      } finally {
+        if (await tmp.exists()) await tmp.delete();
+      }
       // 双写 App 相册，保留压缩产物
-      await AlbumService.save(bytes, baseName);
+      try {
+        await AlbumService.save(bytes, baseName);
+      } catch (e) {
+        debugPrint('AlbumService.save failed: $e');
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l.kbToolSaved)));
@@ -111,7 +132,7 @@ class _KbToolPageState extends State<KbToolPage> {
     final l = AppLocalizations.of(context);
     final picked = _pickedPath;
     final result = _resultBytes;
-    final image = _resultImage;
+    final size = _resultSize;
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
@@ -122,7 +143,7 @@ class _KbToolPageState extends State<KbToolPage> {
             children: [
               if (picked == null)
                 FilledButton.icon(
-                  onPressed: _pick,
+                  onPressed: _busy ? null : _pick,
                   icon: const Icon(Icons.photo_library_outlined),
                   label: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -155,8 +176,14 @@ class _KbToolPageState extends State<KbToolPage> {
                 ),
                 const SizedBox(height: 16),
                 TextField(
+                  enabled: !_busy,
                   controller: _targetController,
+                  onChanged: (_) => setState(() {
+                    _resultBytes = null;
+                    _resultSize = null;
+                  }),
                   keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: InputDecoration(
                     labelText: l.kbToolTargetKb,
                     border: const OutlineInputBorder(),
@@ -180,13 +207,19 @@ class _KbToolPageState extends State<KbToolPage> {
                   ),
                 ),
               ],
-              if (result != null && image != null) ...[
+              if (picked != null)
+                TextButton.icon(
+                  onPressed: _busy ? null : _pick,
+                  icon: const Icon(Icons.photo_library_outlined),
+                  label: Text(l.kbToolPick),
+                ),
+              if (result != null && size != null) ...[
                 const SizedBox(height: 24),
                 Text(
                   l.kbToolResult(
                     (result.lengthInBytes / 1024).toStringAsFixed(0),
-                    '${image.width}',
-                    '${image.height}',
+                    '${size.$1}',
+                    '${size.$2}',
                   ),
                   style: Theme.of(context).textTheme.titleMedium,
                   textAlign: TextAlign.center,

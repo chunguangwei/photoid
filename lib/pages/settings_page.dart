@@ -8,6 +8,7 @@ import '../services/locale_service.dart';
 import '../services/update_service.dart';
 import 'update_dialog.dart';
 import 'my_album_page.dart';
+import 'privacy_policy_page.dart';
 
 /// 设置页（「我的」Tab）：我的相册 + 检查更新 + 隐私说明 + 关于。
 class SettingsPage extends StatefulWidget {
@@ -70,7 +71,8 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             ListTile(
               title: Text(l.langSystem),
-              onTap: () => Navigator.of(sheetCtx).pop(const Locale('__system__')),
+              onTap: () =>
+                  Navigator.of(sheetCtx).pop(const Locale('__system__')),
             ),
             ListTile(
               title: Text(l.langZh),
@@ -96,6 +98,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       appBar: AppBar(title: Text(l.settingsTitle)),
       body: ListView(
+        padding: EdgeInsets.only(bottom: widget.showAlbumEntry ? 112 : 24),
         children: [
           if (widget.showAlbumEntry)
             ListTile(
@@ -127,7 +130,12 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ListTile(
             leading: const Icon(Icons.lock_outline),
-            title: Text(l.privacyNote),
+            title: Text(l.privacyPolicyTitle),
+            subtitle: Text(l.privacyNote),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const PrivacyPolicyPage(),
+            )),
           ),
           const Divider(),
           Padding(

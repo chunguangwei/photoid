@@ -110,19 +110,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chipOriginal => '原图';
 
   @override
-  String get complianceCheckSave => '合规检测并保存';
+  String get complianceCheckSave => '检测照片并保存';
 
   @override
-  String get resultTitle => '合规检测';
+  String get resultTitle => '照片检测';
 
   @override
   String get checkItemsTitle => '检测项';
 
   @override
-  String get verdictPass => '符合要求';
+  String get verdictPass => '文件项目已通过';
 
   @override
-  String get verdictFail => '存在不合规项';
+  String get verdictFail => '请检查未通过项';
 
   @override
   String get fileNameLabel => '文件名';
@@ -432,10 +432,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tabMine => '我的';
 
   @override
-  String get privacySlogan => '照片不出机 · 全部本地处理';
+  String get privacySlogan => '照片处理在本机完成';
 
   @override
-  String get hotNow => '近期热门';
+  String get hotNow => '常用规格';
 
   @override
   String checkBgColor(String bg) {
@@ -609,4 +609,46 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get customDelete => '删除';
+
+  @override
+  String get privacyPolicyTitle => '隐私政策';
+
+  @override
+  String get privacyPolicyBody =>
+      '更新日期：2026年10月21日\n\n照片与人脸检测结果在设备本地处理，不为处理而上传。无需账号，不含广告 SDK。\n\n相机权限用于拍照；照片库权限用于选择照片和保存成片，仅在使用相应功能时请求。\n\n保存的成片也保留在 App 私有相册，可在「我的相册」删除。导出的系统照片库副本需单独删除。系统照片同步与备份遵循设备设置。语言与自定义规格保存在本地。\n\nGoogle ML Kit 在本机检测人脸，但可向 Google 发送技术诊断与使用指标，包括设备和应用信息、安装级标识符、API 事件、性能与错误数据。这些指标不包含输入照片或检测结果。ONNX Runtime 在本机运行内置抠图模型。\n\nAndroid 会检查 GitHub 更新，并按用户选择下载；iOS 通过 App Store 更新。打开在线政策会使用系统浏览器。\n\n联系：chunguangwee@gmail.com。在线政策提供详细说明及 Google SDK 数据披露链接。\n\n为便于接收应用读取，临时导出副本会保留在 App 缓存中。超过一天的副本会在下次启动或导出时清理。';
+
+  @override
+  String get linkOpenFailed => '无法打开链接，可复制后在浏览器中访问。';
+
+  @override
+  String get photoChecksNote =>
+      '检测仅涵盖部分文件属性与通用构图估计，不是合规认证，也不保证被接收。请核对接收机构的最新要求。';
+
+  @override
+  String get checkFailedRetry => '未能完成检测，请重试。';
+
+  @override
+  String get homeNoResults => '没有匹配的规格，请换个名称搜索或创建自定义规格。';
+
+  @override
+  String get loadFailed => '加载失败，请重试。';
+
+  @override
+  String get kbLimitUnreachable => '在保留像素尺寸的情况下无法达到此 KB 上限，请增大目标值。';
+
+  @override
+  String get homeHeroTitle => '照片准备，\n按你的要求来。';
+
+  @override
+  String get homeEyebrow => '本地照片交付工作台';
+
+  @override
+  String get homeCustomDesc => '先设定像素、底色与 KB 范围';
+
+  @override
+  String get deliveryExport => '导出 JPEG 与检测报告';
+
+  @override
+  String get deliveryExportHint =>
+      '导出原始 JPEG 与 JSON 检测报告。报名上传建议在系统面板选择「存储到文件」；其他接收方式可能修改图片。';
 }

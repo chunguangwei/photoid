@@ -1,0 +1,19 @@
+PhotoID Studio — version 1.0.0, candidate build 48
+
+Please review the user-defined photo-file delivery workflow:
+
+1. Home > Custom. Enter a reusable name, width 480 px, height 640 px, minimum 20 KB and maximum 100 KB. Choose a background, then create the specification.
+2. Open the specification and choose a portrait from the photo library or take a photo. Use a single, clearly visible face. Photo processing runs on the device and does not require an account.
+3. Adjust the crop and background. Tap Save to open Photo checks. Retouching starts at zero; it is optional.
+4. Review measured file properties and advisory framing checks. Enter applicant_demo as the file name.
+5. Tap Export JPEG + report. Choose Save to Files in the system share sheet. This exports the original JPEG bytes and a JSON report containing the exact byte count, requested specification and individual check results. The report does not certify government compliance or promise acceptance. Other sharing destinations may alter an image.
+6. Return Home. The custom specification is saved for reuse. Saving to Photos remains available separately.
+
+No login, purchases or subscriptions are needed. Photo access is requested when selecting/saving an image. Camera access is optional if a library image is used.
+
+Privacy: Photos and face-detection results are processed locally. Google ML Kit may send technical diagnostic and usage metrics to Google; the revised policy discloses this. See My > Privacy policy. The app has no advertising SDK or account system.
+
+Changes since build 47: prominent custom-specification workflow, exact JPEG + check-report export, revised navigation/visual hierarchy, accessibility-aware glass treatment, corrected English search, KB-limit handling, crop reset and asynchronous state fixes. The app uses third-party SDKs and an open-source model; we do not claim those components are exclusive to this app.
+
+The public source history is available for development provenance: https://github.com/chunguangwei/photoid
+Please assess the demonstrated file-preparation workflow and advise if a particular remaining similarity requires further changes.

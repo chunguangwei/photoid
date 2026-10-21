@@ -29,18 +29,20 @@ class _CustomSpecPageState extends State<CustomSpecPage> {
   /// mm → px（DPI 换算）；非法/空返回 null
   int? _toPx(String raw) {
     final v = double.tryParse(raw.trim());
-    if (v == null || v <= 0) return null;
+    if (v == null || !v.isFinite || v <= 0) return null;
     if (_unitPx) return v.round();
     final dpi = int.tryParse(_dpi.text.trim()) ?? 300;
+    if (dpi <= 0 || dpi > 2400) return null;
     return (v / 25.4 * dpi).round();
   }
 
   /// 单位切换：换算已填数值（px⇄mm，经 DPI），避免用户重输
   void _switchUnit() {
     final dpi = int.tryParse(_dpi.text.trim()) ?? 300;
+    if (dpi <= 0 || dpi > 2400) return;
     double? conv(String raw) {
       final v = double.tryParse(raw.trim());
-      if (v == null || v <= 0) return null;
+      if (v == null || !v.isFinite || v <= 0) return null;
       // 切到 mm：px→mm；切到 px：mm→px（_unitPx 为切换前状态）
       return _unitPx ? v * 25.4 / dpi : v / 25.4 * dpi;
     }
@@ -81,6 +83,7 @@ class _CustomSpecPageState extends State<CustomSpecPage> {
     _height.dispose();
     _minKb.dispose();
     _maxKb.dispose();
+    _dpi.dispose();
     super.dispose();
   }
 

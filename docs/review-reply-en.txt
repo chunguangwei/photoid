@@ -1,3 +1,6 @@
+HISTORICAL CORRESPONDENCE — DO NOT REUSE AS CURRENT METADATA.
+2026-10-21 audit: the no-analytics and custom-head-proportion claims below are not supported by the current implementation. Use docs/release/1.0-build48/ for the corrected draft; do not resend the historical text.
+
 
 --- Follow-up sent 2026-10-14 (status inquiry) ---
 

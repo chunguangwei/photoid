@@ -12,7 +12,8 @@ import '../models/photo_spec.dart';
 import 'image_pipeline.dart';
 
 class CheckItem {
-  const CheckItem(this.id, this.pass, {this.detail, this.fixId, this.soft = false});
+  const CheckItem(this.id, this.pass,
+      {this.detail, this.fixId, this.soft = false});
 
   /// 稳定语义标识（UI 层据此映射 l10n 键，service 文案改动不影响翻译）。
   /// 取值：format/fileSize/decodable/pixelSize/bestSize/ratio/blueBg/
@@ -43,12 +44,17 @@ class ComplianceService {
   Future<ComplianceReport> check(Uint8List jpgBytes, PhotoSpec spec) async {
     final items = <CheckItem>[];
 
-    // 1. 文件格式（流水线恒定输出 jpg）
-    items.add(const CheckItem('format', true));
+    // 实际检查输入，不能仅凭流水线约定把任何字节都标成 JPG。
+    final isJpeg = jpgBytes.length >= 3 &&
+        jpgBytes[0] == 0xff &&
+        jpgBytes[1] == 0xd8 &&
+        jpgBytes[2] == 0xff;
+    items.add(CheckItem('format', isJpeg));
 
     // 2. 文件大小
     final kb = jpgBytes.lengthInBytes / 1024;
-    final kbOk = kb >= spec.minFileKb && kb <= spec.maxFileKb;
+    final kbOk =
+        kb >= spec.minFileKb && (spec.maxFileKb == 0 || kb <= spec.maxFileKb);
     items.add(CheckItem(
       'fileSize',
       kbOk,
@@ -57,13 +63,19 @@ class ComplianceService {
     ));
 
     // 3. 像素尺寸
-    final image = img.decodeJpg(jpgBytes);
+    img.Image? image;
+    try {
+      if (isJpeg) image = img.decodeJpg(jpgBytes);
+    } catch (_) {
+      // 损坏文件也必须返回失败报告，而不是异常中断整页。
+    }
     if (image == null) {
       items.add(const CheckItem('decodable', false, fixId: 'fileCorrupt'));
       return ComplianceReport(items);
     }
     final wOk = image.width >= spec.minWidth && image.width <= spec.maxWidth;
-    final hOk = image.height >= spec.minHeight && image.height <= spec.maxHeight;
+    final hOk =
+        image.height >= spec.minHeight && image.height <= spec.maxHeight;
     items.add(CheckItem(
       'pixelSize',
       wOk && hOk,
@@ -110,12 +122,10 @@ class ComplianceService {
   (int, int, int) _sampleCorners(img.Image image) {
     final short = image.width < image.height ? image.width : image.height;
     // 上界可能小于 4（short<12 的极小图）：先算下界再钳，防 clamp 抛异常
-    final upper = short ~/ 3;
-    final s = (short * 0.08)
-        .round()
-        .clamp(upper < 4 ? upper : 4, upper < 1 ? 1 : upper)
-        .toInt();
-    final midY = (image.height * 0.22).round();
+    final upper = (short ~/ 3).clamp(1, short);
+    final s =
+        (short * 0.08).round().clamp(upper < 4 ? upper : 4, upper).toInt();
+    final midY = (image.height * 0.22).round().clamp(0, image.height - s);
     final regions = [
       (0, 0), // 左上
       (image.width - s, 0), // 右上
@@ -212,8 +222,7 @@ class ComplianceService {
       final faces = await detector.processImage(input);
       if (faces.isEmpty) {
         return [
-          const CheckItem('faceDetected', false,
-              fixId: 'noFace', soft: true),
+          const CheckItem('faceDetected', false, fixId: 'noFace', soft: true),
         ];
       }
       final face = faces.reduce((a, b) =>

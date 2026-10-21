@@ -6,6 +6,7 @@ import '../l10n/l10n_helpers.dart';
 import '../models/photo_spec.dart';
 import '../services/custom_spec_store.dart';
 import '../services/spec_library.dart';
+import '../widgets/glass_surface.dart';
 import 'custom_spec_page.dart';
 import 'edit_page.dart';
 import 'kb_tool_page.dart';
@@ -28,6 +29,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return Scaffold(
+      extendBody: true,
       body: IndexedStack(
         index: _tab,
         children: const [
@@ -35,21 +37,26 @@ class _HomePageState extends State<HomePage> {
           SettingsPage(showAlbumEntry: true),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _tab,
-        onDestinationSelected: (i) => setState(() => _tab = i),
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.home_outlined),
-            selectedIcon: const Icon(Icons.home),
-            label: l.tabHome,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.person_outline),
-            selectedIcon: const Icon(Icons.person),
-            label: l.tabMine,
-          ),
-        ],
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+        child: GlassSurface(
+            child: NavigationBar(
+          height: 68,
+          selectedIndex: _tab,
+          onDestinationSelected: (i) => setState(() => _tab = i),
+          destinations: [
+            NavigationDestination(
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home),
+              label: l.tabHome,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.person_outline),
+              selectedIcon: const Icon(Icons.person),
+              label: l.tabMine,
+            ),
+          ],
+        )),
       ),
     );
   }
@@ -66,6 +73,7 @@ class _HomeTab extends StatefulWidget {
 class _HomeTabState extends State<_HomeTab> {
   /// 已保存的自定义规格（首页展示，可删除）
   List<PhotoSpec> _customSpecs = [];
+  Future<List<PhotoSpec>> _specsFuture = SpecLibrary.load();
 
   @override
   void initState() {
@@ -125,30 +133,49 @@ class _HomeTabState extends State<_HomeTab> {
     final l = AppLocalizations.of(context);
     return SafeArea(
       child: FutureBuilder<List<PhotoSpec>>(
-        future: SpecLibrary.search(_query),
+        future: _specsFuture,
         builder: (context, snapshot) {
           final searching = _query.trim().isNotEmpty;
           // 学生报名照置顶进入规格流（搜索态按相关度排序，不强制置顶）
+          final all = [
+            studentPhotoSpec,
+            ...?snapshot.data?.where((s) => s.id != studentPhotoSpec.id),
+          ];
+          final query = _query.trim().toLowerCase();
           final specs = searching
-              ? (snapshot.data ?? const <PhotoSpec>[])
-              : [
-                  studentPhotoSpec,
-                  ...?snapshot.data?.where((s) => s.id != studentPhotoSpec.id),
-                ];
+              ? all
+                  .where((s) =>
+                      s.name.toLowerCase().contains(query) ||
+                      (s.nameEn?.toLowerCase().contains(query) ?? false) ||
+                      Tr.of(context).specName(s).toLowerCase().contains(query))
+                  .toList()
+              : all;
           return ListView(
-            padding: EdgeInsets.zero,
+            padding: const EdgeInsets.only(bottom: 112),
             children: [
               _brandHeader(context, l),
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    _primaryGrid(context, l),
-                    const SizedBox(height: 8),
                     _secondaryTools(context, l),
+                    const SizedBox(height: 16),
+                    _primaryGrid(context, l),
                     if (_customSpecs.isNotEmpty)
                       _customSpecsSection(context, l),
                     const SizedBox(height: 16),
+                    if (snapshot.hasError) ...[
+                      Text(l.loadFailed),
+                      TextButton(
+                        onPressed: () =>
+                            setState(() => _specsFuture = SpecLibrary.load()),
+                        child: Text(l.retry),
+                      ),
+                    ],
+                    if (searching &&
+                        specs.isEmpty &&
+                        snapshot.connectionState == ConnectionState.done)
+                      Text(l.homeNoResults),
                     TextField(
                       controller: _searchCtrl,
                       onChanged: (v) => setState(() => _query = v),
@@ -180,33 +207,30 @@ class _HomeTabState extends State<_HomeTab> {
 
   /// 品牌头：渐变底 + App 名 + 隐私口号（对标参考图的蓝色横幅位）。
   Widget _brandHeader(BuildContext context, AppLocalizations l) {
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF2B6CB0),
-            const Color(0xFF2B6CB0).withValues(alpha: 0.75)
-          ],
-        ),
-      ),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l.appTitle,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold)),
-          const SizedBox(height: 6),
-          Text(l.privacySlogan,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.white70)),
+          Text(l.homeEyebrow,
+              style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.primary,
+                  letterSpacing: 1.5,
+                  fontWeight: FontWeight.w700)),
+          const SizedBox(height: 14),
+          Text(l.homeHeroTitle, style: theme.textTheme.headlineMedium),
+          const SizedBox(height: 14),
+          Row(children: [
+            Icon(Icons.lock_outline,
+                size: 14, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 6),
+            Expanded(
+                child: Text(l.privacySlogan,
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant))),
+          ]),
         ],
       ),
     );
@@ -250,9 +274,9 @@ class _HomeTabState extends State<_HomeTab> {
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 10,
       crossAxisSpacing: 10,
-      childAspectRatio: 2.4,
+      childAspectRatio: 2,
       children: [
-        for (final (icon, color, label, onTap) in items)
+        for (final (icon, _, label, onTap) in items)
           Card(
             clipBehavior: Clip.antiAlias,
             margin: EdgeInsets.zero,
@@ -265,10 +289,14 @@ class _HomeTabState extends State<_HomeTab> {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.15),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(icon, color: color, size: 20),
+                    child: Icon(icon,
+                        color: Theme.of(context).colorScheme.primary, size: 20),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -287,6 +315,15 @@ class _HomeTabState extends State<_HomeTab> {
 
   /// 拍证件照大卡：滚动到热门规格区（规格即拍摄入口）。
   void _scrollToHot(BuildContext context) {
+    if (_query.isNotEmpty) {
+      _searchCtrl.clear();
+      setState(() => _query = '');
+      FocusManager.instance.primaryFocus?.unfocus();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _scrollToHot(context);
+      });
+      return;
+    }
     Scrollable.ensureVisible(
       _hotHeaderKey.currentContext ?? context,
       duration: const Duration(milliseconds: 300),
@@ -297,19 +334,45 @@ class _HomeTabState extends State<_HomeTab> {
   final GlobalKey _hotHeaderKey = GlobalKey();
 
   /// 次级小工具：自定义规格（保持精简，只放真实存在的功能）。
-  Widget _secondaryTools(BuildContext context, AppLocalizations l) => Row(
-        children: [
-          _smallTool(
-            icon: Icons.tune,
-            label: l.homeCustomSpec,
-            onTap: () async {
-              await Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => const CustomSpecPage(),
-              ));
-              _loadCustomSpecs();
-            },
+  Widget _secondaryTools(BuildContext context, AppLocalizations l) => Card(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () async {
+            await Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const CustomSpecPage(),
+            ));
+            _loadCustomSpecs();
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Row(children: [
+              Container(
+                  width: 44,
+                  height: 52,
+                  decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Icon(Icons.tune,
+                      color: Theme.of(context).colorScheme.primary)),
+              const SizedBox(width: 14),
+              Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    Text(l.homeCustomSpec,
+                        style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 4),
+                    Text(l.homeCustomDesc,
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ])),
+              const SizedBox(width: 8),
+              const Icon(Icons.arrow_forward_rounded, size: 20),
+            ]),
           ),
-        ],
+        ),
       );
 
   /// 已保存自定义规格：点按进入详情，长按删除
@@ -368,35 +431,14 @@ class _HomeTabState extends State<_HomeTab> {
     }
   }
 
-  Widget _smallTool(
-          {required IconData icon,
-          required String label,
-          required VoidCallback onTap}) =>
-      InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 22),
-              const SizedBox(height: 4),
-              Text(label, style: Theme.of(context).textTheme.labelSmall),
-            ],
-          ),
-        ),
-      );
-
   Widget _hotHeader(AppLocalizations l) => Padding(
         key: _hotHeaderKey,
         padding: const EdgeInsets.only(bottom: 8),
         child: Row(
           children: [
-            Text(l.hotNow, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(width: 6),
-            Icon(Icons.local_fire_department,
-                size: 18, color: Colors.orange.shade700),
+            Expanded(
+                child: Text(l.hotNow,
+                    style: Theme.of(context).textTheme.titleMedium)),
           ],
         ),
       );

@@ -5,12 +5,16 @@ import 'package:flutter/services.dart';
 import 'package:gal/gal.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 import '../models/photo_spec.dart';
 import '../services/album_service.dart';
 import '../services/compliance_service.dart';
+import '../services/delivery_report.dart';
+import '../services/delivery_export_cache.dart';
+import '../widgets/glass_surface.dart';
 
 /// 检测与保存页：合规报告 + 自定义文件命名 + 保存到相册。
 class ResultPage extends StatefulWidget {
@@ -44,6 +48,14 @@ class _ResultPageState extends State<ResultPage> {
   @override
   void initState() {
     super.initState();
+    _check();
+  }
+
+  void _check() {
+    setState(() {
+      _report = null;
+      _reportError = null;
+    });
     ComplianceService().check(widget.jpgBytes, widget.spec).then((r) {
       if (mounted) setState(() => _report = r);
     }).catchError((Object e) {
@@ -59,6 +71,7 @@ class _ResultPageState extends State<ResultPage> {
   }
 
   Future<void> _save() async {
+    if (_saving || _saved) return;
     final permissionError =
         AppLocalizations.of(context).galleryPermissionDenied;
     final fileName = _nameController.text.trim();
@@ -74,13 +87,18 @@ class _ResultPageState extends State<ResultPage> {
       // 通过文件名传递用户命名：Android MediaStore / iOS Photos 均保留文件名
       final dir = await getTemporaryDirectory();
       final file = File(p.join(dir.path, '$fileName.jpg'));
-      await file.writeAsBytes(widget.jpgBytes, flush: true);
-      await Gal.putImage(file.path);
-      file.delete().ignore();
+      try {
+        await file.writeAsBytes(widget.jpgBytes, flush: true);
+        await Gal.putImage(file.path);
+      } finally {
+        if (await file.exists()) await file.delete();
+      }
       // 同步双写 App 相册；失败仅记录，不影响主保存流程
-      AlbumService.save(widget.jpgBytes, fileName).then((_) {}, onError: (e) {
+      try {
+        await AlbumService.save(widget.jpgBytes, fileName);
+      } catch (e) {
         debugPrint('AlbumService.save failed: $e');
-      });
+      }
       if (!mounted) return;
       setState(() => _saved = true);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -90,6 +108,49 @@ class _ResultPageState extends State<ResultPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(AppLocalizations.of(context).saveFailed('$e'))));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _exportFiles() async {
+    final report = _report;
+    if (report == null || _saving) return;
+    final l = AppLocalizations.of(context);
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l.fileNameRequired)));
+      return;
+    }
+    final box = context.findRenderObject() as RenderBox?;
+    final origin =
+        box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+    final json = buildDeliveryReport(
+        fileName: '$name.jpg',
+        jpgBytes: widget.jpgBytes,
+        spec: widget.spec,
+        report: report);
+    setState(() => _saving = true);
+    try {
+      final cache = DeliveryExportCache(await getTemporaryDirectory());
+      await cache.cleanExpired();
+      final files = await cache.prepare(
+          name: name, jpgBytes: widget.jpgBytes, report: json);
+      await SharePlus.instance.share(ShareParams(
+        files: [
+          XFile(files[0].path, mimeType: 'image/jpeg'),
+          XFile(files[1].path, mimeType: 'application/json'),
+        ],
+        fileNameOverrides: ['$name.jpg', '$name.checks.json'],
+        sharePositionOrigin: origin,
+      ));
+      // A share sheet result cannot guarantee the chosen destination saved it.
+      // Keep the screen available for another export or Photos save.
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l.saveFailed('$e'))));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -115,7 +176,7 @@ class _ResultPageState extends State<ResultPage> {
                   width: 96,
                   height: 128,
                   color: theme.colorScheme.surfaceContainerHighest,
-                  child: Image.memory(widget.jpgBytes, fit: BoxFit.cover),
+                  child: Image.memory(widget.jpgBytes, fit: BoxFit.contain),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -132,25 +193,29 @@ class _ResultPageState extends State<ResultPage> {
                       ),
                       const SizedBox(height: 8),
                       if (report != null)
-                        Chip(
-                          avatar: Icon(
-                            report.hardAllPass
-                                ? Icons.check_circle
-                                : Icons.warning_amber,
-                            size: 18,
-                            color: report.hardAllPass
-                                ? Colors.green
-                                : Colors.orange,
-                          ),
-                          label: Text(report.hardAllPass
-                              ? l.verdictPass
-                              : l.verdictFail),
-                        ),
+                        Wrap(children: [
+                          Chip(
+                            avatar: Icon(
+                              report.hardAllPass
+                                  ? Icons.check_circle
+                                  : Icons.warning_amber,
+                              size: 18,
+                              color: report.hardAllPass
+                                  ? Colors.green
+                                  : Colors.orange,
+                            ),
+                            label: Text(report.hardAllPass
+                                ? l.verdictPass
+                                : l.verdictFail),
+                          )
+                        ]),
                     ],
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 16),
+            Text(l.photoChecksNote, style: theme.textTheme.bodySmall),
             const SizedBox(height: 16),
             Text(l.checkItemsTitle, style: theme.textTheme.titleSmall),
             const SizedBox(height: 4),
@@ -159,16 +224,22 @@ class _ResultPageState extends State<ResultPage> {
                 padding: const EdgeInsets.all(24),
                 child: Center(
                   child: _reportError != null
-                      ? Text(_reportError!, textAlign: TextAlign.center)
+                      ? Column(children: [
+                          Text(l.checkFailedRetry, textAlign: TextAlign.center),
+                          TextButton(onPressed: _check, child: Text(l.retry)),
+                        ])
                       : const CircularProgressIndicator(),
                 ),
               )
             else
               ...report.items.map(_buildCheckTile),
             const SizedBox(height: 16),
+            Text(l.deliveryExportHint, style: theme.textTheme.bodySmall),
+            const SizedBox(height: 12),
             TextField(
               controller: _nameController,
-              enabled: !_saved,
+              enabled: !_saved && !_saving,
+              maxLength: 80,
               decoration: InputDecoration(
                 labelText: l.fileNameLabel,
                 hintText: l.fileNameHint,
@@ -177,7 +248,7 @@ class _ResultPageState extends State<ResultPage> {
                 suffixIcon: IconButton(
                   tooltip: l.fileNameRegenerate,
                   icon: const Icon(Icons.autorenew),
-                  onPressed: _saved
+                  onPressed: _saved || _saving
                       ? null
                       : () =>
                           setState(() => _nameController.text = _genFileName()),
@@ -193,34 +264,51 @@ class _ResultPageState extends State<ResultPage> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: _saved
-              ? FilledButton.icon(
-                  onPressed: () =>
-                      Navigator.of(context).popUntil((route) => route.isFirst),
-                  icon: const Icon(Icons.add_a_photo_outlined),
-                  label: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    child: Text(l.doneRetake,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600)),
-                  ),
-                )
-              : FilledButton.icon(
-                  onPressed: _saving ? null : _save,
-                  icon: _saving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+          child: GlassSurface(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (!_saved) ...[
+                    FilledButton.icon(
+                        onPressed:
+                            _saving || report == null ? null : _exportFiles,
+                        icon: const Icon(Icons.ios_share),
+                        label: Text(l.deliveryExport)),
+                    const SizedBox(height: 4),
+                  ],
+                  _saved
+                      ? FilledButton.icon(
+                          onPressed: () => Navigator.of(context)
+                              .popUntil((route) => route.isFirst),
+                          icon: const Icon(Icons.add_a_photo_outlined),
+                          label: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            child: Text(l.doneRetake,
+                                style: const TextStyle(
+                                    fontSize: 14, fontWeight: FontWeight.w600)),
+                          ),
                         )
-                      : const Icon(Icons.save_alt),
-                  label: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    child: Text(l.saveToGallery,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600)),
-                  ),
-                ),
+                      : TextButton.icon(
+                          onPressed: _saving || report == null ? null : _save,
+                          icon: _saving
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.save_alt),
+                          label: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            child: Text(l.saveToGallery,
+                                style: const TextStyle(
+                                    fontSize: 14, fontWeight: FontWeight.w600)),
+                          ),
+                        ),
+                ]),
+          ),
         ),
       ),
     );

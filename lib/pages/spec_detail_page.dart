@@ -87,20 +87,24 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // 背景色行：色块直选（右侧）
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(l.specBgColor, style: theme.textTheme.bodyMedium),
-                        const Spacer(),
-                        for (final bg in idPhotoBackgrounds)
-                          _bgSwatch(spec, bg),
+                        const SizedBox(height: 4),
+                        Wrap(children: [
+                          for (final bg in idPhotoBackgrounds)
+                            _bgSwatch(spec, bg),
+                        ]),
                       ],
                     ),
                     const Divider(height: 24),
                     // 文件大小行：可设置大小
-                    Row(
+                    Wrap(
+                      spacing: 12,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(l.specFileSize, style: theme.textTheme.bodyMedium),
-                        const SizedBox(width: 12),
                         OutlinedButton.icon(
                           onPressed: _editKbRange,
                           icon: const Icon(Icons.edit, size: 14),
@@ -110,12 +114,14 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
                             visualDensity: VisualDensity.compact,
                           ),
                         ),
-                        const Spacer(),
                         Text(
-                          spec.minFileKb == 0
+                          spec.minFileKb == 0 && spec.maxFileKb == 0
                               ? l.specNoLimit
                               : l.specKbRange(
-                                  '${spec.minFileKb}', '${spec.maxFileKb}'),
+                                  '${spec.minFileKb}',
+                                  spec.maxFileKb == 0
+                                      ? '∞'
+                                      : '${spec.maxFileKb}'),
                           style: theme.textTheme.bodyMedium,
                         ),
                       ],
@@ -207,31 +213,39 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
   /// 背景色块（对标参考 app 行内色块直选）
   Widget _bgSwatch(PhotoSpec spec, SpecBackground bg) {
     final selected = bg.name == _spec.background.name;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => setState(() => _spec = _spec.copyWith(background: bg)),
-      child: Padding(
-        padding: const EdgeInsets.all(9),
-        child: Container(
-          width: 26,
-          height: 26,
-          decoration: BoxDecoration(
-            color: Color.fromARGB(255, bg.r, bg.g, bg.b),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: selected
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.outlineVariant,
-              width: selected ? 2 : 1,
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: localizedBgName(context, bg),
+      child: Tooltip(
+        message: localizedBgName(context, bg),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => setState(() => _spec = _spec.copyWith(background: bg)),
+          child: Padding(
+            padding: const EdgeInsets.all(9),
+            child: Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                color: Color.fromARGB(255, bg.r, bg.g, bg.b),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: selected
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.outlineVariant,
+                  width: selected ? 2 : 1,
+                ),
+              ),
+              child: selected
+                  ? Icon(Icons.check,
+                      size: 14,
+                      color: bg.r > 200 && bg.g > 200
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.white)
+                  : null,
             ),
           ),
-          child: selected
-              ? Icon(Icons.check,
-                  size: 14,
-                  color: bg.r > 200 && bg.g > 200
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.white)
-              : null,
         ),
       ),
     );
@@ -240,63 +254,78 @@ class _SpecDetailPageState extends State<SpecDetailPage> {
   /// 「可设置大小」对话框：自定义 KB 区间（对标参考 app）
   Future<void> _editKbRange() async {
     final l = AppLocalizations.of(context);
-    final minC = TextEditingController(
-        text: _spec.minFileKb == 0 ? '' : '${_spec.minFileKb}');
-    final maxC = TextEditingController(
-        text: _spec.maxFileKb == 0 ? '' : '${_spec.maxFileKb}');
-    final ok = await showDialog<bool>(
+    final values = await showDialog<(String, String)>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        scrollable: true,
-        title: Text(l.specKbDialogTitle),
-        content: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: minC,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: l.customMinKb),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: TextField(
-                controller: maxC,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: l.customMaxKb),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l.dialogCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l.confirm),
-          ),
-        ],
-      ),
+      builder: (_) => _KbRangeDialog(spec: _spec),
     );
-    if (ok != true) return;
-    final minKb = int.tryParse(minC.text.trim()) ?? 0;
-    final maxKb = int.tryParse(maxC.text.trim()) ?? 0;
-    // min 不可达钳制：像素总量决定 JPEG 质量 100 的上限，min 过高会让
-    // 编码器永远达不到下限，合规检测报无法修复的 fileTooSmall
-    final estMaxKb = _spec.pixelWidth * _spec.pixelHeight ~/ 400;
-    if (minKb < 0 ||
+    if (values == null || !mounted) return;
+    final (minText, maxText) = values;
+    final minKb = minText.isEmpty ? 0 : int.tryParse(minText);
+    final maxKb = maxText.isEmpty ? 0 : int.tryParse(maxText);
+    if (minKb == null ||
+        maxKb == null ||
+        minKb < 0 ||
         maxKb < 0 ||
-        (minKb > 0 && maxKb > 0 && minKb > maxKb) ||
-        minKb > estMaxKb) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(minKb > estMaxKb
-              ? l.specKbUnreachable('${estMaxKb.clamp(1, 9999)}')
-              : l.customInvalid)));
+        minKb > 2048 ||
+        maxKb > 10240 ||
+        (minKb > 0 && maxKb > 0 && minKb > maxKb)) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l.customInvalid)));
       return;
     }
     setState(() => _spec = _spec.copyWith(minFileKb: minKb, maxFileKb: maxKb));
+  }
+}
+
+/// Own controllers until the closing route animation has actually unmounted.
+class _KbRangeDialog extends StatefulWidget {
+  const _KbRangeDialog({required this.spec});
+  final PhotoSpec spec;
+  @override
+  State<_KbRangeDialog> createState() => _KbRangeDialogState();
+}
+
+class _KbRangeDialogState extends State<_KbRangeDialog> {
+  late final _min = TextEditingController(
+      text: widget.spec.minFileKb == 0 ? '' : '${widget.spec.minFileKb}');
+  late final _max = TextEditingController(
+      text: widget.spec.maxFileKb == 0 ? '' : '${widget.spec.maxFileKb}');
+
+  @override
+  void dispose() {
+    _min.dispose();
+    _max.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return AlertDialog(
+      scrollable: true,
+      title: Text(l.specKbDialogTitle),
+      content: Row(children: [
+        Expanded(
+            child: TextField(
+                controller: _min,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: l.customMinKb))),
+        const SizedBox(width: 12),
+        Expanded(
+            child: TextField(
+                controller: _max,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: l.customMaxKb))),
+      ]),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l.dialogCancel)),
+        FilledButton(
+            onPressed: () =>
+                Navigator.of(context).pop((_min.text.trim(), _max.text.trim())),
+            child: Text(l.confirm)),
+      ],
+    );
   }
 }

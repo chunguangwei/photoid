@@ -1,0 +1,96 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:photoid/main.dart' as app;
+import 'package:photoid/l10n/app_localizations.dart';
+import 'package:photoid/models/photo_spec.dart';
+import 'package:photoid/pages/crop_editor.dart';
+import 'package:photoid/pages/edit_page.dart';
+import 'package:photoid/pages/result_page.dart';
+import 'package:photoid/pages/scan_effect.dart';
+import 'package:photoid/pages/spec_detail_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+void main() {
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  testWidgets('on-device custom photo delivery workflow', (tester) async {
+    // Isolate review-only preferences from the user's real saved specifications.
+    SharedPreferences.setMockInitialValues({'locale_override': 'en'});
+    await app.main();
+    await tester.pump(const Duration(seconds: 7));
+    await tester.pumpAndSettle();
+    final l = await AppLocalizations.delegate.load(const Locale('en'));
+    await binding.takeScreenshot('01_home');
+
+    await tester.tap(find.text(l.homeCustomSpec));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.widgetWithText(TextField, l.customName), 'Application photo');
+    await tester.enterText(
+        find.widgetWithText(TextField, l.customWidth), '480');
+    await tester.enterText(
+        find.widgetWithText(TextField, l.customHeight), '640');
+    await tester.enterText(find.widgetWithText(TextField, l.customMinKb), '20');
+    await tester.enterText(
+        find.widgetWithText(TextField, l.customMaxKb), '100');
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text(l.customCreate));
+    await tester.tap(find.text(l.customCreate));
+    await tester.pumpAndSettle();
+    expect(find.byType(SpecDetailPage), findsOneWidget);
+    await binding.takeScreenshot('02_custom_requirements');
+    final spec =
+        tester.widget<SpecDetailPage>(find.byType(SpecDetailPage)).spec;
+    expect((spec.pixelWidth, spec.pixelHeight, spec.minFileKb, spec.maxFileKb),
+        (480, 640, 20, 100));
+
+    final dir = await getApplicationDocumentsDirectory();
+    final source = File('${dir.path}/photoid_review_fixture.png');
+    expect(await source.exists(), isTrue,
+        reason:
+            'Copy the review fixture to the app Documents directory before running.');
+    final context = tester.element(find.byType(SpecDetailPage));
+    Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => EditPage(sourcePath: source.path, spec: spec)));
+    final deadline = DateTime.now().add(const Duration(seconds: 90));
+    while (find.byType(CropEditor).evaluate().isEmpty &&
+        DateTime.now().isBefore(deadline)) {
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+    expect(find.byType(CropEditor), findsOneWidget,
+        reason:
+            'Native face detection and bundled MODNet must produce a preview');
+    await binding.takeScreenshot('03_edit');
+    await tester.tap(find.text(l.bgRed));
+    final recolorDeadline = DateTime.now().add(const Duration(seconds: 20));
+    do {
+      await tester.pump(const Duration(milliseconds: 300));
+    } while (find.byType(ScanOverlayEffect).evaluate().isNotEmpty &&
+        DateTime.now().isBefore(recolorDeadline));
+    await tester.tap(find.text(l.editCropReset));
+    await tester.tap(find.text(l.saveAction));
+    final reportDeadline = DateTime.now().add(const Duration(seconds: 60));
+    while (find.byType(ResultPage).evaluate().isEmpty &&
+        DateTime.now().isBefore(reportDeadline)) {
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+    while (find.text(l.verdictPass).evaluate().isEmpty &&
+        DateTime.now().isBefore(reportDeadline)) {
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+    expect(find.text(l.verdictPass), findsOneWidget,
+        reason: 'Actual output must pass the requested file checks');
+    final result = tester.widget<ResultPage>(find.byType(ResultPage));
+    expect(
+        result.jpgBytes.lengthInBytes, inInclusiveRange(20 * 1024, 100 * 1024));
+    expect(result.spec.background.name, idPhotoRed.name);
+    await binding.takeScreenshot('04_file_checks');
+    expect(find.text(l.deliveryExport), findsOneWidget);
+    await source.delete();
+    await tester.pumpWidget(const SizedBox());
+  }, timeout: const Timeout(Duration(minutes: 5)));
+}

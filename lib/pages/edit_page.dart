@@ -38,6 +38,8 @@ class _EditPageState extends State<EditPage> {
   String? _error;
   bool _showOriginal = false;
   bool _regenerating = false;
+  int _backgroundSeq = 0;
+  bool _switchingBackground = false;
 
   /// 面部精修强度 0–1（磨皮/匀肤/提亮/轻度瘦脸）。
   ///
@@ -53,11 +55,6 @@ class _EditPageState extends State<EditPage> {
   /// 预览用合成图缓存（效果重算产物）
   Uint8List? _previewJpg;
 
-  /// 流水线结果版本号：**只在重跑流水线时自增**，用于重建裁剪编辑器。
-  /// 效果重算不动它——底图字节变了由 CropEditor.didUpdateWidget 处理，
-  /// 用户已调好的取景框得以保留。
-  int _resultVersion = 0;
-
   /// 效果重算：只认最新一次请求（序号比对），避免快速拖动时旧结果覆盖新结果
   int _effectsSeq = 0;
   bool _effectsBusy = false;
@@ -66,7 +63,7 @@ class _EditPageState extends State<EditPage> {
   /// 导出中（生成成片跑在 isolate，期间禁用保存按钮防重复点击）
   bool _exporting = false;
 
-  final GlobalKey<CropEditorState> _editorKey = GlobalKey<CropEditorState>();
+  GlobalKey<CropEditorState> _editorKey = GlobalKey<CropEditorState>();
   Rect? _currentCrop;
 
   @override
@@ -142,9 +139,13 @@ class _EditPageState extends State<EditPage> {
   Future<void> _switchBackground(SpecBackground bg) async {
     final r = _result;
     if (bg.name == _spec.background.name || r == null) return;
+    final seq = ++_backgroundSeq;
+    ++_effectsSeq;
+    _effectsDebounce?.cancel();
     setState(() {
       _spec = _spec.copyWith(background: bg);
       _effectsBusy = true;
+      _switchingBackground = true;
     });
     try {
       final recolored = await compute(
@@ -158,7 +159,7 @@ class _EditPageState extends State<EditPage> {
         ),
       );
       // 期间用户又换了色 / 重跑了流水线 → 丢弃
-      if (!mounted || _result != r) return;
+      if (!mounted || seq != _backgroundSeq) return;
       setState(() {
         _result = r.withBackground(recolored);
         _previewJpg = null;
@@ -167,12 +168,17 @@ class _EditPageState extends State<EditPage> {
       await _refreshEffects();
     } catch (_) {
       // 换底失败（极端 OOM）：退回整条流水线重跑，保证界面不停在半路
-      if (!mounted) return;
+      if (!mounted || seq != _backgroundSeq) return;
       setState(() => _regenerating = true);
       await _run();
       if (mounted) setState(() => _regenerating = false);
     } finally {
-      if (mounted) setState(() => _effectsBusy = false);
+      if (mounted && seq == _backgroundSeq) {
+        setState(() {
+          _effectsBusy = false;
+          _switchingBackground = false;
+        });
+      }
     }
   }
 
@@ -201,7 +207,7 @@ class _EditPageState extends State<EditPage> {
       setState(() {
         _result = result;
         _previewJpg = null;
-        _resultVersion++;
+        _editorKey = GlobalKey<CropEditorState>();
       });
       // 出片已带上效果；预览图还要单独渲染一份（未裁剪的完整工作图）
       _refreshEffects();
@@ -228,7 +234,9 @@ class _EditPageState extends State<EditPage> {
         title: Text(AppLocalizations.of(context).editTitle),
         actions: [
           TextButton(
-            onPressed: (result == null || _exporting) ? null : _goResult,
+            onPressed: (result == null || _exporting || _switchingBackground)
+                ? null
+                : _goResult,
             child: _exporting
                 ? const SizedBox(
                     width: 18,
@@ -257,7 +265,8 @@ class _EditPageState extends State<EditPage> {
   /// 点「保存」瞬间会整页冻结数秒。
   Future<void> _goResult() async {
     final r = _result;
-    if (r == null || _exporting) return;
+    if (r == null || _exporting || _switchingBackground) return;
+    final spec = _spec;
     setState(() => _exporting = true);
     try {
       final jpg = await compute(
@@ -268,19 +277,19 @@ class _EditPageState extends State<EditPage> {
           height: r.compositedHeight,
           crop: _currentCrop ?? r.autoCrop,
           faceRect: r.faceRect,
-          targetWidth: _spec.pixelWidth,
-          targetHeight: _spec.pixelHeight,
+          targetWidth: spec.pixelWidth,
+          targetHeight: spec.pixelHeight,
           bg: Uint8List.fromList(
-              [_spec.background.r, _spec.background.g, _spec.background.b]),
-          minKb: _spec.minFileKb,
-          maxKb: _spec.maxFileKb,
+              [spec.background.r, spec.background.g, spec.background.b]),
+          minKb: spec.minFileKb,
+          maxKb: spec.maxFileKb,
           beauty: _beauty,
           clarity: _clarity,
         ),
       );
       if (!mounted) return;
       await Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) => ResultPage(jpgBytes: jpg, spec: _spec),
+        builder: (_) => ResultPage(jpgBytes: jpg, spec: spec),
       ));
     } catch (e) {
       if (mounted) {
@@ -375,13 +384,16 @@ class _EditPageState extends State<EditPage> {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Center(
-              child: _showOriginal
-                  ? Image.memory(result.originalBytes, fit: BoxFit.contain)
-                  : Stack(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Offstage(
+                    offstage: _showOriginal,
+                    child: Stack(
                       fit: StackFit.expand,
                       children: [
                         CropEditor(
-                          key: ValueKey(_resultVersion),
+                          key: _editorKey,
                           imageBytes: _previewJpg ?? result.compositedJpg,
                           imageWidth: result.compositedWidth,
                           imageHeight: result.compositedHeight,
@@ -394,6 +406,11 @@ class _EditPageState extends State<EditPage> {
                           const IgnorePointer(child: ScanOverlayEffect()),
                       ],
                     ),
+                  ),
+                  if (_showOriginal)
+                    Image.memory(result.originalBytes, fit: BoxFit.contain),
+                ],
+              ),
             ),
           ),
         ),
@@ -547,7 +564,7 @@ class _EditPageState extends State<EditPage> {
   Widget _bgSwatch(SpecBackground bg) {
     final selected = bg.name == _spec.background.name;
     return GestureDetector(
-      onTap: (_result == null && _error == null)
+      onTap: _exporting || (_result == null && _error == null)
           ? null
           : () => _switchBackground(bg),
       child: Column(

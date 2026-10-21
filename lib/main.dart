@@ -2,14 +2,18 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'l10n/app_localizations.dart';
 import 'pages/splash_page.dart';
 import 'pages/update_dialog.dart';
 import 'services/locale_service.dart';
 import 'services/update_service.dart';
+import 'services/glass_preferences.dart';
+import 'theme/app_theme.dart';
+import 'services/delivery_export_cache.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // 全部 UI 按竖屏设计（拍摄/裁剪/编辑均无横屏布局），锁定竖屏
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
@@ -21,6 +25,10 @@ void main() async {
     return ErrorWidget(details.exception);
   };
   await LocaleService.load();
+  await GlassPreferences.load();
+  unawaited(getTemporaryDirectory()
+      .then((dir) => DeliveryExportCache(dir).cleanExpired())
+      .catchError((Object e) => debugPrint('Export cache cleanup failed: $e')));
   runApp(const PhotoIdApp());
 }
 
@@ -69,11 +77,11 @@ class _PhotoIdAppState extends State<PhotoIdApp> {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         localeResolutionCallback: (deviceLocale, supported) {
-          // 系统语言为英文时用英文，否则回退中文。
-          if (deviceLocale != null && deviceLocale.languageCode == 'en') {
-            return const Locale('en');
+          // 中文系统使用中文；其余语言回退上架主语言英文。
+          if (deviceLocale?.languageCode == 'zh') {
+            return const Locale('zh');
           }
-          return const Locale('zh');
+          return const Locale('en');
         },
         debugShowCheckedModeBanner: false,
         builder: (context, child) {
@@ -84,15 +92,8 @@ class _PhotoIdAppState extends State<PhotoIdApp> {
             child: child!,
           );
         },
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2B6CB0)),
-          useMaterial3: true,
-        ),
-        darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF2B6CB0), brightness: Brightness.dark),
-          useMaterial3: true,
-        ),
+        theme: photoIdTheme(Brightness.light),
+        darkTheme: photoIdTheme(Brightness.dark),
         home: const SplashPage(),
       ),
     );

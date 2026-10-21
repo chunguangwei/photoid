@@ -287,13 +287,13 @@ abstract class AppLocalizations {
   /// No description provided for @complianceCheckSave.
   ///
   /// In en, this message translates to:
-  /// **'Run compliance check & save'**
+  /// **'Check photo & save'**
   String get complianceCheckSave;
 
   /// No description provided for @resultTitle.
   ///
   /// In en, this message translates to:
-  /// **'Compliance check'**
+  /// **'Photo checks'**
   String get resultTitle;
 
   /// No description provided for @checkItemsTitle.
@@ -305,13 +305,13 @@ abstract class AppLocalizations {
   /// No description provided for @verdictPass.
   ///
   /// In en, this message translates to:
-  /// **'Meets requirements'**
+  /// **'File checks passed'**
   String get verdictPass;
 
   /// No description provided for @verdictFail.
   ///
   /// In en, this message translates to:
-  /// **'Some checks failed'**
+  /// **'Review failed checks'**
   String get verdictFail;
 
   /// No description provided for @fileNameLabel.
@@ -887,13 +887,13 @@ abstract class AppLocalizations {
   /// No description provided for @privacySlogan.
   ///
   /// In en, this message translates to:
-  /// **'Photos never leave your device'**
+  /// **'Photo processing stays on your device'**
   String get privacySlogan;
 
   /// No description provided for @hotNow.
   ///
   /// In en, this message translates to:
-  /// **'Trending'**
+  /// **'Common specifications'**
   String get hotNow;
 
   /// No description provided for @checkBgColor.
@@ -1207,6 +1207,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete'**
   String get customDelete;
+
+  /// No description provided for @privacyPolicyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get privacyPolicyTitle;
+
+  /// No description provided for @privacyPolicyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated October 21, 2026\n\nPhotos and face detection results are processed on your device and are not uploaded for processing. No account is required, and the app has no advertising SDK.\n\nCamera access is used to take photos. Photo library access is used to choose photos and save finished images, only when you use those features.\n\nSaved results are also stored in the app’s private album. Delete them in My Photos. Exported copies must be deleted separately in the system photo library. System photo syncing and backups follow your device settings. Language and custom specifications are stored locally.\n\nGoogle ML Kit performs face detection locally, but can send technical diagnostics and usage metrics to Google, including device/app information, per-installation identifiers, API events, performance and errors. These metrics do not include your input photos or detection results. ONNX Runtime runs the bundled background-removal model locally.\n\nAndroid checks GitHub for app updates and downloads updates on request. iOS updates come from the App Store. Opening the online policy uses your browser.\n\nQuestions: chunguangwee@gmail.com. The online policy provides further details and links to Google’s SDK disclosures.\n\nTemporary export copies are kept in the app cache so receiving apps can read them. Copies older than one day are removed at the next app launch or export.'**
+  String get privacyPolicyBody;
+
+  /// No description provided for @linkOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to open this link. You can copy it and open it in your browser.'**
+  String get linkOpenFailed;
+
+  /// No description provided for @photoChecksNote.
+  ///
+  /// In en, this message translates to:
+  /// **'These checks cover selected file properties and general framing estimates. They do not certify compliance or guarantee acceptance. Check the receiving organization’s current requirements.'**
+  String get photoChecksNote;
+
+  /// No description provided for @checkFailedRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Checks could not be completed. Please retry.'**
+  String get checkFailedRetry;
+
+  /// No description provided for @homeNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching specifications. Try another name or create a custom spec.'**
+  String get homeNoResults;
+
+  /// No description provided for @loadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load. Please retry.'**
+  String get loadFailed;
+
+  /// No description provided for @kbLimitUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'This KB limit cannot be reached while preserving the image dimensions. Choose a larger limit.'**
+  String get kbLimitUnreachable;
+
+  /// No description provided for @homeHeroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your photo.\nYour requirements.'**
+  String get homeHeroTitle;
+
+  /// No description provided for @homeEyebrow.
+  ///
+  /// In en, this message translates to:
+  /// **'ON-DEVICE PHOTO WORKSPACE'**
+  String get homeEyebrow;
+
+  /// No description provided for @homeCustomDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Set dimensions, background and KB limits'**
+  String get homeCustomDesc;
+
+  /// No description provided for @deliveryExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export JPEG + report'**
+  String get deliveryExport;
+
+  /// No description provided for @deliveryExportHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Export the unchanged JPEG and a JSON check report. Choose Save to Files in the system sheet for file upload. Other destinations may alter images.'**
+  String get deliveryExportHint;
 }
 
 class _AppLocalizationsDelegate

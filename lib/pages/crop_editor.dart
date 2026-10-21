@@ -35,6 +35,7 @@ class CropEditor extends StatefulWidget {
 class CropEditorState extends State<CropEditor> {
   ui.Image? _image;
   bool _decodeFailed = false;
+  int _decodeSeq = 0;
 
   /// 用户缩放倍率（相对铺满窗口的基准），≥1
   double _scale = 1;
@@ -84,17 +85,33 @@ class CropEditorState extends State<CropEditor> {
   }
 
   Future<void> _decode() async {
+    final seq = ++_decodeSeq;
+    ui.Codec? codec;
     try {
-      final codec = await ui.instantiateImageCodec(widget.imageBytes);
+      codec = await ui.instantiateImageCodec(widget.imageBytes);
       final frame = await codec.getNextFrame();
-      if (mounted) setState(() => _image = frame.image);
+      if (!mounted || seq != _decodeSeq) {
+        frame.image.dispose();
+        return;
+      }
+      final old = _image;
+      setState(() => _image = frame.image);
+      old?.dispose();
     } catch (e) {
       // 解码失败（OOM/数据损坏）：可观测日志 + 占位图标，不留白屏
       debugPrint('CropEditor decode failed '
           '(${widget.imageWidth}x${widget.imageHeight}, '
           '${widget.imageBytes.lengthInBytes}B): $e');
-      if (mounted) setState(() => _decodeFailed = true);
+      if (mounted && seq == _decodeSeq) setState(() => _decodeFailed = true);
+    } finally {
+      codec?.dispose();
     }
+  }
+
+  @override
+  void dispose() {
+    _image?.dispose();
+    super.dispose();
   }
 
   /// 还原为自动构图
@@ -151,8 +168,7 @@ class CropEditorState extends State<CropEditor> {
     final dispH = widget.imageHeight * _baseScale * _scale;
     final loX = math.min(0.0, _window.width - dispW);
     final loY = math.min(0.0, _window.height - dispH);
-    _offset = Offset(
-        _offset.dx.clamp(loX, 0.0), _offset.dy.clamp(loY, 0.0));
+    _offset = Offset(_offset.dx.clamp(loX, 0.0), _offset.dy.clamp(loY, 0.0));
   }
 
   /// 当前取图窗对应的图像坐标裁剪框（高由宽÷比例推导，严格等比）
@@ -175,8 +191,7 @@ class CropEditorState extends State<CropEditor> {
     setState(() {
       if (d.scale != 1.0) {
         // 双指等比缩放：保持焦点下的图像点不动
-        final newScale =
-            (_gestureStartScale * d.scale).clamp(1.0, 8.0);
+        final newScale = (_gestureStartScale * d.scale).clamp(1.0, 8.0);
         final k = newScale / _gestureStartScale;
         _scale = newScale;
         _offset = _gestureFocalWindow -
@@ -201,8 +216,8 @@ class CropEditorState extends State<CropEditor> {
         final image = _image;
         if (_decodeFailed) {
           return const Center(
-            child: Icon(Icons.broken_image_outlined,
-                size: 48, color: Colors.grey),
+            child:
+                Icon(Icons.broken_image_outlined, size: 48, color: Colors.grey),
           );
         }
         return GestureDetector(
@@ -274,8 +289,7 @@ class _CropPainter extends CustomPainter {
       ..drawRect(
           Rect.fromLTRB(0, window.top, window.left, window.bottom), overlay)
       ..drawRect(
-          Rect.fromLTRB(
-              window.right, window.top, size.width, window.bottom),
+          Rect.fromLTRB(window.right, window.top, size.width, window.bottom),
           overlay);
     // 窗框
     canvas.drawRect(
@@ -291,10 +305,8 @@ class _CropPainter extends CustomPainter {
     for (var i = 1; i <= 2; i++) {
       final gx = window.left + window.width * i / 3;
       final gy = window.top + window.height * i / 3;
-      canvas.drawLine(
-          Offset(gx, window.top), Offset(gx, window.bottom), grid);
-      canvas.drawLine(
-          Offset(window.left, gy), Offset(window.right, gy), grid);
+      canvas.drawLine(Offset(gx, window.top), Offset(gx, window.bottom), grid);
+      canvas.drawLine(Offset(window.left, gy), Offset(window.right, gy), grid);
     }
   }
 
