@@ -13,7 +13,7 @@
     "whatsNew": "Application tasks with saved requirements and source references; existing-file checks; up to five photo outputs from one source; ZIP delivery with JPEGs, JSON reports and a readable checklist. Existing photo tools remain available."
   },
   "zh-Hans": {
-    "name": "智能证件照",
+    "name": "PhotoID Studio",
     "subtitle": "按报名要求制作、检查和导出照片",
     "promotionalText": "保存报名要求，检查已有照片，用一张原图分别制作多个版本，再把 JPEG 和可读清单一起导出。",
     "keywords": "证件照,报名照,照片压缩,像素,KB,裁剪,换底,照片文件,离线",

@@ -18,6 +18,8 @@ iOS release 构建成功：cn.wcg.idphoto / 1.1.0 (49)，108.2MB。已覆盖安�
 
 本机产物保存在原项目 build/releases/1.1.0/：app-release.apk、SHA256SUMS、Runner.app。Runner.app 为真机开发签名包，不是 App Store 分发 IPA。
 
-完整的系统文件选择器、真实照片推理、相机授权、Photos 保存、系统分享与 ZIP 解压、离线与 iPad 兼容模式仍需设备验收，不能用模型/单元测试替代。未登录读取申诉最新回复，未上传或提交 App Store，未完成系统性竞品差异验证，不保证 4.3 审核结果。2026-10-23 已授权发布 GitHub v1.1.0，使用本记录校验的 APK；发布结果见 https://github.com/chunguangwei/photoid/releases/tag/v1.1.0 。
+完整的系统文件选择器、真实照片推理、相机授权、Photos 保存、系统分享与 ZIP 解压、离线与 iPad 兼容模式仍需设备验收，不能用模型/单元测试替代。2026-10-23 已在原 ASC 记录读取消息（无新回复），已通过 Xcode 上传 1.1.0 (49)，尚未重新提交审核，未完成系统性竞品差异验证，不保证 4.3 审核结果。2026-10-23 已授权发布 GitHub v1.1.0，使用本记录校验的 APK；发布结果见 https://github.com/chunguangwei/photoid/releases/tag/v1.1.0 。
 
 源码功能提交：`2907acf`。本机原有 Info.plist 的重排改动保留，未纳入功能提交。
+
+2026-10-23：正式 IPA 导出与上传成功，App Privacy 已按随包 SDK 清单发布修正。详见 submission-status-2026-10-23.md；新截图和系统交付流程验收仍待完成。
