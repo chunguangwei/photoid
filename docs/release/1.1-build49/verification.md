@@ -14,10 +14,10 @@
 
 Android release 构建成功：1.1.0 / versionCode 49，minSdk 26、targetSdk 36，三架构通用包。apksigner 验证通过，沿用正式签名证书 SHA-256 d27c0bd02d30bf67b1b66d833934a0ec806a5f22a1085839988551bd8616c87f。APK 字节数 146007258，SHA-256 `1b60dc6f55ee4c9d3612935de5b8a9d1e7439e05dbd3227588c0891bd2d3a2a7`。最终合并清单没有多余麦克风、音频、视频或通知权限。
 
-iOS release 构建成功：cn.wcg.idphoto / 1.1.0 (49)，108.2MB。已覆盖安装 iPhone 13，设备端版本确认是 1.1.0 (49)，未卸载。电脑端 codesign --verify --deep --strict 通过；与旧版使用相同开发证书、团队、entitlements 与未过期且包含该设备的 profile。设备启动仍被 iOS Security 拒绝（签名/权限/未信任提示），已请求用户核对手机弹窗；不能据安装成功声称真机可运行。
+iOS release 构建成功：cn.wcg.idphoto / 1.1.0 (49)，108.2MB。已覆盖安装 iPhone 13，设备端版本确认是 1.1.0 (49)，未卸载。电脑端 codesign --verify --deep --strict 通过；与旧版使用相同开发证书、团队、entitlements 与未过期且包含该设备的 profile。最初启动曾被 iOS Security 拒绝；用户确认安装后，再次通过 devicectl 启动成功。该结果只确认启动，不代表完整真机流程验收。
 
 本机产物保存在原项目 build/releases/1.1.0/：app-release.apk、SHA256SUMS、Runner.app。Runner.app 为真机开发签名包，不是 App Store 分发 IPA。
 
-完整的系统文件选择器、真实照片推理、相机授权、Photos 保存、系统分享与 ZIP 解压、离线与 iPad 兼容模式仍需设备验收，不能用模型/单元测试替代。未登录读取申诉最新回复，未上传或提交 App Store，未完成系统性竞品差异验证，不保证 4.3 审核结果。公开 Android Release 仍为 v1.0.0，本轮新构建尚未公开发布。
+完整的系统文件选择器、真实照片推理、相机授权、Photos 保存、系统分享与 ZIP 解压、离线与 iPad 兼容模式仍需设备验收，不能用模型/单元测试替代。未登录读取申诉最新回复，未上传或提交 App Store，未完成系统性竞品差异验证，不保证 4.3 审核结果。2026-10-23 已授权发布 GitHub v1.1.0，使用本记录校验的 APK；发布结果见 https://github.com/chunguangwei/photoid/releases/tag/v1.1.0 。
 
 源码功能提交：`2907acf`。本机原有 Info.plist 的重排改动保留，未纳入功能提交。
