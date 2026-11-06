@@ -31,6 +31,8 @@ dependencies:
   url_launcher: ^6.3.2
   vector_math: ^2.4.2
 dev_dependencies:
+  integration_test:
+    sdk: flutter
   file_selector_platform_interface: ^2.7.0
   flutter_test:
     sdk: flutter
@@ -45,6 +47,7 @@ flutter:
   # 应用代码从不 load，列进来会白白打进包体 1.4MB
   assets:
     - assets/demo/portrait.jpg
+    - assets/demo/requirements-zh.png
     - assets/demo/requirements.png
     - assets/photo_specs.json
     - assets/models/hivision_modnet.onnx

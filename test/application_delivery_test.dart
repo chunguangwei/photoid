@@ -39,6 +39,31 @@ void main() {
     expect(checklist, contains('100 × 140'));
     expect(checklist, contains('not verified'));
   });
+  test('export keeps short confirmed excerpt and marks replaced evidence stale',
+      () async {
+    var t = await store.create(name: 'Task');
+    t = await store.setSource(t.id, jpeg());
+    t = await store.setEvidence(t.id, jpeg());
+    t = await store.addConfirmedOutput(
+        t.id, requirement(), 'main', 'Width 100 px; height 140 px',
+        expectedEvidenceRevision: 1);
+    t = await store.saveOutput(
+        t.id, t.outputs.single.id, jpeg(), requirement());
+    t = await store.setEvidence(t.id, jpeg());
+    final file = await ApplicationDelivery.build(t, store, dir, 'en');
+    final archive = ZipDecoder().decodeBytes(await file.readAsBytes());
+    final report =
+        jsonDecode(utf8.decode(archive.findFile('main.checks.json')!.content))
+            as Map;
+    expect(report['requirementsSource']['confirmed'], false);
+    expect(
+        report['requirementsSource']['excerpt'], 'Width 100 px; height 140 px');
+    final checklist = utf8.decode(archive.findFile('CHECKLIST.txt')!.content);
+    expect(checklist, contains('recheck required'));
+    expect(archive.files.map((f) => f.name),
+        containsAll(['main.jpg', 'main.checks.json', 'CHECKLIST.txt']));
+    expect(archive.files.length, 3);
+  });
   test('missing files and unfinished outputs cannot be exported', () async {
     final t = await store.create(name: 'Task');
     await store.setSource(t.id, jpeg());

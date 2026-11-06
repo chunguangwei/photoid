@@ -1,0 +1,16 @@
+DRAFT — replace version/build and attach final device evidence before submission.
+
+PhotoID Studio adds a requirements-to-delivery workflow. No login or purchase is needed. All users can access the same demo.
+
+1. Home > Try a demo task. This creates an editable local task with a licensed sample portrait, a clearly fictional requirements screenshot and two unfinished outputs. It does not pre-mark files as passed.
+2. On the task, tap Extract requirements from screenshot. Text recognition runs locally (Apple Vision on iOS; bundled ML Kit on Android). Review the original image/text and select candidates. Confirm width and height, KB limits, JPEG, background and a unique file name. Ambiguous/unsupported content is left for manual review. Only the editable short excerpt shown on screen is saved into the task and included in exported reports.
+3. The demo already contains Main (480×640, blue, 20–100 KB) and Profile (300×400, white, 10–100 KB). For a separate import example add a third output with a distinct name; then prepare it too or remove it before exporting the original two-output demo.
+4. Prepare each output through the real crop editor and save the file to the task. Open Delivery overview: it rereads actual files and shows requested versus measured dimensions, format, bytes and KB. Background is labelled as the selected setting, not independently certified.
+5. After all outputs are prepared, Export delivery ZIP > Save to Files. The ZIP contains JPEGs, per-file JSON reports and CHECKLIST.txt. Open Files and inspect/unzip it. Export rereads files; missing/corrupt/nonconforming outputs are rejected. Replacing evidence or editing requirements invalidates earlier source confirmation.
+
+The requirements are fictional demonstration data, not institution rules. OCR, user confirmation and file checks do not verify identity, certify portrait suitability or guarantee acceptance. Existing camera, background replacement, manual specs, cropping, KB control and album remain available.
+
+Images and recognized requirement text are not uploaded for processing. Google ML Kit may send technical diagnostics/usage metrics as described in the privacy policy. No account, subscription or advertising SDK.
+
+Source/development provenance: https://github.com/chunguangwei/photoid
+Please assess the actual end-to-end workflow. We do not claim that shared components or the app concept are exclusive.

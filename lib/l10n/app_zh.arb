@@ -390,10 +390,12 @@
   "workflowConfirmValues": "我已对照来源核对宽高及全部要求",
   "workflowAdd": "确认并添加要求",
   "workflowInvalid": "请填写并确认有效要求：50–2000 像素，宽高比 0.5–2，KB 不超过 2048；使用不重复的英文字母、数字、下划线或短横线文件名。",
-  "workflowUnsupported": "原文含不支持的单位或格式。请核对原文；此处仅支持像素、KB 和 JPEG，不能直接替换原要求。",
+  "workflowUnsupported": "部分原文要求无法自动应用。请核对原文；此处仅支持明确的像素尺寸、整数 KB 范围和 JPEG。",
   "workflowManual": "手动填写要求",
   "workflowReconfirm": "对照当前截图重新确认",
   "workflowReconfirmNote": "请对照当前截图核对这份要求，再确认。这是你的核对记录，不是机构认证。",
   "workflowRecent": "继续最近任务",
-  "workflowInProgress": "个待完成任务"
+  "workflowInProgress": "个待完成任务",
+  "workflowDetectedBackgrounds": "识别到的底色候选，请选择并核对",
+  "workflowExcerptExport": "仅下方短摘录会保存到任务并包含在导出报告中，请移除无关内容或个人信息。"
 }

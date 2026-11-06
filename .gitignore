@@ -64,3 +64,6 @@ key.properties
 # logo/render.mjs 的一次性构建依赖（sharp），不入库
 node_modules/
 package-lock.json
+
+# Kotlin compiler scratch data
+/android/.kotlin/

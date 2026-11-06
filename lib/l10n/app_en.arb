@@ -485,10 +485,12 @@
   "workflowConfirmValues": "I have verified width, height and all requirements against the source",
   "workflowAdd": "Confirm and add requirements",
   "workflowInvalid": "Complete and confirm valid requirements: 50–2000 px, aspect 0.5–2, KB up to 2048; unique ASCII file name.",
-  "workflowUnsupported": "The source contains unsupported units or formats. Review the original; only pixel dimensions, KB and JPEG can be prepared here. Do not silently substitute its requirements.",
+  "workflowUnsupported": "Some source constraints cannot be applied automatically. Review the original; only exact pixel dimensions, integer KB limits and JPEG can be prepared here.",
   "workflowManual": "Enter requirements manually",
   "workflowReconfirm": "Confirm against current screenshot",
   "workflowReconfirmNote": "Check the current screenshot and these requirements before confirming. This is your confirmation, not institutional certification.",
   "workflowRecent": "Continue recent task",
-  "workflowInProgress": "unfinished tasks"
+  "workflowInProgress": "unfinished tasks",
+  "workflowDetectedBackgrounds": "Detected backgrounds — choose and verify",
+  "workflowExcerptExport": "Only this short excerpt will be saved and included in your exported reports. Remove unrelated or personal information."
 }

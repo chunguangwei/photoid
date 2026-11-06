@@ -32,7 +32,7 @@ void main() {
     expect(find.textContaining('Skip'), findsNothing);
     expect(find.text('Application tasks'), findsOneWidget);
   });
-  for (final lang in ['zh', 'en'])
+  for (final lang in ['zh', 'en']) {
     for (final dark in [false, true]) {
       testWidgets('task workflow at 320pt 130% $lang dark=$dark',
           (tester) async {
@@ -58,4 +58,5 @@ void main() {
         expect(tester.takeException(), isNull);
       });
     }
+  }
 }

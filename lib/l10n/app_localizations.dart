@@ -1931,7 +1931,7 @@ abstract class AppLocalizations {
   /// No description provided for @workflowUnsupported.
   ///
   /// In en, this message translates to:
-  /// **'The source contains unsupported units or formats. Review the original; only pixel dimensions, KB and JPEG can be prepared here. Do not silently substitute its requirements.'**
+  /// **'Some source constraints cannot be applied automatically. Review the original; only exact pixel dimensions, integer KB limits and JPEG can be prepared here.'**
   String get workflowUnsupported;
 
   /// No description provided for @workflowManual.
@@ -1963,6 +1963,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'unfinished tasks'**
   String get workflowInProgress;
+
+  /// No description provided for @workflowDetectedBackgrounds.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected backgrounds — choose and verify'**
+  String get workflowDetectedBackgrounds;
+
+  /// No description provided for @workflowExcerptExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Only this short excerpt will be saved and included in your exported reports. Remove unrelated or personal information.'**
+  String get workflowExcerptExport;
 }
 
 class _AppLocalizationsDelegate

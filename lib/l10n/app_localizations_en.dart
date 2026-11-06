@@ -1029,7 +1029,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workflowUnsupported =>
-      'The source contains unsupported units or formats. Review the original; only pixel dimensions, KB and JPEG can be prepared here. Do not silently substitute its requirements.';
+      'Some source constraints cannot be applied automatically. Review the original; only exact pixel dimensions, integer KB limits and JPEG can be prepared here.';
 
   @override
   String get workflowManual => 'Enter requirements manually';
@@ -1046,4 +1046,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workflowInProgress => 'unfinished tasks';
+
+  @override
+  String get workflowDetectedBackgrounds =>
+      'Detected backgrounds — choose and verify';
+
+  @override
+  String get workflowExcerptExport =>
+      'Only this short excerpt will be saved and included in your exported reports. Remove unrelated or personal information.';
 }

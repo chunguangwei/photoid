@@ -6,7 +6,7 @@ permalink: /privacy-policy
 
 # Privacy Policy / 隐私政策
 
-**Effective date / 生效日期：2026-10-21**
+**Effective date / 生效日期：2026-11-06**
 **App: PhotoID Studio（智能证件照）**
 
 ---
@@ -150,3 +150,10 @@ Existing-file checks read the selected bytes without modifying them. Files selec
 任务名称、备注、用户提供的要求来源与日期、可选要求截图、原图和成片保存在应用文档目录。应用不抓取或独立验证来源。删除任务会删除应用内副本，不影响系统原图及已导出文件；设备备份由系统设置决定。
 
 已有照片检查只读取、不改写所选字节。“文件”选取保留所选文件字节，图库或相机可能提供系统转换副本。ZIP 交付包包含照片、要求和检查报告，仅通过你选择的分享目标离开应用。近期交付副本按上述临时导出缓存规则保留。
+
+
+## Requirement screenshots / 要求截图
+
+Requirement screenshots are recognized locally using Apple Vision on iOS and bundled ML Kit on Android. Only selected images are processed. Recognition images and text are not uploaded for recognition. Android ML Kit may send technical diagnostics and usage metrics as disclosed above. User-confirmed short excerpts stay in local tasks and are included in reports only on explicit export. Review excerpts and remove personal information before saving or sharing. Changes to the source or requirements require confirmation again.
+
+要求截图在本机识别：iOS 使用 Apple Vision，Android 使用随包 ML Kit。仅处理用户选中的图片，不为识别上传图片或文字。Android ML Kit 可按上文披露发送技术诊断与使用指标。用户确认的短摘录保存在本地任务中，仅在主动导出报告时包含；请在保存与分享前移除个人信息。来源或要求改变后需重新核对，确认不代表机构认证。

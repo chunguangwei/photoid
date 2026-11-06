@@ -50,6 +50,61 @@ void main() {
         ApplicationTask.fromJson(t.toJson()).outputs.single.requirementSource,
         isNull);
   });
+  test('confirmation cannot claim evidence that is missing on disk', () async {
+    var t = await store.create(name: 'Task');
+    t = await store.setEvidence(t.id, jpeg());
+    t = await store.addOutput(t.id, requirement(), 'main');
+    await store.evidenceFile(t).delete();
+    await expectLater(
+        store.confirmOutputSource(t.id, t.outputs.single.id, 'Width 100px',
+            expectedEvidenceRevision: 1, expectedRevision: 0),
+        throwsStateError);
+    await expectLater(
+        store.addConfirmedOutput(t.id, requirement(), 'extra', 'Width 100px',
+            expectedEvidenceRevision: 1),
+        throwsStateError);
+  });
+  test('broken demo assets rebuild without deleting the damaged user task',
+      () async {
+    Future<ApplicationTask> make() => store.createDemo(
+        name: 'Demo',
+        notes: 'Fictional',
+        source: jpeg(),
+        evidence: jpeg(),
+        outputs: [(requirement(), 'main')]);
+    final first = await make();
+    await store.sourceFile(first).writeAsBytes([]);
+    final next = await make();
+    expect(next.id, isNot(first.id));
+    expect((await store.list()).length, 2);
+  });
+  test(
+      'mid-transaction demo write failure rolls back staging and preserves user tasks',
+      () async {
+    final user = await store.create(name: 'User task');
+    var writes = 0;
+    final failing =
+        ApplicationTaskStore(dir, demoAssetWriter: (file, bytes) async {
+      if (++writes == 2) throw const FileSystemException('disk full');
+      await file.writeAsBytes(bytes);
+    });
+    await expectLater(
+        failing.createDemo(
+            name: 'Demo',
+            notes: '',
+            source: jpeg(),
+            evidence: jpeg(),
+            outputs: [(requirement(), 'main')]),
+        throwsA(isA<FileSystemException>()));
+    expect((await store.list()).map((t) => t.id), [user.id]);
+    expect(
+        await Directory('${dir.path}/tasks')
+            .list()
+            .where((e) => e.path.contains('.demo_'))
+            .length,
+        0);
+    expect((await store.create(name: 'After failure')).name, 'After failure');
+  });
   test('demo is ordinary, incomplete, idempotent and rebuilt after deletion',
       () async {
     final user = await store.create(name: 'User');

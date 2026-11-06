@@ -11,9 +11,16 @@ import 'photo_file_inspection.dart';
 /// All mutations are serialized, including read/modify/write and file replacement.
 /// Only application-owned copies are deleted. Metadata is atomically replaced.
 class ApplicationTaskStore {
-  ApplicationTaskStore(Directory documents)
-      : _root = Directory(p.join(documents.path, 'tasks'));
+  ApplicationTaskStore(Directory documents,
+      {Future<void> Function(File, List<int>)? demoAssetWriter})
+      : _root = Directory(p.join(documents.path, 'tasks')),
+        _demoAssetWriter = demoAssetWriter ?? _writeDemoBytes;
   final Directory _root;
+  final Future<void> Function(File, List<int>) _demoAssetWriter;
+  static Future<void> _writeDemoBytes(File file, List<int> bytes) async {
+    await file.writeAsBytes(bytes, flush: true);
+  }
+
   static final Map<String, Future<void>> _pending = {};
   static Future<ApplicationTaskStore> open() async =>
       ApplicationTaskStore(await getApplicationDocumentsDirectory());
@@ -327,7 +334,9 @@ class ApplicationTaskStore {
           {required int expectedEvidenceRevision}) =>
       _serial(() async {
         final t = await get(id);
-        if (!t.hasEvidence || t.evidenceRevision != expectedEvidenceRevision) {
+        if (!t.hasEvidence ||
+            !await evidenceFile(t).exists() ||
+            t.evidenceRevision != expectedEvidenceRevision) {
           throw StateError('Evidence changed');
         }
         if (t.outputs.length >= 5) throw StateError('Maximum five outputs');
@@ -361,6 +370,7 @@ class ApplicationTaskStore {
         final t = await get(id);
         final o = t.outputs.firstWhere((v) => v.id == outputId);
         if (!t.hasEvidence ||
+            !await evidenceFile(t).exists() ||
             t.evidenceRevision != expectedEvidenceRevision ||
             o.revision != expectedRevision) {
           throw StateError('Evidence or requirements changed');
@@ -410,7 +420,18 @@ class ApplicationTaskStore {
               t.hasEvidence &&
               await sourceFile(t).exists() &&
               await evidenceFile(t).exists()) {
-            return t;
+            try {
+              final source = sourceFile(t), evidence = evidenceFile(t);
+              if (await source.length() > 30 * 1024 * 1024 ||
+                  await evidence.length() > 30 * 1024 * 1024) {
+                continue;
+              }
+              await _validateImage(await source.readAsBytes());
+              await _validateImage(await evidence.readAsBytes());
+              return t;
+            } catch (_) {
+              /* Preserve damaged tasks, create an intact example. */
+            }
           }
         }
         await _root.create(recursive: true);
@@ -439,10 +460,10 @@ class ApplicationTaskStore {
                 for (final (spec, name) in outputs)
                   ApplicationOutput(id: _id(), spec: spec, fileName: name)
               ]);
-          await File(p.join(staging.path, 'source_1.image'))
-              .writeAsBytes(source, flush: true);
-          await File(p.join(staging.path, 'requirements_1.image'))
-              .writeAsBytes(evidence, flush: true);
+          await _demoAssetWriter(
+              File(p.join(staging.path, 'source_1.image')), source);
+          await _demoAssetWriter(
+              File(p.join(staging.path, 'requirements_1.image')), evidence);
           await File(p.join(staging.path, 'task.json'))
               .writeAsString(jsonEncode(t.toJson()), flush: true);
           await staging.rename(_dir(id).path);

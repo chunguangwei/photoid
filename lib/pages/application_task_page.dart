@@ -179,9 +179,13 @@ class _ApplicationTaskPageState extends State<ApplicationTaskPage> {
             builder: (_) => RequirementsImportPage(
                 imagePath: _store!.evidenceFile(snapshot).path)));
     if (result == null || !mounted) return;
+    if (result.manual) {
+      await _requirement();
+      return;
+    }
     await _act(() async {
       await _store!.addConfirmedOutput(
-          snapshot.id, result.spec, result.fileName, result.excerpt,
+          snapshot.id, result.spec!, result.fileName, result.excerpt,
           expectedEvidenceRevision: snapshot.evidenceRevision);
     });
   }
@@ -200,7 +204,7 @@ class _ApplicationTaskPageState extends State<ApplicationTaskPage> {
                       height: 180,
                       errorBuilder: (_, __, ___) => Text(l.taskActionFailed)),
                   Text(
-                      '${output.spec.pixelWidth} × ${output.spec.pixelHeight} px · ${output.spec.minFileKb}–${output.spec.maxFileKb} KB · JPEG'),
+                      '${output.spec.pixelWidth} × ${output.spec.pixelHeight} px · ${output.spec.minFileKb}–${output.spec.maxFileKb == 0 ? "∞" : output.spec.maxFileKb} KB · JPEG'),
                   Text(Tr.of(context).bgName(output.spec.background)),
                   Text(output.requirementSource!.excerpt),
                   Text(l.workflowReconfirmNote)
@@ -437,7 +441,7 @@ class _ApplicationTaskPageState extends State<ApplicationTaskPage> {
                                                     .titleMedium),
                                             const SizedBox(height: 6),
                                             Text(
-                                                '${output.spec.name}\n${output.spec.pixelWidth} × ${output.spec.pixelHeight} px · ${output.spec.minFileKb}–${output.spec.maxFileKb} KB · ${tr.bgName(output.spec.background)}'),
+                                                '${output.spec.name}\n${output.spec.pixelWidth} × ${output.spec.pixelHeight} px · ${output.spec.minFileKb}–${output.spec.maxFileKb == 0 ? "∞" : output.spec.maxFileKb} KB · ${tr.bgName(output.spec.background)}'),
                                             const SizedBox(height: 8),
                                             Row(children: [
                                               Icon(

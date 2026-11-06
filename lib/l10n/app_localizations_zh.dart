@@ -976,7 +976,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get workflowUnsupported =>
-      '原文含不支持的单位或格式。请核对原文；此处仅支持像素、KB 和 JPEG，不能直接替换原要求。';
+      '部分原文要求无法自动应用。请核对原文；此处仅支持明确的像素尺寸、整数 KB 范围和 JPEG。';
 
   @override
   String get workflowManual => '手动填写要求';
@@ -992,4 +992,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get workflowInProgress => '个待完成任务';
+
+  @override
+  String get workflowDetectedBackgrounds => '识别到的底色候选，请选择并核对';
+
+  @override
+  String get workflowExcerptExport => '仅下方短摘录会保存到任务并包含在导出报告中，请移除无关内容或个人信息。';
 }

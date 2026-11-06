@@ -65,7 +65,9 @@ class _ApplicationTasksPageState extends State<ApplicationTasksPage> {
     final locale = AppLocalizations.of(context).localeName;
     setState(() => _creating = true);
     try {
-      await _open(await DemoTask.open(_store!, locale));
+      final task = await DemoTask.open(_store!, locale);
+      if (!mounted) return;
+      await _open(task);
     } catch (e) {
       if (mounted) showPhotoActionError(context, e);
     } finally {

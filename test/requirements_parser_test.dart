@@ -41,7 +41,42 @@ void main() {
     expect(parseRequirements('尺寸480×640').dimensions, isEmpty);
   });
   test('English background names do not match inside other words', () {
-    expect(parseRequirements('A JPEG is required. Whiteboard reference.').backgrounds,isEmpty);
+    expect(
+        parseRequirements('A JPEG is required. Whiteboard reference.')
+            .backgrounds,
+        isEmpty);
+  });
+  test('decimal and negative values are never parsed as integer suffixes', () {
+    for (final text in [
+      '10.5–100 KB',
+      '1,020–100 KB',
+      '-20-100 KB',
+      '100000-100 KB',
+      '20-100KBps'
+    ]) {
+      expect(parseRequirements(text).sizes, isEmpty, reason: text);
+    }
+    expect(parseRequirements('4.480×640px').dimensions, isEmpty);
+  });
+  test('dimension bounds do not become exact dimensions', () {
+    expect(
+        parseRequirements('minimum width 480px, maximum height 640px')
+            .dimensions,
+        isEmpty);
+    expect(parseRequirements('最小宽480像素，最大高640像素').dimensions, isEmpty);
+  });
+  test('trailing minimum and Chinese dimension bounds are not exact values',
+      () {
+    for (final text in [
+      'Width: 480px minimum, height: 640px',
+      '宽480像素以上，高640像素',
+      '宽480像素，高640像素以内'
+    ]) {
+      expect(parseRequirements(text).dimensions, isEmpty, reason: text);
+    }
+  });
+  test('unrecognized OCR units stay unfilled rather than being guessed', () {
+    expect(parseRequirements('宽480像秦,高640像素').dimensions, isEmpty);
   });
   test('reversed range remains visible for validation, bounded input', () {
     expect(parseRequirements('100-20KB').sizes.single.min, 100);

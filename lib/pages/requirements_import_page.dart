@@ -7,8 +7,15 @@ import '../services/requirements_ocr.dart';
 import '../services/requirements_parser.dart';
 
 class RequirementImportResult {
-  const RequirementImportResult(this.spec, this.fileName, this.excerpt);
-  final PhotoSpec spec;
+  const RequirementImportResult(this.spec, this.fileName, this.excerpt)
+      : manual = false;
+  const RequirementImportResult.manual()
+      : spec = null,
+        fileName = '',
+        excerpt = '',
+        manual = true;
+  final bool manual;
+  final PhotoSpec? spec;
   final String fileName, excerpt;
 }
 
@@ -30,7 +37,9 @@ class _RequirementsImportPageState extends State<RequirementsImportPage> {
       _height = TextEditingController(),
       _min = TextEditingController(),
       _max = TextEditingController(),
-      _name = TextEditingController();
+      _name = TextEditingController(),
+      _excerpt = TextEditingController();
+  String _dimensionExcerpt = '', _sizeExcerpt = '', _backgroundExcerpt = '';
   String? _validation;
   @override
   void initState() {
@@ -41,7 +50,7 @@ class _RequirementsImportPageState extends State<RequirementsImportPage> {
   @override
   void dispose() {
     _sequence++;
-    for (final c in [_width, _height, _min, _max, _name]) {
+    for (final c in [_width, _height, _min, _max, _name, _excerpt]) {
       c.dispose();
     }
     super.dispose();
@@ -67,6 +76,11 @@ class _RequirementsImportPageState extends State<RequirementsImportPage> {
       _min.clear();
       _max.clear();
       _background = null;
+      _excerpt.clear();
+      _dimensionExcerpt = '';
+      _sizeExcerpt = '';
+      _backgroundExcerpt = '';
+      _draft = draft;
       if (draft.dimensions.length == 1 && !draft.dimensions.single.ambiguous) {
         _chooseDimensions(draft.dimensions.single);
       }
@@ -82,15 +96,51 @@ class _RequirementsImportPageState extends State<RequirementsImportPage> {
   }
 
   void _chooseDimensions(DimensionCandidate d) {
+    _dimensionExcerpt = d.excerpt;
     _width.text = '${d.width}';
     _height.text = '${d.height}';
     _confirmed = false;
+    _updateExcerpt();
   }
 
   void _chooseSize(SizeCandidate s) {
+    _sizeExcerpt = s.excerpt;
     _min.text = s.min?.toString() ?? '';
     _max.text = s.max?.toString() ?? '';
     _confirmed = false;
+    _updateExcerpt();
+  }
+
+  void _updateExcerpt() {
+    _excerpt.text = [_dimensionExcerpt, _sizeExcerpt, _backgroundExcerpt]
+        .where((v) => v.isNotEmpty)
+        .join('\n');
+  }
+
+  String _colorExcerpt(String color) {
+    final expression = {
+      'blue': r'蓝(?:色)?(?:底|背景)|\bblue(?:\s+background)?\b',
+      'white': r'白(?:色)?(?:底|背景)|\bwhite(?:\s+background)?\b',
+      'red': r'红(?:色)?(?:底|背景)|\bred(?:\s+background)?\b',
+      'gray': r'灰(?:色)?(?:底|背景)|\bgr[ae]y(?:\s+background)?\b'
+    }[color]!;
+    return RegExp(expression, caseSensitive: false)
+            .firstMatch(_draft?.text ?? '')
+            ?.group(0) ??
+        '';
+  }
+
+  static const _colors = {
+    'blue': idPhotoBlue,
+    'white': idPhotoWhite,
+    'red': idPhotoRed,
+    'gray': idPhotoGray
+  };
+  void _chooseBackground(String color) {
+    _background = _colors[color];
+    _backgroundExcerpt = _colorExcerpt(color);
+    _confirmed = false;
+    _updateExcerpt();
   }
 
   void _save() {
@@ -101,6 +151,8 @@ class _RequirementsImportPageState extends State<RequirementsImportPage> {
     final name = _name.text.trim();
     if (!_jpeg ||
         !_confirmed ||
+        _excerpt.text.trim().isEmpty ||
+        _excerpt.text.length > 4000 ||
         _background == null ||
         w == null ||
         h == null ||
@@ -121,7 +173,7 @@ class _RequirementsImportPageState extends State<RequirementsImportPage> {
       setState(() => _validation = l.workflowInvalid);
       return;
     }
-    final text = _draft!.text;
+    final text = _excerpt.text.trim();
     Navigator.pop(
         context,
         RequirementImportResult(
@@ -140,14 +192,15 @@ class _RequirementsImportPageState extends State<RequirementsImportPage> {
                 maxRatio: h / w + 0.05,
                 background: _background!),
             name,
-            text.length > 4000 ? text.substring(0, 4000) : text));
+            text));
   }
 
   Widget _field(TextEditingController controller, String label,
-          {bool number = true}) =>
+          {bool number = true, String? fieldKey}) =>
       Padding(
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: TextFormField(
+              key: fieldKey == null ? null : Key(fieldKey),
               controller: controller,
               decoration: InputDecoration(
                   labelText: label, border: const OutlineInputBorder()),
@@ -180,7 +233,8 @@ class _RequirementsImportPageState extends State<RequirementsImportPage> {
             Text(_failed ? l.workflowOcrFailed : l.workflowNoText),
             TextButton(onPressed: _read, child: Text(l.workflowRetry)),
             TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(
+                    context, const RequirementImportResult.manual()),
                 child: Text(l.workflowManual))
           ] else ...[
             ExpansionTile(
@@ -200,8 +254,8 @@ class _RequirementsImportPageState extends State<RequirementsImportPage> {
                   subtitle: Text('${c.width} × ${c.height} px'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => setState(() => _chooseDimensions(c))),
-            _field(_width, l.workflowWidth),
-            _field(_height, l.workflowHeight),
+            _field(_width, l.workflowWidth, fieldKey: 'import-width'),
+            _field(_height, l.workflowHeight, fieldKey: 'import-height'),
             Text(l.workflowSize),
             for (final c in d.sizes)
               TextButton(
@@ -209,25 +263,46 @@ class _RequirementsImportPageState extends State<RequirementsImportPage> {
                   child: Text(c.excerpt)),
             _field(_min, l.workflowMinimum),
             _field(_max, l.workflowMaximum),
-            _field(_name, l.workflowFilename, number: false),
+            _field(_name, l.workflowFilename,
+                number: false, fieldKey: 'import-name'),
+            if (d.backgrounds.isNotEmpty) ...[
+              Text(l.workflowDetectedBackgrounds),
+              Wrap(spacing: 8, children: [
+                for (final color in d.backgrounds)
+                  ActionChip(
+                      label: Text(_colorExcerpt(color)),
+                      onPressed: () => setState(() => _chooseBackground(color)))
+              ]),
+            ],
             DropdownButtonFormField<SpecBackground>(
+                key: ValueKey(_background),
                 initialValue: _background,
                 isExpanded: true,
                 decoration:
                     InputDecoration(labelText: l.workflowChooseBackground),
                 items: [
-                  for (final bg in [
-                    idPhotoBlue,
-                    const SpecBackground('white', 255, 255, 255),
-                    const SpecBackground('red', 255, 0, 0),
-                    const SpecBackground('gray', 128, 128, 128)
-                  ])
+                  for (final bg in _colors.values)
                     DropdownMenuItem(value: bg, child: Text(tr.bgName(bg)))
                 ],
                 onChanged: (bg) => setState(() {
-                      _background = bg;
-                      _confirmed = false;
+                      if (bg != null) {
+                        _chooseBackground(_colors.entries
+                            .firstWhere((e) => identical(e.value, bg))
+                            .key);
+                      }
                     })),
+            const SizedBox(height: 12),
+            Text(l.workflowExcerptExport),
+            TextFormField(
+                key: const Key('import-excerpt'),
+                controller: _excerpt,
+                minLines: 2,
+                maxLines: 5,
+                maxLength: 4000,
+                decoration: InputDecoration(
+                    labelText: l.workflowExcerpt,
+                    border: const OutlineInputBorder()),
+                onChanged: (_) => setState(() => _confirmed = false)),
             CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
                 value: _jpeg,

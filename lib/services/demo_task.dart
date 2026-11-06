@@ -24,7 +24,9 @@ class DemoTask {
   static Future<ApplicationTask> open(
       ApplicationTaskStore store, String locale) async {
     final source = await rootBundle.load('assets/demo/portrait.jpg');
-    final evidence = await rootBundle.load('assets/demo/requirements.png');
+    final evidence = await rootBundle.load(locale == 'zh'
+        ? 'assets/demo/requirements-zh.png'
+        : 'assets/demo/requirements.png');
     return store.createDemo(
         name: locale == 'zh' ? '示例 · 报名照片' : 'Demo · Application photos',
         notes: locale == 'zh'

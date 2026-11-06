@@ -36,29 +36,45 @@ RequirementsDraft parseRequirements(String text) {
           unit,
       caseSensitive: false);
   for (final m in explicit.allMatches(normalized)) {
+    final context =
+        normalized.substring(m.start > 28 ? m.start - 28 : 0, m.end);
+    const qualifier =
+        r'minimum|maximum|at least|at most|no more than|no less than|最小|最大|至少|至多|不超过|不少于|不低于|不高于|以上|以下|以内|以外|[<>≤≥]';
+    final trailing = normalized.substring(
+        m.end, m.end + 24 < normalized.length ? m.end + 24 : normalized.length);
+    if (RegExp(r'(?:' + qualifier + r'|min|max)\s*(?:width|height|宽|高)',
+                caseSensitive: false)
+            .hasMatch(context) ||
+        RegExp(qualifier, caseSensitive: false).hasMatch(m[0]!) ||
+        RegExp(r'^\s*(?:' + qualifier + r')', caseSensitive: false)
+            .hasMatch(trailing)) {
+      if (!warnings.contains('bounds')) warnings.add('bounds');
+      continue;
+    }
     dimensions.add(DimensionCandidate(int.parse(m[1]!), int.parse(m[2]!), m[0]!,
         ambiguous: false));
   }
-  final pairs =
-      RegExp(r'(\d{2,5})\s*[x×*]\s*(\d{2,5})\s*' + unit, caseSensitive: false);
+  final pairs = RegExp(
+      r'(?<![\d.,+\-–—])(\d{2,5})\s*[x×*]\s*(\d{2,5})\s*' + unit,
+      caseSensitive: false);
   for (final m in pairs.allMatches(normalized)) {
     dimensions
         .add(DimensionCandidate(int.parse(m[1]!), int.parse(m[2]!), m[0]!));
   }
   final ranges = RegExp(
-      r'(\d{1,5})\s*(?:KB|KiB)?\s*[-–—~至到]\s*(\d{1,5})\s*(?:KB|KiB)',
+      r'(?<![\d.,+\-–—])(\d{1,5})\s*(?:KB|KiB)?\s*[-–—~至到]\s*(\d{1,5})\s*(?:KB|KiB)(?![A-Za-z])',
       caseSensitive: false);
   for (final m in ranges.allMatches(normalized)) {
     sizes.add(SizeCandidate(int.parse(m[1]!), int.parse(m[2]!), m[0]!));
   }
   final max = RegExp(
-      r'(?:不超过|小于等于|至多|最多|上限|no more than|at most|max(?:imum)?|<=|≤)\s*:?\s*(\d{1,5})\s*(?:KB|KiB)',
+      r'(?:不超过|小于等于|至多|最多|上限|no more than|at most|max(?:imum)?|<=|≤)\s*:?\s*(\d{1,5})\s*(?:KB|KiB)(?![A-Za-z])',
       caseSensitive: false);
   for (final m in max.allMatches(normalized)) {
     sizes.add(SizeCandidate(null, int.parse(m[1]!), m[0]!));
   }
   final min = RegExp(
-      r'(?:不少于|至少|下限|at least|min(?:imum)?|>=|≥)\s*:?\s*(\d{1,5})\s*(?:KB|KiB)',
+      r'(?:不少于|至少|下限|at least|min(?:imum)?|>=|≥)\s*:?\s*(\d{1,5})\s*(?:KB|KiB)(?![A-Za-z])',
       caseSensitive: false);
   for (final m in min.allMatches(normalized)) {
     sizes.add(SizeCandidate(int.parse(m[1]!), null, m[0]!));
