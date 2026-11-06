@@ -40,6 +40,9 @@ void main() {
     expect(parseRequirements('文件 100KB').sizes, isEmpty);
     expect(parseRequirements('尺寸480×640').dimensions, isEmpty);
   });
+  test('English background names do not match inside other words', () {
+    expect(parseRequirements('A JPEG is required. Whiteboard reference.').backgrounds,isEmpty);
+  });
   test('reversed range remains visible for validation, bounded input', () {
     expect(parseRequirements('100-20KB').sizes.single.min, 100);
     expect(() => parseRequirements('x' * 100001), throwsArgumentError);

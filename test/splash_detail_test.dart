@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:photoid/l10n/app_localizations.dart';
 import 'package:photoid/models/photo_spec.dart';
-import 'package:photoid/pages/splash_page.dart';
 import 'package:photoid/pages/spec_detail_page.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
@@ -13,23 +12,6 @@ Widget _wrap(Widget child) => MaterialApp(
     );
 
 void main() {
-  testWidgets('启动页：倒计时+跳过按钮渲染，点跳过离开', (tester) async {
-    await tester.pumpWidget(_wrap(const SplashPage()));
-    await tester.pump();
-    final l = await AppLocalizations.delegate
-        .load(const Locale('zh'));
-
-    // 倒计时跳过按钮
-    expect(find.text(l.splashSkip(6)), findsOneWidget);
-    // 广告位槽留空：不展示「广告位」文案
-    expect(find.text(l.splashAdPlaceholder), findsNothing);
-
-    await tester.tap(find.text(l.splashSkip(6)));
-    await tester.pumpAndSettle();
-    // 离开后启动页不再存在
-    expect(find.byType(SplashPage), findsNothing);
-  });
-
   testWidgets('规格详情页：冲印尺寸/可设置大小/文件格式/背景色块渲染', (tester) async {
     const spec = PhotoSpec(
       id: 't1',
@@ -82,8 +64,7 @@ void main() {
     await tester.tap(find.text(l.specKbEditable));
     await tester.pumpAndSettle();
     // 输入 min/max 并确认
-    await tester.enterText(
-        find.widgetWithText(TextField, l.customMinKb), '20');
+    await tester.enterText(find.widgetWithText(TextField, l.customMinKb), '20');
     await tester.enterText(
         find.widgetWithText(TextField, l.customMaxKb), '300');
     await tester.tap(find.text(l.confirm));

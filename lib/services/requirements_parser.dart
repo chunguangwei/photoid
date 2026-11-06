@@ -65,19 +65,23 @@ RequirementsDraft parseRequirements(String text) {
   }
   final backgrounds = <String>[];
   for (final entry in {
-    'blue': r'蓝(?:色)?(?:底|背景)|blue\s*(?:background)?',
-    'white': r'白(?:色)?(?:底|背景)|white\s*(?:background)?',
-    'red': r'红(?:色)?(?:底|背景)|red\s*(?:background)?',
-    'gray': r'灰(?:色)?(?:底|背景)|gr[ae]y\s*(?:background)?'
+    'blue': r'蓝(?:色)?(?:底|背景)|\bblue\b\s*(?:background)?',
+    'white': r'白(?:色)?(?:底|背景)|\bwhite\b\s*(?:background)?',
+    'red': r'红(?:色)?(?:底|背景)|\bred\b\s*(?:background)?',
+    'gray': r'灰(?:色)?(?:底|背景)|\bgr[ae]y\b\s*(?:background)?'
   }.entries) {
-    if (RegExp(entry.value, caseSensitive: false).hasMatch(normalized))
+    if (RegExp(entry.value, caseSensitive: false).hasMatch(normalized)) {
       backgrounds.add(entry.key);
+    }
   }
   if (RegExp(r'\b(?:mm|cm|dpi|mb)\b|毫米|厘米|兆', caseSensitive: false)
           .hasMatch(normalized) ||
-      RegExp(r'\d\s*(?:mm|cm|mb)', caseSensitive: false).hasMatch(normalized))
+      RegExp(r'\d\s*(?:mm|cm|mb)', caseSensitive: false).hasMatch(normalized)) {
     warnings.add('units');
+  }
   if (RegExp(r'\b(?:png|heic|webp|pdf|gif)\b', caseSensitive: false)
-      .hasMatch(normalized)) warnings.add('format');
+      .hasMatch(normalized)) {
+    warnings.add('format');
+  }
   return RequirementsDraft(text, dimensions, sizes, backgrounds, warnings);
 }

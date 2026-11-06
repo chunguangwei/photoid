@@ -76,3 +76,9 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+// Bundled models: recognition must work on first use without Play Services download.
+dependencies {
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+    implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
+}

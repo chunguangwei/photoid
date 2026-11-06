@@ -322,6 +322,37 @@ class ApplicationTaskStore {
           ];
         return _write(ApplicationTask.fromJson(j));
       });
+  Future<ApplicationTask> addConfirmedOutput(
+          String id, PhotoSpec spec, String name, String excerpt,
+          {required int expectedEvidenceRevision}) =>
+      _serial(() async {
+        final t = await get(id);
+        if (!t.hasEvidence || t.evidenceRevision != expectedEvidenceRevision) {
+          throw StateError('Evidence changed');
+        }
+        if (t.outputs.length >= 5) throw StateError('Maximum five outputs');
+        _validateSpec(spec);
+        _uniqueName(t, name);
+        if (excerpt.trim().isEmpty || excerpt.length > 4000) {
+          throw ArgumentError('Invalid excerpt');
+        }
+        final source = OutputRequirementSource(
+            excerpt: excerpt,
+            evidenceRevision: t.evidenceRevision,
+            specFingerprint: requirementFingerprint(spec),
+            confirmed: true);
+        final j = t.toJson()
+          ..['outputs'] = [
+            ...t.outputs.map((o) => o.toJson()),
+            ApplicationOutput(
+                    id: _id(),
+                    spec: spec,
+                    fileName: name,
+                    requirementSource: source)
+                .toJson()
+          ];
+        return _write(ApplicationTask.fromJson(j));
+      });
   Future<ApplicationTask> confirmOutputSource(
           String id, String outputId, String excerpt,
           {required int expectedEvidenceRevision,
@@ -331,10 +362,12 @@ class ApplicationTaskStore {
         final o = t.outputs.firstWhere((v) => v.id == outputId);
         if (!t.hasEvidence ||
             t.evidenceRevision != expectedEvidenceRevision ||
-            o.revision != expectedRevision)
+            o.revision != expectedRevision) {
           throw StateError('Evidence or requirements changed');
-        if (excerpt.trim().isEmpty || excerpt.length > 4000)
+        }
+        if (excerpt.trim().isEmpty || excerpt.length > 4000) {
           throw ArgumentError('Invalid excerpt');
+        }
         final source = OutputRequirementSource(
             excerpt: excerpt,
             evidenceRevision: t.evidenceRevision,
@@ -360,27 +393,32 @@ class ApplicationTaskStore {
         _validateMetadata(name, notes, '', '');
         await _validateImage(source);
         await _validateImage(evidence);
-        if (outputs.isEmpty || outputs.length > 5)
+        if (outputs.isEmpty || outputs.length > 5) {
           throw ArgumentError('Invalid demo');
+        }
         final names = <String>{};
         for (final (spec, name) in outputs) {
           _validateSpec(spec);
           _validateName(name);
-          if (!names.add(name.toLowerCase()))
+          if (!names.add(name.toLowerCase())) {
             throw ArgumentError('Duplicate name');
+          }
         }
         for (final t in await list()) {
           if (t.isDemo &&
               t.hasSource &&
               t.hasEvidence &&
               await sourceFile(t).exists() &&
-              await evidenceFile(t).exists()) return t;
+              await evidenceFile(t).exists()) {
+            return t;
+          }
         }
         await _root.create(recursive: true);
         // Interrupted staging directories are invisible to list(); clean only owned staging.
         await for (final e in _root.list(followLinks: false)) {
-          if (e is Directory && p.basename(e.path).startsWith('.demo_'))
+          if (e is Directory && p.basename(e.path).startsWith('.demo_')) {
             await e.delete(recursive: true);
+          }
         }
         final id = _id();
         final staging = Directory(p.join(_root.path, '.demo_$id'));

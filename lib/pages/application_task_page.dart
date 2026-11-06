@@ -13,6 +13,8 @@ import '../widgets/photo_input.dart';
 import '../widgets/task_details_dialog.dart';
 import 'custom_spec_page.dart';
 import 'edit_page.dart';
+import 'requirements_import_page.dart';
+import 'delivery_overview_page.dart';
 
 class ApplicationTaskPage extends StatefulWidget {
   const ApplicationTaskPage({super.key, required this.taskId, this.store});
@@ -164,6 +166,74 @@ class _ApplicationTaskPageState extends State<ApplicationTaskPage> {
     });
   }
 
+  Future<void> _importRequirements() async {
+    if (_busy || _task!.outputs.length >= 5) return;
+    if (!_task!.hasEvidence) {
+      await _source(evidence: true);
+    }
+    if (!mounted || _task == null || !_task!.hasEvidence) return;
+    final snapshot = _task!;
+    final result = await Navigator.push<RequirementImportResult>(
+        context,
+        MaterialPageRoute(
+            builder: (_) => RequirementsImportPage(
+                imagePath: _store!.evidenceFile(snapshot).path)));
+    if (result == null || !mounted) return;
+    await _act(() async {
+      await _store!.addConfirmedOutput(
+          snapshot.id, result.spec, result.fileName, result.excerpt,
+          expectedEvidenceRevision: snapshot.evidenceRevision);
+    });
+  }
+
+  Future<void> _reconfirm(ApplicationOutput output) async {
+    final l = AppLocalizations.of(context), snapshot = _task!;
+    if (!snapshot.hasEvidence) return;
+    final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+                title: Text(l.workflowReconfirm),
+                content: SingleChildScrollView(
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Image.file(_store!.evidenceFile(snapshot),
+                      cacheWidth: 1000,
+                      height: 180,
+                      errorBuilder: (_, __, ___) => Text(l.taskActionFailed)),
+                  Text(
+                      '${output.spec.pixelWidth} × ${output.spec.pixelHeight} px · ${output.spec.minFileKb}–${output.spec.maxFileKb} KB · JPEG'),
+                  Text(Tr.of(context).bgName(output.spec.background)),
+                  Text(output.requirementSource!.excerpt),
+                  Text(l.workflowReconfirmNote)
+                ])),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: Text(l.dialogCancel)),
+                  FilledButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: Text(l.confirm))
+                ]));
+    if (confirmed != true || !mounted) return;
+    await _act(() async {
+      await _store!.confirmOutputSource(
+          snapshot.id, output.id, output.requirementSource!.excerpt,
+          expectedEvidenceRevision: snapshot.evidenceRevision,
+          expectedRevision: output.revision);
+    });
+  }
+
+  Future<void> _overview() async {
+    await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => DeliveryOverviewPage(
+                taskId: widget.taskId,
+                store: _store!,
+                onPrepare: _prepare,
+                onEdit: (o) => _requirement(existing: o))));
+    if (mounted) await _load();
+  }
+
   Future<void> _export() async {
     final locale = AppLocalizations.of(context).localeName;
     final box = context.findRenderObject() as RenderBox?;
@@ -236,6 +306,11 @@ class _ApplicationTaskPageState extends State<ApplicationTaskPage> {
                 : ListView(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
                     children: [
+                        OutlinedButton.icon(
+                            onPressed: _busy ? null : _overview,
+                            icon: const Icon(Icons.fact_check_outlined),
+                            label: Text(l.workflowOverview)),
+                        const SizedBox(height: 12),
                         Text(task.name,
                             style: Theme.of(context).textTheme.headlineMedium),
                         const SizedBox(height: 12),
@@ -290,6 +365,14 @@ class _ApplicationTaskPageState extends State<ApplicationTaskPage> {
                                               : () => _source(evidence: true),
                                           icon: const Icon(Icons.attach_file),
                                           label: Text(l.taskAttachEvidence)),
+                                      TextButton.icon(
+                                          onPressed:
+                                              _busy || task.outputs.length >= 5
+                                                  ? null
+                                                  : _importRequirements,
+                                          icon: const Icon(
+                                              Icons.document_scanner_outlined),
+                                          label: Text(l.workflowExtract)),
                                     ]))),
                         const SizedBox(height: 16),
                         Card(
@@ -378,6 +461,18 @@ class _ApplicationTaskPageState extends State<ApplicationTaskPage> {
                                                 label: Text(output.ready
                                                     ? l.taskRedo
                                                     : l.taskPrepare)),
+                                            if (output.requirementSource !=
+                                                null)
+                                              TextButton(
+                                                  onPressed: _busy
+                                                      ? null
+                                                      : () =>
+                                                          _reconfirm(output),
+                                                  child: Text(output
+                                                          .requirementSource!
+                                                          .confirmed
+                                                      ? l.workflowConfirmed
+                                                      : l.workflowStale)),
                                             Wrap(spacing: 8, children: [
                                               TextButton(
                                                   onPressed: _busy

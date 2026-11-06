@@ -1217,7 +1217,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyPolicyBody.
   ///
   /// In en, this message translates to:
-  /// **'Updated October 21, 2026\n\nPhotos and face detection results are processed on your device and are not uploaded for processing. No account is required, and the app has no advertising SDK.\n\nCamera access is used to take photos. Photo library access is used to choose photos and save finished images, only when you use those features.\n\nSaved results are also stored in the app’s private album. Delete them in My Photos. Exported copies must be deleted separately in the system photo library. System photo syncing and backups follow your device settings. Language and custom specifications are stored locally.\n\nGoogle ML Kit performs face detection locally, but can send technical diagnostics and usage metrics to Google, including device/app information, per-installation identifiers, API events, performance and errors. These metrics do not include your input photos or detection results. ONNX Runtime runs the bundled background-removal model locally.\n\nAndroid checks GitHub for app updates and downloads updates on request. iOS updates come from the App Store. Opening the online policy uses your browser.\n\nQuestions: chunguangwee@gmail.com. The online policy provides further details and links to Google’s SDK disclosures.\n\nTemporary export copies are kept in the app cache so receiving apps can read them. Copies older than one day are removed at the next app launch or export.\n\nApplication tasks are stored locally with your notes, requirement references, optional screenshots, source photo and prepared versions. Sources you record are not independently verified. Delete a task to remove its app-owned copies; system originals and files you already exported are kept. Existing-file checks read the selected bytes without changing them. ZIP delivery packages contain photo files and requirement/check reports; only share them with recipients you choose.'**
+  /// **'Updated November 6, 2026\n\nPhotos and face detection results are processed on your device and are not uploaded for processing. No account is required, and the app has no advertising SDK.\n\nCamera access is used to take photos. Photo library access is used to choose photos and save finished images, only when you use those features.\n\nSaved results are also stored in the app’s private album. Delete them in My Photos. Exported copies must be deleted separately in the system photo library. System photo syncing and backups follow your device settings. Language and custom specifications are stored locally.\n\nGoogle ML Kit performs face detection locally, but can send technical diagnostics and usage metrics to Google, including device/app information, per-installation identifiers, API events, performance and errors. These metrics do not include your input photos or detection results. ONNX Runtime runs the bundled background-removal model locally.\n\nAndroid checks GitHub for app updates and downloads updates on request. iOS updates come from the App Store. Opening the online policy uses your browser.\n\nQuestions: chunguangwee@gmail.com. The online policy provides further details and links to Google’s SDK disclosures.\n\nTemporary export copies are kept in the app cache so receiving apps can read them. Copies older than one day are removed at the next app launch or export.\n\nApplication tasks are stored locally with your notes, requirement references, optional screenshots, source photo and prepared versions. Sources you record are not independently verified. Delete a task to remove its app-owned copies; system originals and files you already exported are kept. Existing-file checks read the selected bytes without changing them. ZIP delivery packages contain photo files and requirement/check reports; only share them with recipients you choose.\n\nRequirement screenshots are read locally using Apple Vision on iOS and bundled ML Kit text recognition on Android. Only selected images are processed; text is not uploaded for recognition. Confirmed excerpts remain in your task and are shared in reports only when you export them. Changed requirements or screenshots require rechecking. Recognition and user confirmation are not institutional certification.'**
   String get privacyPolicyBody;
 
   /// No description provided for @linkOpenFailed.
@@ -1717,6 +1717,252 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your application, ready to prepare'**
   String get taskDeliveryTitle;
+
+  /// No description provided for @workflowDemo.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a demo task'**
+  String get workflowDemo;
+
+  /// No description provided for @workflowDemoNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Fictional requirements · real editing and export'**
+  String get workflowDemoNote;
+
+  /// No description provided for @workflowOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery overview'**
+  String get workflowOverview;
+
+  /// No description provided for @workflowRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Recheck files'**
+  String get workflowRefresh;
+
+  /// No description provided for @workflowRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required file properties'**
+  String get workflowRequired;
+
+  /// No description provided for @workflowActual.
+  ///
+  /// In en, this message translates to:
+  /// **'Measured file properties'**
+  String get workflowActual;
+
+  /// No description provided for @workflowBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected background (not measured)'**
+  String get workflowBackground;
+
+  /// No description provided for @workflowUnprepared.
+  ///
+  /// In en, this message translates to:
+  /// **'Not prepared'**
+  String get workflowUnprepared;
+
+  /// No description provided for @workflowMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'File missing — prepare again'**
+  String get workflowMissing;
+
+  /// No description provided for @workflowFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'File checks failed — review or prepare again'**
+  String get workflowFailed;
+
+  /// No description provided for @workflowPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'File checks passed'**
+  String get workflowPassed;
+
+  /// No description provided for @workflowExcerpt.
+  ///
+  /// In en, this message translates to:
+  /// **'Requirement excerpt (source not independently verified)'**
+  String get workflowExcerpt;
+
+  /// No description provided for @workflowConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed by you'**
+  String get workflowConfirmed;
+
+  /// No description provided for @workflowStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Requirements or source changed — confirm again'**
+  String get workflowStale;
+
+  /// No description provided for @workflowPrepare.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare this file'**
+  String get workflowPrepare;
+
+  /// No description provided for @workflowEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit requirements'**
+  String get workflowEdit;
+
+  /// No description provided for @workflowExtract.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract requirements from screenshot'**
+  String get workflowExtract;
+
+  /// No description provided for @workflowRecognizing.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading text on your device…'**
+  String get workflowRecognizing;
+
+  /// No description provided for @workflowRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry recognition'**
+  String get workflowRetry;
+
+  /// No description provided for @workflowOcrFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Text recognition unavailable or failed. Retry or enter requirements manually.'**
+  String get workflowOcrFailed;
+
+  /// No description provided for @workflowNoText.
+  ///
+  /// In en, this message translates to:
+  /// **'No readable text found. Try a clearer screenshot or enter requirements manually.'**
+  String get workflowNoText;
+
+  /// No description provided for @workflowOcrNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Review every value against the screenshot. Nothing is saved until you confirm. 1 KB = 1024 bytes.'**
+  String get workflowOcrNote;
+
+  /// No description provided for @workflowOriginalText.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognized text'**
+  String get workflowOriginalText;
+
+  /// No description provided for @workflowDimensions.
+  ///
+  /// In en, this message translates to:
+  /// **'Dimension candidates — confirm width and height'**
+  String get workflowDimensions;
+
+  /// No description provided for @workflowSize.
+  ///
+  /// In en, this message translates to:
+  /// **'File-size candidates'**
+  String get workflowSize;
+
+  /// No description provided for @workflowWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Width (px)'**
+  String get workflowWidth;
+
+  /// No description provided for @workflowHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Height (px)'**
+  String get workflowHeight;
+
+  /// No description provided for @workflowMinimum.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum KB (blank = no minimum)'**
+  String get workflowMinimum;
+
+  /// No description provided for @workflowMaximum.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum KB (blank = no maximum)'**
+  String get workflowMaximum;
+
+  /// No description provided for @workflowFilename.
+  ///
+  /// In en, this message translates to:
+  /// **'File name (without .jpg)'**
+  String get workflowFilename;
+
+  /// No description provided for @workflowChooseBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Select required background'**
+  String get workflowChooseBackground;
+
+  /// No description provided for @workflowJpeg.
+  ///
+  /// In en, this message translates to:
+  /// **'I have checked that JPEG is acceptable'**
+  String get workflowJpeg;
+
+  /// No description provided for @workflowConfirmValues.
+  ///
+  /// In en, this message translates to:
+  /// **'I have verified width, height and all requirements against the source'**
+  String get workflowConfirmValues;
+
+  /// No description provided for @workflowAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm and add requirements'**
+  String get workflowAdd;
+
+  /// No description provided for @workflowInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete and confirm valid requirements: 50–2000 px, aspect 0.5–2, KB up to 2048; unique ASCII file name.'**
+  String get workflowInvalid;
+
+  /// No description provided for @workflowUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'The source contains unsupported units or formats. Review the original; only pixel dimensions, KB and JPEG can be prepared here. Do not silently substitute its requirements.'**
+  String get workflowUnsupported;
+
+  /// No description provided for @workflowManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter requirements manually'**
+  String get workflowManual;
+
+  /// No description provided for @workflowReconfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm against current screenshot'**
+  String get workflowReconfirm;
+
+  /// No description provided for @workflowReconfirmNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the current screenshot and these requirements before confirming. This is your confirmation, not institutional certification.'**
+  String get workflowReconfirmNote;
+
+  /// No description provided for @workflowRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue recent task'**
+  String get workflowRecent;
+
+  /// No description provided for @workflowInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'unfinished tasks'**
+  String get workflowInProgress;
 }
 
 class _AppLocalizationsDelegate

@@ -615,7 +615,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get privacyPolicyBody =>
-      '更新日期：2026年10月21日\n\n照片与人脸检测结果在设备本地处理，不为处理而上传。无需账号，不含广告 SDK。\n\n相机权限用于拍照；照片库权限用于选择照片和保存成片，仅在使用相应功能时请求。\n\n保存的成片也保留在 App 私有相册，可在「我的相册」删除。导出的系统照片库副本需单独删除。系统照片同步与备份遵循设备设置。语言与自定义规格保存在本地。\n\nGoogle ML Kit 在本机检测人脸，但可向 Google 发送技术诊断与使用指标，包括设备和应用信息、安装级标识符、API 事件、性能与错误数据。这些指标不包含输入照片或检测结果。ONNX Runtime 在本机运行内置抠图模型。\n\nAndroid 会检查 GitHub 更新，并按用户选择下载；iOS 通过 App Store 更新。打开在线政策会使用系统浏览器。\n\n联系：chunguangwee@gmail.com。在线政策提供详细说明及 Google SDK 数据披露链接。\n\n为便于接收应用读取，临时导出副本会保留在 App 缓存中。超过一天的副本会在下次启动或导出时清理。\n\n报名任务及其中的备注、要求来源、可选截图、原图和各版本成片保存在本机。你记录的来源未经应用独立验证。删除任务会删除应用内副本，系统原图及已导出的文件会保留。已有照片检查只读取所选字节，不改写文件。ZIP 交付包包含照片与要求/检查报告，请仅分享给你选择的接收方。';
+      '更新日期：2026年11月6日\n\n照片与人脸检测结果在设备本地处理，不为处理而上传。无需账号，不含广告 SDK。\n\n相机权限用于拍照；照片库权限用于选择照片和保存成片，仅在使用相应功能时请求。\n\n保存的成片也保留在 App 私有相册，可在「我的相册」删除。导出的系统照片库副本需单独删除。系统照片同步与备份遵循设备设置。语言与自定义规格保存在本地。\n\nGoogle ML Kit 在本机检测人脸，但可向 Google 发送技术诊断与使用指标，包括设备和应用信息、安装级标识符、API 事件、性能与错误数据。这些指标不包含输入照片或检测结果。ONNX Runtime 在本机运行内置抠图模型。\n\nAndroid 会检查 GitHub 更新，并按用户选择下载；iOS 通过 App Store 更新。打开在线政策会使用系统浏览器。\n\n联系：chunguangwee@gmail.com。在线政策提供详细说明及 Google SDK 数据披露链接。\n\n为便于接收应用读取，临时导出副本会保留在 App 缓存中。超过一天的副本会在下次启动或导出时清理。\n\n报名任务及其中的备注、要求来源、可选截图、原图和各版本成片保存在本机。你记录的来源未经应用独立验证。删除任务会删除应用内副本，系统原图及已导出的文件会保留。已有照片检查只读取所选字节，不改写文件。ZIP 交付包包含照片与要求/检查报告，请仅分享给你选择的接收方。\n\n要求截图文字识别在本机进行：iOS 使用 Apple Vision，Android 使用随包的 ML Kit 文字识别模型。仅处理你选择的截图；识别文字不上传作识别。确认后的要求摘录保存在任务中，并随你主动导出的报告分享。修改要求或更换截图后需重新核对；识别和用户确认均不代表机构认证。';
 
   @override
   String get linkOpenFailed => '无法打开链接，可复制后在浏览器中访问。';
@@ -867,4 +867,129 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get taskDeliveryTitle => '按报名要求准备文件';
+
+  @override
+  String get workflowDemo => '体验示例任务';
+
+  @override
+  String get workflowDemoNote => '虚构要求 · 真实制作与导出';
+
+  @override
+  String get workflowOverview => '交付总览';
+
+  @override
+  String get workflowRefresh => '重新检查文件';
+
+  @override
+  String get workflowRequired => '要求的文件属性';
+
+  @override
+  String get workflowActual => '实测文件属性';
+
+  @override
+  String get workflowBackground => '所选底色（非实测）';
+
+  @override
+  String get workflowUnprepared => '未制作';
+
+  @override
+  String get workflowMissing => '文件缺失，请重新制作';
+
+  @override
+  String get workflowFailed => '文件检查未通过，请核对或重新制作';
+
+  @override
+  String get workflowPassed => '文件属性检查通过';
+
+  @override
+  String get workflowExcerpt => '要求摘录（来源未经独立验证）';
+
+  @override
+  String get workflowConfirmed => '你已核对确认';
+
+  @override
+  String get workflowStale => '要求或来源已变更，请重新核对';
+
+  @override
+  String get workflowPrepare => '制作这份文件';
+
+  @override
+  String get workflowEdit => '修改要求';
+
+  @override
+  String get workflowExtract => '从截图提取要求';
+
+  @override
+  String get workflowRecognizing => '正在本机识别文字…';
+
+  @override
+  String get workflowRetry => '重新识别';
+
+  @override
+  String get workflowOcrFailed => '文字识别不可用或失败。可重试或手动填写要求。';
+
+  @override
+  String get workflowNoText => '未找到可读取的文字。请换清晰截图或手动填写要求。';
+
+  @override
+  String get workflowOcrNote => '请逐项对照截图核对。点击确认前不会保存任何规格。1 KB = 1024 字节。';
+
+  @override
+  String get workflowOriginalText => '识别原文';
+
+  @override
+  String get workflowDimensions => '尺寸候选，请确认宽与高';
+
+  @override
+  String get workflowSize => '文件大小候选';
+
+  @override
+  String get workflowWidth => '宽度（像素）';
+
+  @override
+  String get workflowHeight => '高度（像素）';
+
+  @override
+  String get workflowMinimum => '最小 KB（留空表示无下限）';
+
+  @override
+  String get workflowMaximum => '最大 KB（留空表示无上限）';
+
+  @override
+  String get workflowFilename => '文件名（不含 .jpg）';
+
+  @override
+  String get workflowChooseBackground => '选择要求的底色';
+
+  @override
+  String get workflowJpeg => '我已核对可以使用 JPEG 格式';
+
+  @override
+  String get workflowConfirmValues => '我已对照来源核对宽高及全部要求';
+
+  @override
+  String get workflowAdd => '确认并添加要求';
+
+  @override
+  String get workflowInvalid =>
+      '请填写并确认有效要求：50–2000 像素，宽高比 0.5–2，KB 不超过 2048；使用不重复的英文字母、数字、下划线或短横线文件名。';
+
+  @override
+  String get workflowUnsupported =>
+      '原文含不支持的单位或格式。请核对原文；此处仅支持像素、KB 和 JPEG，不能直接替换原要求。';
+
+  @override
+  String get workflowManual => '手动填写要求';
+
+  @override
+  String get workflowReconfirm => '对照当前截图重新确认';
+
+  @override
+  String get workflowReconfirmNote => '请对照当前截图核对这份要求，再确认。这是你的核对记录，不是机构认证。';
+
+  @override
+  String get workflowRecent => '继续最近任务';
+
+  @override
+  String get workflowInProgress => '个待完成任务';
 }

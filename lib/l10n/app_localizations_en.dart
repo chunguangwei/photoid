@@ -635,7 +635,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyPolicyBody =>
-      'Updated October 21, 2026\n\nPhotos and face detection results are processed on your device and are not uploaded for processing. No account is required, and the app has no advertising SDK.\n\nCamera access is used to take photos. Photo library access is used to choose photos and save finished images, only when you use those features.\n\nSaved results are also stored in the app’s private album. Delete them in My Photos. Exported copies must be deleted separately in the system photo library. System photo syncing and backups follow your device settings. Language and custom specifications are stored locally.\n\nGoogle ML Kit performs face detection locally, but can send technical diagnostics and usage metrics to Google, including device/app information, per-installation identifiers, API events, performance and errors. These metrics do not include your input photos or detection results. ONNX Runtime runs the bundled background-removal model locally.\n\nAndroid checks GitHub for app updates and downloads updates on request. iOS updates come from the App Store. Opening the online policy uses your browser.\n\nQuestions: chunguangwee@gmail.com. The online policy provides further details and links to Google’s SDK disclosures.\n\nTemporary export copies are kept in the app cache so receiving apps can read them. Copies older than one day are removed at the next app launch or export.\n\nApplication tasks are stored locally with your notes, requirement references, optional screenshots, source photo and prepared versions. Sources you record are not independently verified. Delete a task to remove its app-owned copies; system originals and files you already exported are kept. Existing-file checks read the selected bytes without changing them. ZIP delivery packages contain photo files and requirement/check reports; only share them with recipients you choose.';
+      'Updated November 6, 2026\n\nPhotos and face detection results are processed on your device and are not uploaded for processing. No account is required, and the app has no advertising SDK.\n\nCamera access is used to take photos. Photo library access is used to choose photos and save finished images, only when you use those features.\n\nSaved results are also stored in the app’s private album. Delete them in My Photos. Exported copies must be deleted separately in the system photo library. System photo syncing and backups follow your device settings. Language and custom specifications are stored locally.\n\nGoogle ML Kit performs face detection locally, but can send technical diagnostics and usage metrics to Google, including device/app information, per-installation identifiers, API events, performance and errors. These metrics do not include your input photos or detection results. ONNX Runtime runs the bundled background-removal model locally.\n\nAndroid checks GitHub for app updates and downloads updates on request. iOS updates come from the App Store. Opening the online policy uses your browser.\n\nQuestions: chunguangwee@gmail.com. The online policy provides further details and links to Google’s SDK disclosures.\n\nTemporary export copies are kept in the app cache so receiving apps can read them. Copies older than one day are removed at the next app launch or export.\n\nApplication tasks are stored locally with your notes, requirement references, optional screenshots, source photo and prepared versions. Sources you record are not independently verified. Delete a task to remove its app-owned copies; system originals and files you already exported are kept. Existing-file checks read the selected bytes without changing them. ZIP delivery packages contain photo files and requirement/check reports; only share them with recipients you choose.\n\nRequirement screenshots are read locally using Apple Vision on iOS and bundled ML Kit text recognition on Android. Only selected images are processed; text is not uploaded for recognition. Confirmed excerpts remain in your task and are shared in reports only when you export them. Changed requirements or screenshots require rechecking. Recognition and user confirmation are not institutional certification.';
 
   @override
   String get linkOpenFailed =>
@@ -913,4 +913,137 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get taskDeliveryTitle => 'Your application, ready to prepare';
+
+  @override
+  String get workflowDemo => 'Try a demo task';
+
+  @override
+  String get workflowDemoNote =>
+      'Fictional requirements · real editing and export';
+
+  @override
+  String get workflowOverview => 'Delivery overview';
+
+  @override
+  String get workflowRefresh => 'Recheck files';
+
+  @override
+  String get workflowRequired => 'Required file properties';
+
+  @override
+  String get workflowActual => 'Measured file properties';
+
+  @override
+  String get workflowBackground => 'Selected background (not measured)';
+
+  @override
+  String get workflowUnprepared => 'Not prepared';
+
+  @override
+  String get workflowMissing => 'File missing — prepare again';
+
+  @override
+  String get workflowFailed => 'File checks failed — review or prepare again';
+
+  @override
+  String get workflowPassed => 'File checks passed';
+
+  @override
+  String get workflowExcerpt =>
+      'Requirement excerpt (source not independently verified)';
+
+  @override
+  String get workflowConfirmed => 'Confirmed by you';
+
+  @override
+  String get workflowStale => 'Requirements or source changed — confirm again';
+
+  @override
+  String get workflowPrepare => 'Prepare this file';
+
+  @override
+  String get workflowEdit => 'Edit requirements';
+
+  @override
+  String get workflowExtract => 'Extract requirements from screenshot';
+
+  @override
+  String get workflowRecognizing => 'Reading text on your device…';
+
+  @override
+  String get workflowRetry => 'Retry recognition';
+
+  @override
+  String get workflowOcrFailed =>
+      'Text recognition unavailable or failed. Retry or enter requirements manually.';
+
+  @override
+  String get workflowNoText =>
+      'No readable text found. Try a clearer screenshot or enter requirements manually.';
+
+  @override
+  String get workflowOcrNote =>
+      'Review every value against the screenshot. Nothing is saved until you confirm. 1 KB = 1024 bytes.';
+
+  @override
+  String get workflowOriginalText => 'Recognized text';
+
+  @override
+  String get workflowDimensions =>
+      'Dimension candidates — confirm width and height';
+
+  @override
+  String get workflowSize => 'File-size candidates';
+
+  @override
+  String get workflowWidth => 'Width (px)';
+
+  @override
+  String get workflowHeight => 'Height (px)';
+
+  @override
+  String get workflowMinimum => 'Minimum KB (blank = no minimum)';
+
+  @override
+  String get workflowMaximum => 'Maximum KB (blank = no maximum)';
+
+  @override
+  String get workflowFilename => 'File name (without .jpg)';
+
+  @override
+  String get workflowChooseBackground => 'Select required background';
+
+  @override
+  String get workflowJpeg => 'I have checked that JPEG is acceptable';
+
+  @override
+  String get workflowConfirmValues =>
+      'I have verified width, height and all requirements against the source';
+
+  @override
+  String get workflowAdd => 'Confirm and add requirements';
+
+  @override
+  String get workflowInvalid =>
+      'Complete and confirm valid requirements: 50–2000 px, aspect 0.5–2, KB up to 2048; unique ASCII file name.';
+
+  @override
+  String get workflowUnsupported =>
+      'The source contains unsupported units or formats. Review the original; only pixel dimensions, KB and JPEG can be prepared here. Do not silently substitute its requirements.';
+
+  @override
+  String get workflowManual => 'Enter requirements manually';
+
+  @override
+  String get workflowReconfirm => 'Confirm against current screenshot';
+
+  @override
+  String get workflowReconfirmNote =>
+      'Check the current screenshot and these requirements before confirming. This is your confirmation, not institutional certification.';
+
+  @override
+  String get workflowRecent => 'Continue recent task';
+
+  @override
+  String get workflowInProgress => 'unfinished tasks';
 }

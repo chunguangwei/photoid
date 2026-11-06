@@ -9,6 +9,7 @@ import 'pages/splash_page.dart';
 import 'pages/update_dialog.dart';
 import 'services/locale_service.dart';
 import 'services/update_service.dart';
+import 'services/modnet_segmenter.dart';
 import 'services/glass_preferences.dart';
 import 'theme/app_theme.dart';
 import 'services/delivery_export_cache.dart';
@@ -47,6 +48,9 @@ class _PhotoIdAppState extends State<PhotoIdApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(ModnetSegmenter.warmUp());
+    });
     // 启动 3 秒后静默检查 GitHub Release，避免影响首屏。
     _updateCheckTimer = Timer(const Duration(seconds: 3), _checkUpdate);
   }
