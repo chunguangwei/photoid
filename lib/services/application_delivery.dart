@@ -45,8 +45,14 @@ class ApplicationDelivery {
           'file': {'name': '${output.fileName}.jpg', ...check.toJson()},
           'requestedSpecification': output.spec.toJson(),
           'acceptanceGuaranteed': false,
+          if (output.requirementSource != null)
+            'requirementsSource': output.requirementSource!.toJson(),
         })));
         readable.add('${output.fileName}.jpg\n${check.readable(locale)}');
+        final source = output.requirementSource;
+        if (source != null)
+          readable.add(
+              '${zh ? "要求摘录（来源未独立验证）" : "Requirements excerpt (source not independently verified)"}: ${source.excerpt}\n${source.confirmed ? (zh ? "用户已确认" : "User confirmed") : (zh ? "要求或来源已变更，需重新核对" : "Requirements or source changed; recheck required")}');
       }
       // Replacing the source, changing a requirement or deleting a task during
       // generation invalidates this snapshot; never silently export old files.

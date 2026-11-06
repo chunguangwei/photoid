@@ -44,6 +44,8 @@ flutter:
   # 注意：图标 PNG 不在此列——它们只是 flutter_launcher_icons 的构建输入，
   # 应用代码从不 load，列进来会白白打进包体 1.4MB
   assets:
+    - assets/demo/portrait.jpg
+    - assets/demo/requirements.png
     - assets/photo_specs.json
     - assets/models/hivision_modnet.onnx
 

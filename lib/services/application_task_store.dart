@@ -212,7 +212,13 @@ class ApplicationTaskStore {
         final t = await get(id);
         final j = t.toJson()
           ..['hasEvidence'] = true
-          ..['evidenceRevision'] = t.evidenceRevision + 1;
+          ..['evidenceRevision'] = t.evidenceRevision + 1
+          ..['outputs'] = [
+            for (final o in t.outputs)
+              o.toJson()
+                ..['requirementSource'] =
+                    o.requirementSource?.invalidate().toJson()
+          ];
         final next = ApplicationTask.fromJson(j);
         await _atomic(evidenceFile(next), bytes);
         return _write(next);
@@ -258,7 +264,13 @@ class ApplicationTaskStore {
                           id: o.id,
                           spec: spec,
                           fileName: name,
-                          revision: o.revision + 1)
+                          revision: o.revision + 1,
+                          requirementSource: o.requirementSource == null
+                              ? null
+                              : requirementFingerprint(o.spec) ==
+                                      requirementFingerprint(spec)
+                                  ? o.requirementSource
+                                  : o.requirementSource!.invalidate())
                       .toJson()
           ];
         return _write(ApplicationTask.fromJson(j));
@@ -309,6 +321,98 @@ class ApplicationTaskStore {
               v.toJson()..['ready'] = (v.id == outputId ? true : v.ready)
           ];
         return _write(ApplicationTask.fromJson(j));
+      });
+  Future<ApplicationTask> confirmOutputSource(
+          String id, String outputId, String excerpt,
+          {required int expectedEvidenceRevision,
+          required int expectedRevision}) =>
+      _serial(() async {
+        final t = await get(id);
+        final o = t.outputs.firstWhere((v) => v.id == outputId);
+        if (!t.hasEvidence ||
+            t.evidenceRevision != expectedEvidenceRevision ||
+            o.revision != expectedRevision)
+          throw StateError('Evidence or requirements changed');
+        if (excerpt.trim().isEmpty || excerpt.length > 4000)
+          throw ArgumentError('Invalid excerpt');
+        final source = OutputRequirementSource(
+            excerpt: excerpt,
+            evidenceRevision: t.evidenceRevision,
+            specFingerprint: requirementFingerprint(o.spec),
+            confirmed: true);
+        final j = t.toJson()
+          ..['outputs'] = [
+            for (final v in t.outputs)
+              v.toJson()
+                ..['requirementSource'] =
+                    (v.id == outputId ? source : v.requirementSource)?.toJson()
+          ];
+        return _write(ApplicationTask.fromJson(j));
+      });
+
+  Future<ApplicationTask> createDemo(
+          {required String name,
+          required String notes,
+          required Uint8List source,
+          required Uint8List evidence,
+          required List<(PhotoSpec, String)> outputs}) =>
+      _serial(() async {
+        _validateMetadata(name, notes, '', '');
+        await _validateImage(source);
+        await _validateImage(evidence);
+        if (outputs.isEmpty || outputs.length > 5)
+          throw ArgumentError('Invalid demo');
+        final names = <String>{};
+        for (final (spec, name) in outputs) {
+          _validateSpec(spec);
+          _validateName(name);
+          if (!names.add(name.toLowerCase()))
+            throw ArgumentError('Duplicate name');
+        }
+        for (final t in await list()) {
+          if (t.isDemo &&
+              t.hasSource &&
+              t.hasEvidence &&
+              await sourceFile(t).exists() &&
+              await evidenceFile(t).exists()) return t;
+        }
+        await _root.create(recursive: true);
+        // Interrupted staging directories are invisible to list(); clean only owned staging.
+        await for (final e in _root.list(followLinks: false)) {
+          if (e is Directory && p.basename(e.path).startsWith('.demo_'))
+            await e.delete(recursive: true);
+        }
+        final id = _id();
+        final staging = Directory(p.join(_root.path, '.demo_$id'));
+        try {
+          await staging.create();
+          final t = ApplicationTask(
+              id: id,
+              name: name,
+              notes: notes,
+              sourceReference: 'Fictional demonstration / 虚构演示',
+              updatedAt: DateTime.now().toUtc(),
+              isDemo: true,
+              hasSource: true,
+              hasEvidence: true,
+              sourceRevision: 1,
+              evidenceRevision: 1,
+              outputs: [
+                for (final (spec, name) in outputs)
+                  ApplicationOutput(id: _id(), spec: spec, fileName: name)
+              ]);
+          await File(p.join(staging.path, 'source_1.image'))
+              .writeAsBytes(source, flush: true);
+          await File(p.join(staging.path, 'requirements_1.image'))
+              .writeAsBytes(evidence, flush: true);
+          await File(p.join(staging.path, 'task.json'))
+              .writeAsString(jsonEncode(t.toJson()), flush: true);
+          await staging.rename(_dir(id).path);
+          return t;
+        } catch (_) {
+          if (await staging.exists()) await staging.delete(recursive: true);
+          rethrow;
+        }
       });
   Future<void> delete(String id) => _serial(() async {
         final dir = _dir(id);
