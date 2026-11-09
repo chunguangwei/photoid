@@ -13,7 +13,12 @@
 - 正式签名 APK：`build/releases/1.2.0-50/app-release.apk`
 - APK SHA-256：`6594b5f5c01cd95154264962c9a104a9adef011f0cb8530db84628ca3d69e2e2`
 - 校验文件：`build/releases/1.2.0-50/SHA256SUMS`
-- iOS App Store 归档与 IPA：生成中，成功后补充实际校验值；未上传/未重新送审。
+- iOS 归档：`build/ios/archive/Runner.xcarchive`
+- App Store IPA：`build/ios/ipa/photoid.ipa`，72290383 字节。
+- IPA SHA-256：`abd362d89ff2d18a98806ac1543e0c9d6a5ec003fab6ebea4a937cfa299985f3`
+- 已核对 IPA 版本 1.2.0、build 50、bundle/team、App Store 分发 profile（非开发或企业 profile），无测试 framework。
+- 普通入口的开发签名归档 App 已通过签名校验，并在连接的 iPhone 上原位安装、启动；不是留下集成测试入口。
+- GitHub 已建立 v1.2.0 发布草稿，附正式签名 APK 与 SHA256SUMS；公开 latest 仍为 v1.1.0，不触发旧用户自动更新。App Store 尚未上传/重新送审。
 
 ## 发布门槛
 

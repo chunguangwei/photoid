@@ -41,3 +41,8 @@ Flutter `test` 默认在集成测试结束后卸载应用。本轮首次真机�
 - ASC 于 2026-11-09 实查仍为 1.1.0(49) 被拒、4.3(a) 未解决；11 月 6 日开发者询问后未显示新增回复。TestFlight 与上传记录最高 build 49，候选改为 1.2.0(50)，提交前需再核对编号。
 - iPhone USB 连接可用于原生测试；Mac iPhone 镜像重试仍无法连接，iPad 实机不可用，当前只有 iOS 27 模拟器且旧 ML Kit 框架限制 arm64 模拟运行。原生选择器/iPad 验收仍如实待办。
 - 已找到并私下复用原项目 gitignored 安卓发行签名配置。公版 v1.1.0 APK 的 versionCode=49，签名 SHA-256 为 d27c0bd02d30bf67b1b66d833934a0ec806a5f22a1085839988551bd8616c87f；新版发行包及覆盖升级结果在候选包记录补充，不发布调试签名包。
+
+
+### 候选包最终结果
+
+1.2.0(50) 最终全量 209 项通过，静态分析 No issues found。原签名 Android APK 已生成并校验证书，公版49→新版50覆盖升级通过（UID/首次安装时间保持）。已创建 GitHub 发布草稿，未公开发布。iOS 归档与 App Store 分发 IPA 已成功导出并核对版本、bundle/team/profile；正常入口开发签名归档 App 已在 iPhone 上原位安装、启动。原有根工作区 Info.plist 用户改动未改写。校验值及路径见 [候选包记录](candidate-1.2.0-build50.md)。未进行 App Store 上传或审核提交；剩余交互/素材验收保持待办。
