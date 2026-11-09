@@ -1145,4 +1145,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get finderCropFraming => '预估裁剪可能切到脸部，请人工调整构图';
+
+  @override
+  String get startupContinue => '进入首页';
 }

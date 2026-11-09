@@ -8,9 +8,9 @@ PhotoID prepares portrait files on your device: find candidates against task req
 
 ### Features
 
-The next development update adds a [task-aware local photo finder](docs/photo-finder.md): choose a folder or multiple files, review real on-device face detections and estimated crop pixels for your saved requirements, then explicitly adopt a photo. **Manual Files, Photos and camera selection remain available.** [Current implementation and release preparation](docs/release/next-photo-finder/README.md). This feature is not yet published or submitted to the App Store.
+The next development update adds a [task-aware local photo finder](docs/photo-finder.md): choose a folder or multiple files, review real on-device face detections and estimated crop pixels for your saved requirements, then explicitly adopt a photo. **Manual Files, Photos and camera selection remain available.** [Current implementation and release preparation](docs/release/next-photo-finder/README.md). The candidate is 1.2.0 (50), with a brief skippable brand intro restored; it is not yet published or submitted to the App Store.
 
-The 1.1 development update adds [application tasks and file delivery](docs/release/1.1-build49/README.md): read-only checks for existing files, saved requirements and references, up to five outputs from one source photo, and ZIP export with a readable checklist. All existing photo tools remain available. The public Android release link below remains v1.0.0 until a new release is explicitly published.
+The 1.1 development update adds [application tasks and file delivery](docs/release/1.1-build49/README.md): read-only checks for existing files, saved requirements and references, up to five outputs from one source photo, and ZIP export with a readable checklist. All existing photo tools remain available. The public Android release link is v1.1.0; the new 1.2.0 candidate remains unpublished.
 
 
 Version 1.0.0 adds a custom-requirements workspace, accessible glass navigation, original JPEG + JSON file checks export, and reliability fixes. [Download Android](https://github.com/chunguangwei/photoid/releases/latest) · [Review and release preparation](docs/release/1.0-build48/README.md).
@@ -94,9 +94,9 @@ PhotoID 是一款**纯端侧**的 AI 证件照制作应用。支持拍摄或从�
 
 ### 功能特性
 
-下一次开发更新增加[按任务要求本机找照片](docs/photo-finder.md)：选择目录或多选文件，查看本地人脸检测、理由与任务裁剪像素估计，再明确采用原图。**保留人工“文件”、图库和拍照入口。** [发布与截图准备](docs/release/next-photo-finder/README.md)，尚未正式发布或提交此功能的 App Store 新包。
+下一次开发更新增加[按任务要求本机找照片](docs/photo-finder.md)：选择目录或多选文件，查看本地人脸检测、理由与任务裁剪像素估计，再明确采用原图。**保留人工“文件”、图库和拍照入口。** [发布与截图准备](docs/release/next-photo-finder/README.md)，候选版本为 1.2.0（50），已恢复可立即跳过的品牌加载动效，尚未正式发布或提交此功能的 App Store 新包。
 
-1.1 开发更新新增[报名任务与文件交付](docs/release/1.1-build49/README.md)：已有文件只读检查、要求与来源记录、共用原图分别制作最多五份成片，以及附可读清单的 ZIP 导出。所有原有工具保留。下方公开 Android 下载仍指向已发布的 v1.0.0，新功能以本次构建与验证记录为准。
+1.1 开发更新新增[报名任务与文件交付](docs/release/1.1-build49/README.md)：已有文件只读检查、要求与来源记录、共用原图分别制作最多五份成片，以及附可读清单的 ZIP 导出。所有原有工具保留。下方公开 Android 下载指向已发布的 v1.1.0，新功能以本次构建与验证记录为准。
 
 
 v1.0.0 新增自定义规格工作台、玻璃导航、JPEG + JSON 文件交付及稳定性修复。[下载 Android](https://github.com/chunguangwei/photoid/releases/latest) · [送审与发布准备](docs/release/1.0-build48/README.md)。

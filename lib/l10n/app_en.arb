@@ -540,5 +540,6 @@
   "finderFaces": "detected faces",
   "finderItems": "Directory items checked",
   "finderPreview": "Photo preview (up to 1280 px)",
-  "finderCropFraming": "Estimated crop may cut the face — adjust framing manually"
+  "finderCropFraming": "Estimated crop may cut the face — adjust framing manually",
+  "startupContinue": "Continue"
 }

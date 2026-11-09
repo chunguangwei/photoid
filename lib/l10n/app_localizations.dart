@@ -2263,6 +2263,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Estimated crop may cut the face — adjust framing manually'**
   String get finderCropFraming;
+
+  /// No description provided for @startupContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get startupContinue;
 }
 
 class _AppLocalizationsDelegate

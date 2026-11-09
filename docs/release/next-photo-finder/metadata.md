@@ -1,6 +1,6 @@
 # App Store 元数据草稿（下一版）
 
-使用同一 App ID；版本/build 待在 ASC 核对后填写。本稿应与最终二进制和实际截图逐项核对。保留既有名称，避免仅改名换皮。
+使用同一 App ID；候选为 1.2.0（50），2026-11-09 实查 ASC 最新上传为 49，上传前需再次核对。本稿应与最终二进制和实际截图逐项核对。保留既有名称，避免仅改名换皮。
 
 ## English (US)
 
@@ -35,6 +35,7 @@ What’s New:
 • Manual Files, Photos and camera selection remain available.
 • Local sample photos demonstrate the real finder; file and task checks prevent adopting stale results.
 • Includes the task requirements, screenshot text extraction and file delivery workflow.
+• Restores a brief brand intro with immediate continue and Reduce Motion support.
 
 ## 简体中文
 
@@ -69,6 +70,7 @@ PhotoID Studio 帮助你围绕报名和申请要求，在本机准备人像照�
 • 保留“文件”、图库及拍照入口。
 • 示例照片使用真实模型检测，采用前复核文件与任务版本，避免使用过期结果。
 • 包含报名任务、截图要求提取及文件交付工作流。
+• 恢复轻量品牌加载动效，可立即进入首页并支持减少动态效果。
 
 ## 发布前文案核对
 

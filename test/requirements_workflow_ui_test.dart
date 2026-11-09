@@ -25,7 +25,7 @@ void main() {
     expect(tasks!.single.complete, false);
     expect(tasks.single.outputs.length, 2);
   });
-  testWidgets('startup immediately shows usable home instead of countdown',
+  testWidgets('startup finishes brand motion and shows home without countdown',
       (tester) async {
     await tester.pumpWidget(host(const SplashPage()));
     await tester.pumpAndSettle();

@@ -1,4 +1,4 @@
-Draft for the next binary — replace the version/build after checking App Store Connect. Do not submit this draft against the old build.
+Prepared for version 1.2.0 (50). Not submitted. Select the new binary and verify all materials before submission; do not use against build 49.
 
 PhotoID Studio remains the same application and App ID. This update adds a task-aware local photo-finding workflow, alongside the requirements extraction and file delivery workflow. All manual photo tools remain available.
 

@@ -541,7 +541,7 @@ HEIC 会漏入；99 强制转 JPG 且质量损失可忽略）。
 
 ### SplashPage（lib/pages/splash_page.dart）
 
-当前直接呈现可用首页并在后台预热模型，无倒计时或广告等待页。旧启动动画记录在 Git 历史中，不能作为当前 UI 说明。
+按用户 2026-11-09 要求恢复品牌组装动效：取景角标 → 人像描边/扫描 → 品牌徽章。复用原有矢量绘制，主序列约 1.6 秒，可点击“进入首页”或画面立即结束；减少动态效果时直接显示首页。首页提前在下层构建，模型预热保持后台执行，不等待网络或模型就绪。没有六秒倒计时、广告位或下载百分比。
 
 ### 报名任务、截图要求和本机找照片
 
@@ -696,7 +696,7 @@ dart analyze            # 静态检查
 | `effects_test` | 美颜/清晰度强度契约：0 短路、不外溢人脸外、保五官、不溢出回绕、**中频色斑被压制**、**强度单调可感知**、**阴影肤色参与**、**暖肤提亮生效**、**无彩色描边**、**暗部高光不死**、**鲜艳度不使肤色发橙** |
 | `image_pipeline_test` | `encodeToKbRange` 区间命中与 EOI 填充 |
 | `crop_editor_test` | 裁剪编辑器不抛异常 |
-| `splash_detail_test` | 启动页倒计时/跳过、规格详情页渲染 |
+| `splash_detail_test` | 品牌动效/立即进入/减少动态效果、规格详情页渲染 |
 | `photo_spec_test` | 规格模型不变量与 JSON 反序列化 |
 | `album_service_test` / `custom_spec_store_test` | 本地存储 CRUD |
 | `update_service_test` / `update_dialog_test` | 升级检查与对话框 |
@@ -765,3 +765,8 @@ Android 端应用内自升级完全依赖 GitHub Release。⚠️ **铁律：`pu
 - [product.md](product.md) — 当前产品文档（定位/功能/规格体系/合规检测）
 - [CONTRIBUTING](../CONTRIBUTING.md) — 贡献指南
 - [LICENSE](../LICENSE) — 非商业许可证（个人免费，商用需书面授权）
+
+
+### 集成测试后的发行构建
+
+Flutter 3.47 的 `--no-pub` 也会跳过原生插件注册文件重生成。集成测试后直接用该选项打 release 可能残留 IntegrationTestPlugin，导致 Android release 编译失败。发行命令使用普通 `flutter build apk --release` / `flutter build ipa --release ...`，让工具按 release 模式重新生成注册文件；不要手工修改生成文件或 SDK。测试与发行构建按顺序执行，避免同一工作树中的 Flutter 命令竞争生成状态。确保有足够临时空间，Xcode 归档会在 DerivedData 另建中间产物。

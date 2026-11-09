@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:convert';
+import 'package:archive/archive.dart' show getCrc32, ZipDecoder;
 import 'package:image/image.dart' as img;
 import 'package:flutter/material.dart';
 import 'package:photoid/l10n/app_localizations.dart';
@@ -11,6 +13,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:photoid/services/photo_finder_demo.dart';
+import 'package:photoid/services/image_pipeline.dart';
+import 'package:photoid/services/application_delivery.dart';
+import 'package:photoid/models/photo_spec.dart';
 import 'package:photoid/services/photo_finder_session.dart';
 
 void main() {
@@ -86,11 +91,149 @@ void main() {
       await root.delete(recursive: true);
     }
   });
+
+  testWidgets('real HEIC, EXIF rotation and predecode resource guards',
+      (tester) async {
+    final root =
+        await (await getTemporaryDirectory()).createTemp('finder_formats_');
+    final gateway = NativeFinderGateway();
+    String? session;
+    try {
+      final heic = await rootBundle.load('assets/demo/portrait.heic');
+      final heicFile = await File('${root.path}/portrait.heic').writeAsBytes(
+          heic.buffer.asUint8List(heic.offsetInBytes, heic.lengthInBytes));
+      final jpeg = await rootBundle.load('assets/demo/portrait.jpg');
+      final oriented = img.decodeJpg(
+          jpeg.buffer.asUint8List(jpeg.offsetInBytes, jpeg.lengthInBytes))!;
+      oriented.exif.imageIfd.orientation = 6;
+      final rotated = await File('${root.path}/rotated.jpg')
+          .writeAsBytes(img.encodeJpg(oriented));
+      final bigBytes = File('${root.path}/over_30mb.jpg');
+      final handle = await bigBytes.open(mode: FileMode.write);
+      await handle.truncate(30 * 1024 * 1024 + 1);
+      await handle.close();
+      // A valid 25MP, 1-bit grayscale PNG needs only ~3MB of raw row data.
+      // Metadata must reject it before the native decoder allocates pixels.
+      List<int> chunk(String type, List<int> content) {
+        final bytes = Uint8List.fromList([...type.codeUnits, ...content]);
+        final length = ByteData(4)..setUint32(0, content.length);
+        final crc = ByteData(4)..setUint32(0, getCrc32(bytes));
+        return [
+          ...length.buffer.asUint8List(),
+          ...bytes,
+          ...crc.buffer.asUint8List()
+        ];
+      }
+
+      final ihdr = ByteData(13)
+        ..setUint32(0, 5000)
+        ..setUint32(4, 5000)
+        ..setUint8(8, 1);
+      final png = Uint8List.fromList([
+        137,
+        80,
+        78,
+        71,
+        13,
+        10,
+        26,
+        10,
+        ...chunk('IHDR', ihdr.buffer.asUint8List()),
+        ...chunk('IDAT', ZLibEncoder().convert(Uint8List(626 * 5000))),
+        ...chunk('IEND', []),
+      ]);
+      final bomb = await File('${root.path}/over_24mp.png').writeAsBytes(png);
+      final listing = await gateway.call('openDemo', {
+        'paths': [heicFile.path, rotated.path, bigBytes.path, bomb.path]
+      });
+      session = listing['session'] as String;
+      final results = <String, Map>{};
+      for (final entry in listing['entries']) {
+        results[entry['name'] as String] = {
+          ...Map.from(entry),
+          ...Map.from(await gateway
+              .call('analyze', {'session': session, 'id': entry['id']}))
+        };
+      }
+      final h = results['portrait.heic']!;
+      expect(h['skip'], isNull);
+      expect(h['width'], 800);
+      expect(h['height'], 1200);
+      final copied = await gateway.call('materialize',
+          {'session': session, 'id': h['id'], 'fingerprint': h['fingerprint']});
+      final converted =
+          img.decodeJpg(await File(copied['path'] as String).readAsBytes())!;
+      expect(converted.width, 800);
+      expect(converted.height, 1200);
+      final rotation = results['rotated.jpg']!;
+      expect(rotation['skip'], isNull);
+      expect(rotation['width'], 1200);
+      expect(rotation['height'], 800);
+      final thumb = img.decodeJpg(
+          await File(rotation['thumbnailPath'] as String).readAsBytes())!;
+      expect(thumb.width / thumb.height, closeTo(1.5, .01));
+      expect(results['over_30mb.jpg']!['skip'], 'oversized');
+      expect(results['over_24mp.png']!['skip'], 'oversized');
+    } finally {
+      if (session != null) await gateway.call('close', {'session': session});
+      await root.delete(recursive: true);
+    }
+  });
+
+  testWidgets('native editing pipeline saves reopens and verifies delivery ZIP',
+      (tester) async {
+    final root =
+        await (await getTemporaryDirectory()).createTemp('finder_delivery_');
+    try {
+      final store = ApplicationTaskStore(root);
+      var task = await store.create(name: 'Native delivery QA');
+      final source = await rootBundle.load('assets/demo/portrait.jpg');
+      task = await store.setSource(
+          task.id,
+          source.buffer
+              .asUint8List(source.offsetInBytes, source.lengthInBytes));
+      task = await store.addOutput(task.id,
+          DemoTask.spec('Main', 480, 640, 0, 120, idPhotoBlue), 'main');
+      task = await store.addOutput(
+          task.id,
+          DemoTask.spec('Profile', 300, 400, 0, 120,
+              const SpecBackground('white', 255, 255, 255)),
+          'profile');
+      for (final output in task.outputs) {
+        final result = await ImagePipeline()
+            .run(store.sourceFile(task).path, output.spec)
+            .timeout(const Duration(seconds: 90));
+        await store.saveOutput(task.id, output.id, result.jpgBytes, output.spec,
+            expectedRevision: task.tokenFor(output));
+      }
+      final reopened = await ApplicationTaskStore(root).get(task.id);
+      expect(reopened.complete, true);
+      final zip = await ApplicationDelivery.build(reopened, store, root, 'en');
+      final archive = ZipDecoder().decodeBytes(await zip.readAsBytes());
+      expect(archive.files.length, 5);
+      for (final output in reopened.outputs) {
+        final bytes = archive.findFile('${output.fileName}.jpg')!.content;
+        final delivered = img.decodeJpg(bytes)!;
+        expect(delivered.width, output.spec.pixelWidth);
+        expect(delivered.height, output.spec.pixelHeight);
+        expect(bytes, await store.outputFile(reopened, output).readAsBytes());
+      }
+      expect(utf8.decode(archive.findFile('CHECKLIST.txt')!.content),
+          contains('Native delivery QA'));
+      expect(
+          archive.files.any((f) =>
+              f.name.contains('portrait') || f.name.contains('thumbnail')),
+          false);
+    } finally {
+      await root.delete(recursive: true);
+    }
+  });
   testWidgets(
       'production finder UI runs actual sample analysis and captures review evidence',
       (tester) async {
     if (Platform.isIOS && binding.lifecycleState != AppLifecycleState.resumed) {
-      markTestSkipped('Unlock iPhone and bring the app to foreground before native UI capture.');
+      markTestSkipped(
+          'Unlock iPhone and bring the app to foreground before native UI capture.');
       return;
     }
     final temp = await getTemporaryDirectory();
