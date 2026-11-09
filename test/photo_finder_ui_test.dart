@@ -24,7 +24,7 @@ class CandidateGateway implements FinderGateway {
   @override
   Future<dynamic> call(String method, Map<String, dynamic> args) async {
     calls.add(method);
-    if (method == 'chooseFiles') {
+    if (method == 'chooseFiles' || method == 'choosePhotos') {
       return {
         'session': 'candidate',
         'visited': 1,
@@ -107,6 +107,8 @@ void main() {
                   child: const Text('Open finder'))))));
       await tester.tap(find.text('Open finder'));
       await settleFiles(tester);
+      await tester.tap(find.text('Formats, limits & privacy'));
+      await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
           find.byKey(const Key('finder-files')), 250,
           scrollable: find.byType(Scrollable).first);
@@ -115,6 +117,8 @@ void main() {
       final candidate = find.byKey(const ValueKey('finder-result-source.jpg'));
       await tester.scrollUntilVisible(candidate, 300,
           scrollable: find.byType(Scrollable).first);
+      await tester.pumpAndSettle();
+      await tester.tap(candidate);
       await tester.pumpAndSettle();
       expect(
           find.textContaining(
@@ -126,7 +130,7 @@ void main() {
             asset.buffer
                 .asUint8List(asset.offsetInBytes, asset.lengthInBytes)));
       }
-      final use = find.text('Use this photo');
+      final use = find.text('Prepare with this photo');
       await tester.ensureVisible(use);
       await tester.tap(use);
       await settleFiles(tester);
@@ -190,7 +194,8 @@ void main() {
         await settleFiles(tester);
         expect(find.byKey(const Key('finder-manual')), findsOneWidget);
         expect(tester.takeException(), isNull);
-        await tester.drag(find.byType(ListView).first, const Offset(0, -650));
+        await tester.drag(
+            find.byKey(const Key('finder-scroll')), const Offset(0, -650));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
       });

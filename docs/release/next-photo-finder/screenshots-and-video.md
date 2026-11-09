@@ -1,19 +1,19 @@
 # 截图、图示与视频
 
-工程图示见 [功能流程图](../../photo-finder.md)，实际 [iPhone / Android 中英文工程采集](device-captures/README.md) 已准备。真机集成测试可采集生产 PhotoFinderPage 的中英文图；来自真实 iPhone、实际原生模型与公开示例，不是 AI 生成 UI，也不把 fixture 文件名预设成推荐结果。测试使用临时任务和生产主题，不替代最终完整应用的 Store 素材验收。
+当前为 build51 简版流程。工程图示见 [功能流程图](../../photo-finder.md)。[build50 工程图](device-captures/README.md) 属于历史界面，不能作为本版上架素材。集成测试使用真实原生模型、内部授权素材和生产主题，不按 fixture 文件名预设推荐结果；工程采集不替代最终正常应用的 Store 素材验收。
 
 ## 最终 App Store 截图顺序
 
 | 图 | 实际画面 | 中文标题 | English title |
 |---|---|---|---|
-| 1 | 首页、任务找照片入口 | 从要求开始找照片 | Find photos for your requirements |
-| 2 | 已有任务、找照片设置，人工入口可见 | 文件夹筛选，人工选图仍在 | Folder finding. Manual choice stays. |
-| 3 | 真实候选和人数/原因 | 看清原因，由你决定 | Review the reasons. You decide. |
-| 4 | 逐项裁剪估计 | 按每份要求估计裁剪像素 | Estimate crop pixels for each output |
-| 5 | 截图要求提取与确认 | 要求逐项核对后保存 | Verify requirements before saving |
-| 6 | 成片总览与 ZIP 清单 | 逐份实测，打包交付 | Check actual files. Deliver together. |
+| 1 | 首页 AI 找照片入口，手动制作仍可见 | 从一批照片里挑原图 | Find a starting photo in a batch |
+| 2 | 33 个常用规格及自定义入口 | 先选你需要的尺寸 | Choose the size you need |
+| 3 | 相册批量与文件夹按钮 | 相册多选，或选一个文件夹 | Select photos or a folder |
+| 4 | 真实结果网格和预览 | 点一张，开始制作 | Tap a photo to prepare |
+| 5 | 裁切、底色与文件大小编辑 | 按尺寸与 KB 要求制作 | Prepare dimensions and file size |
+| 6 | 制作记录与成片实测 | 留下记录，检查成片 | Keep history. Inspect actual files. |
 
-避免“官方认证”“保证通过”“AI 自动选出合规照”“全相册自动分类”。示例和估计在截图中保留标识，不隐藏人工核对提示。除明确允许的展示排版外，不伪造功能状态或涂改检测结果。
+避免“官方认证”“保证通过”“AI 自动选出合规照”“全相册自动分类”。估计在截图中保留标识，不隐藏人工核对提示。除明确允许的展示排版外，不伪造功能状态或涂改检测结果。
 
 ## 采集要求
 
@@ -24,4 +24,4 @@
 
 ## 60–90 秒审核演示
 
-首页 AI 找照片 → 选示例任务 → 展开任务要求 → 示例照片真实检测 → 单人/多人/无脸原因 → 各输出裁剪像素 → 明确采用、替换确认 → 手工调整并制作两份输出 → 文件总览与交付。另展示人工选图入口和停止/清除。目录授权、Photos/相机及 iPad 兼容模式须独立测试，不能从示例推断已验收。
+首页 AI 找照片 → 常用尺寸（另示自定义入口）→ 系统相册批量选择 → 真实结果网格 → 点图预览并采用 → 原有编辑器裁切换底压缩 → 保存成片并检查尺寸/字节。另展示目录选择、人工选图/拍照和取消换批次保留结果。高级 OCR/多文件交付可作补充，不再作为主流程前置步骤。原生选择器与 iPad 兼容模式须独立测试，不能从内部素材注入测试推断已验收。

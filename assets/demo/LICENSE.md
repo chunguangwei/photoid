@@ -7,3 +7,5 @@ requirements.png / requirements-zh.png: original fictional text fixtures, create
 Photo finder variants: generated locally at runtime from portrait.jpg (resized, blurred and a side-by-side duplicate), plus an original flat-color no-portrait sample. They are detection fixtures, not claims about the depicted person's eligibility. No canned AI recommendation is assigned to them. Captures under docs/release/next-photo-finder/device-captures include this same licensed sample.
 
 portrait.heic: codec QA copy converted from the same licensed portrait.jpg using macOS ImageIO (sips), 2026-11-09. No new portrait or endorsement.
+
+wide.heic: original synthetic flat-color 8000×300 codec regression fixture, generated 2026-11-09; contains no personal photo. All fixtures are developer QA inputs; the app has no user-facing example entry.

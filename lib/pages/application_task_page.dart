@@ -11,7 +11,7 @@ import '../services/application_delivery.dart';
 import '../services/photo_file_inspection.dart';
 import '../widgets/photo_input.dart';
 import '../widgets/task_details_dialog.dart';
-import 'custom_spec_page.dart';
+import 'photo_spec_picker_page.dart';
 import 'photo_finder_page.dart';
 import 'edit_page.dart';
 import 'requirements_import_page.dart';
@@ -144,8 +144,7 @@ class _ApplicationTaskPageState extends State<ApplicationTaskPage> {
     final spec = await Navigator.push<PhotoSpec>(
         context,
         MaterialPageRoute(
-            builder: (_) =>
-                CustomSpecPage(returnSpec: true, initialSpec: existing?.spec)));
+            builder: (_) => PhotoSpecPickerPage(initialSpec: existing?.spec)));
     if (spec == null || !mounted) return;
     final name = await showDialog<String>(
         context: context,

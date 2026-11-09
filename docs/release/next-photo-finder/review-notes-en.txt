@@ -1,25 +1,19 @@
-Prepared for version 1.2.0 (50). Not submitted. Select the new binary and verify all materials before submission; do not use against build 49.
+Prepared for version 1.2.0 (51). Draft only: select the matching new binary and final screenshots before submitting. This replaces the build50 sample-led walkthrough.
 
-PhotoID Studio remains the same application and App ID. This update adds a task-aware local photo-finding workflow, alongside the requirements extraction and file delivery workflow. All manual photo tools remain available.
+PhotoID Studio adds a simpler local source-finding flow. No login is required.
 
-Reproducible walkthrough:
-1. On Home, open AI photo finder and choose “Try a demo task”. The sample contains fictional editable output requirements, not an official standard.
-2. The photo finder shows the task’s requirements. Tap “Try sample photos”. It generates variants of a licensed portrait and performs the same real on-device detection used for user-selected files; there are no preassigned recommendation results.
-3. Inspect the detected faces, reasons and estimated crop resolution for each task output. Single portraits, multiple faces, a small photo, a blurred variant and a no-portrait sample can be reviewed. Detection results can differ between devices.
-4. Use group filters or file/path search. Expand an output’s estimated crop; this is a preparation reference, not a full-head or institutional acceptance check.
-5. Choose “Use this photo”. Confirm replacing the demo source. The selected file is checked again, then copied into the local task. Existing prepared outputs become incomplete. Prepare each file in the existing editor, review actual file checks, and export the ZIP.
-6. To test personal sources, choose a downloaded local folder or select multiple files. Subfolders are opt-in. The app reads only the selected scope, has bounded scanning and a stop/clear option, and ends access on exit. On Android 11+, Downloads root is restricted by the system; a subfolder or multiple files can be used.
-7. “Choose a photo manually” remains visible. It returns to the existing Files / Photos / camera choices. The finder is optional.
-8. For requirements extraction, attach a requirement screenshot in the task, extract text locally, verify values and the short source excerpt, and confirm explicitly. Final delivery includes prepared outputs and checks, not scanned directories or unselected photos.
+1. Open AI photo finder on Home. Choose a size from the 33 common specifications, search by name or pixel dimensions, or enter custom dimensions and KB limits. Common specifications are preparation references, not official certification.
+2. Choose multiple photos from the system photo library, or select a downloaded folder. The app analyzes only the chosen scope. File multi-selection and opt-in subfolders are under the additional options.
+3. Review the photo grid. Recommended photos appear first; All photos includes uncertain, low-resolution and skipped items with reasons. Tap a photo to preview; detailed measurements are optional. Recommendations are not acceptance guarantees.
+4. Tap Prepare with this photo to enter the existing crop/background/JPEG-size editor using the chosen specification. A source-backed preparation record is saved only after explicit adoption. Manual single-photo and camera entry remain available.
+5. Preparation history and existing-file checks remain accessible from Home. Existing multi-output requirements, screenshot OCR confirmation and file delivery are preserved as secondary tools, rather than prerequisites for finding a photo.
+6. Changing the target size reuses completed detections. Canceling a replacement selection retains the previous batch. Stop and clear controls are available.
 
-Implementation: iOS uses Apple Vision and scoped document access. Android uses SAF and bundled ML Kit face detection. Image dimensions, crop estimates and quality references are measured locally. No photo-processing server, model download, account or identity recognition is required. Third-party SDK technical diagnostics are disclosed in the privacy policy; file providers can download explicitly selected files.
+There are no user-facing sample-task or sample-photo creation entries. To test, select photos from the review device library or Files. A demonstration recording and final screenshots should show the matching binary; internal engineering fixtures are not presented as an app feature.
 
-We understand the previous 4.3(a) concern. This update changes the working flow from choosing and styling one portrait to finding a source against saved task requirements, reviewing traceable requirements, preparing separate files and checking the resulting delivery. We provide a public sample so these changes are directly testable. We do not claim unique implementation alone guarantees eligibility, or that any photo is officially accepted.
+Implementation: Apple Vision + scoped PHPicker/document access on iOS; bundled ML Kit + system Photo Picker/SAF on Android. iOS photo providers are read one representation at a time, without copying hundreds of originals up front. Scanning and cache limits apply, and original bytes and saved requirements are checked again before adoption. Photos are not uploaded for model processing; selected providers may download files, and SDK technical diagnostics are disclosed in the privacy policy.
 
-Independent source and development history:
-https://github.com/chunguangwei/photoid
+This update changes the working flow beyond styling one portrait: it helps users find a source against a chosen specification and then prepare and inspect actual files. We understand the previous 4.3(a) concern and provide observable behavior rather than relying on implementation originality alone. The app is independent of government agencies, does not issue documents and does not guarantee acceptance.
 
-Privacy policy:
-https://chunguangwei.github.io/photoid/privacy-policy
-
-No login is required. The application is not affiliated with a government agency, does not issue identity documents and does not guarantee acceptance.
+Source: https://github.com/chunguangwei/photoid
+Privacy: https://chunguangwei.github.io/photoid/privacy-policy

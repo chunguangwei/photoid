@@ -12,11 +12,14 @@ import 'photo_file_inspection.dart';
 /// Only application-owned copies are deleted. Metadata is atomically replaced.
 class ApplicationTaskStore {
   ApplicationTaskStore(Directory documents,
-      {Future<void> Function(File, List<int>)? demoAssetWriter})
+      {Future<void> Function(File, List<int>)? demoAssetWriter,
+      Future<void> Function(File, List<int>)? selectionAssetWriter})
       : _root = Directory(p.join(documents.path, 'tasks')),
-        _demoAssetWriter = demoAssetWriter ?? _writeDemoBytes;
+        _demoAssetWriter = demoAssetWriter ?? _writeDemoBytes,
+        _selectionAssetWriter = selectionAssetWriter ?? _writeDemoBytes;
   final Directory _root;
   final Future<void> Function(File, List<int>) _demoAssetWriter;
+  final Future<void> Function(File, List<int>) _selectionAssetWriter;
   static Future<void> _writeDemoBytes(File file, List<int> bytes) async {
     await file.writeAsBytes(bytes, flush: true);
   }
@@ -133,6 +136,42 @@ class ApplicationTaskStore {
             verifiedDate: verifiedDate,
             updatedAt: DateTime.now().toUtc()));
       });
+
+  /// Publish the source and its requirement together, with no empty record on failure.
+  Future<ApplicationTask> createFromSelection(
+          {required String name,
+          required Uint8List source,
+          required PhotoSpec spec}) =>
+      _serial(() async {
+        _validateMetadata(name, '', '', '');
+        _validateSpec(spec);
+        await _validateImage(source);
+        await _root.create(recursive: true);
+        final id = _id(),
+            stage = Directory(p.join(_root.path, '.selection_$id'));
+        try {
+          await stage.create();
+          final task = ApplicationTask(
+              id: id,
+              name: name.trim(),
+              updatedAt: DateTime.now().toUtc(),
+              hasSource: true,
+              sourceRevision: 1,
+              outputs: [
+                ApplicationOutput(id: _id(), spec: spec, fileName: 'photo')
+              ]);
+          await _selectionAssetWriter(
+              File(p.join(stage.path, 'source_1.image')), source);
+          await File(p.join(stage.path, 'task.json'))
+              .writeAsString(jsonEncode(task.toJson()), flush: true);
+          await stage.rename(_dir(id).path);
+          return task;
+        } catch (_) {
+          if (await stage.exists()) await stage.delete(recursive: true);
+          rethrow;
+        }
+      });
+
   Future<ApplicationTask> updateMetadata(String id,
           {required String name,
           required String notes,

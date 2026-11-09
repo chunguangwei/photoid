@@ -1148,4 +1148,76 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get startupContinue => '进入首页';
+
+  @override
+  String get finderPickSize => '选择证件照尺寸';
+
+  @override
+  String get finderSizeSearch => '搜索尺寸、考试或用途';
+
+  @override
+  String get finderCustomSize => '手动填写尺寸 / KB 要求';
+
+  @override
+  String get finderChooseTarget => '需要制作什么尺寸？';
+
+  @override
+  String get finderChooseSizeFirst => '先选尺寸，再选照片。';
+
+  @override
+  String get finderBatchPhotos => '从相册批量选择';
+
+  @override
+  String get finderOtherSources => '文件夹或照片文件';
+
+  @override
+  String get finderSourceHint => '可在系统选择器中批量勾选照片，连续选择手势以系统支持为准。';
+
+  @override
+  String get finderShortPrivacy => '本机分析，仅读取你选中的范围。';
+
+  @override
+  String get finderAdvanced => '支持格式与使用说明';
+
+  @override
+  String get finderRecommend => '优先查看';
+
+  @override
+  String get finderAllPhotos => '全部照片';
+
+  @override
+  String get finderAnalyzing => '正在挑选合适的照片…';
+
+  @override
+  String get finderNoRecommended => '暂未找到明显合适的照片，你仍可自行挑选。';
+
+  @override
+  String get finderStartHint => '选好尺寸和一批照片，帮你挑出适合制作的原图。';
+
+  @override
+  String get finderDetails => '查看判断依据';
+
+  @override
+  String get finderPrepare => '用这张制作';
+
+  @override
+  String get finderSaveRecords => '制作记录';
+
+  @override
+  String get finderSimpleIntro => '选尺寸 → 选一批照片 → 开始制作';
+
+  @override
+  String get finderShortCaution => '筛选仅供参考，最终是否接收由接收方决定。';
+
+  @override
+  String get finderProviderIos => '请使用已下载的本地文件夹。系统可能下载你从相册或文件提供方明确选择的照片。';
+
+  @override
+  String get finderChangePhotos => '重新选择照片';
+
+  @override
+  String get finderPreparingSource => '正在准备原图…';
+
+  @override
+  String get finderNoPhotos => '这里没有找到支持的照片，试试其他文件夹或从相册选择。';
 }

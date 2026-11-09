@@ -1,4 +1,6 @@
-# 工程界面采集，不是最终 App Store 素材
+# build50 历史工程界面（已被简版流程替代）
+
+本目录保留历史验收证据，不代表 build51 当前界面或最终上架素材。
 
 2026-11-09，Android 模拟器 `imagepilot_caption_test` / emulator-5554。生产 PhotoFinderPage、生产主题与本地化，临时示例任务，实际随包 ML Kit 检测；Wi-Fi 和移动数据关闭。Flutter integration_test 原生截图，经人工查看确认包含实际页面，并有 setup/results 字节不同的回归断言。文件 SHA-256 见 android/manifest.json。
 

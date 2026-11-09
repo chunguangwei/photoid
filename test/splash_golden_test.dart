@@ -8,8 +8,8 @@ void main() {
       (tester) async {
     await tester.pumpWidget(host(const SplashPage()));
     await tester.pumpAndSettle();
-    expect(find.text('Application tasks'), findsOneWidget);
-    expect(find.text('Try a demo task'), findsOneWidget);
+    expect(find.text('AI photo finder'), findsOneWidget);
+    expect(find.text('Try a demo task'), findsNothing);
     expect(
         find
             .byType(TextButton)

@@ -39,6 +39,35 @@ void main() {
         throwsStateError);
     expect((await store.get(t.id)).sourceRevision, 1);
   });
+  test('source adoption atomically creates a normal source-backed record',
+      () async {
+    final task = await store.createFromSelection(
+        name: 'One inch', source: jpeg(), spec: requirement());
+    expect(task.hasSource, true);
+    expect(task.isDemo, false);
+    expect(task.outputs.length, 1);
+    expect(await store.sourceFile(task).readAsBytes(), jpeg());
+    expect((await store.list()).single.id, task.id);
+    await expectLater(
+        store.createFromSelection(
+            name: 'Bad', source: Uint8List(3), spec: requirement()),
+        throwsArgumentError);
+    expect((await store.list()).length, 1);
+  });
+  test('failed source publication leaves no visible or staged record',
+      () async {
+    final failing =
+        ApplicationTaskStore(dir, selectionAssetWriter: (file, bytes) async {
+      await file.writeAsBytes(bytes);
+      throw const FileSystemException('injected write failure');
+    });
+    await expectLater(
+        failing.createFromSelection(
+            name: 'Failed', source: jpeg(), spec: requirement()),
+        throwsA(isA<FileSystemException>()));
+    expect(await store.list(), isEmpty);
+    expect(await Directory('${dir.path}/tasks').list().toList(), isEmpty);
+  });
   test('delivery snapshot blocks mutations until its work completes', () async {
     final t = await store.create(name: 'Task');
     final entered = Completer<void>();

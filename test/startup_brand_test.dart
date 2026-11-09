@@ -14,20 +14,20 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1000));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('brand-intro')), findsNothing);
-    expect(find.text('Application tasks'), findsOneWidget);
+    expect(find.text('AI photo finder'), findsOneWidget);
   });
   testWidgets('continue immediately dismisses brand intro', (tester) async {
     await tester.pumpWidget(host(const SplashPage()));
     await tester.tap(find.byKey(const Key('startup-continue')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('brand-intro')), findsNothing);
-    expect(find.text('Application tasks'), findsOneWidget);
+    expect(find.text('AI photo finder'), findsOneWidget);
   });
   testWidgets('reduce motion immediately shows home', (tester) async {
     await tester.pumpWidget(host(const MediaQuery(
         data: MediaQueryData(disableAnimations: true), child: SplashPage())));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('brand-intro')), findsNothing);
-    expect(find.text('Application tasks'), findsOneWidget);
+    expect(find.text('AI photo finder'), findsOneWidget);
   });
 }

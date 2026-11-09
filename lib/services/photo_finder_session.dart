@@ -21,10 +21,11 @@ class PhotoFinderSession extends ChangeNotifier {
   PhotoFinderSession(this.outputs,
       {FinderGateway? gateway, this.waitUntilForeground})
       : gateway = gateway ?? NativeFinderGateway();
-  final List<ApplicationOutput> outputs;
+  List<ApplicationOutput> outputs;
   final FinderGateway gateway;
   final Future<void> Function()? waitUntilForeground;
   final candidates = <FinderCandidate>[];
+  bool get hasSelection => _session != null;
   String? _session, error;
   int _scope = 0, _scan = 0;
   int visited = 0, total = 0, processed = 0, skipped = 0;
@@ -33,10 +34,25 @@ class PhotoFinderSession extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
+  void updateOutputs(List<ApplicationOutput> next) {
+    if (running || choosing) {
+      throw StateError('Stop scanning before changing the target');
+    }
+    outputs = List.unmodifiable(next);
+    final reranked = [
+      for (final c in candidates) evaluatePhoto(c.analysis, outputs)
+    ];
+    candidates
+      ..clear()
+      ..addAll(reranked)
+      ..sort((a, b) => b.order.compareTo(a.order));
+    _notify();
+  }
+
   Future<void> open(String method,
       {bool recursive = false, List<String>? demoPaths}) async {
-    await clear();
     if (_disposed) return;
+    if (running) stop();
     final scope = ++_scope, scan = ++_scan;
     choosing = true;
     error = null;
@@ -55,9 +71,19 @@ class PhotoFinderSession extends ChangeNotifier {
         await gateway.call('close', {'session': id});
         return;
       }
-      _session = id;
       await waitUntilForeground?.call();
-      if (_disposed || scope != _scope || scan != _scan) return;
+      if (_disposed || scope != _scope || scan != _scan) {
+        await gateway.call('close', {'session': id});
+        return;
+      }
+      final previous = _session;
+      _session = id;
+      if (previous != null && previous != id) {
+        await gateway.call('close', {'session': previous});
+      }
+      candidates.clear();
+      processed = 0;
+      skipped = 0;
       choosing = false;
       running = true;
       visited = (result['visited'] as num?)?.toInt() ?? 0;

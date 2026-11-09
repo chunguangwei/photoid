@@ -1,5 +1,7 @@
 # PhotoID 开发文档（Development Guide）
 
+> **当前开发版 1.2.0（51）**：按用户反馈简化为“选尺寸 → 选一批照片 → 点一张开始制作”，移除面向用户的示例入口。常用 33 个规格和自定义输入直接可用，主流程不再要求建任务；原有记录和高级工具保留。见 [简版交互说明](release/next-photo-finder/ux-1.2.0-build51.md)。build50 材料为历史，不能作为本版最终上架素材。
+
 面向贡献者与维护者的架构与流程说明。用户-facing 介绍见 [README](../README.md)。
 English readers: the codebase comments and ARB sources are authoritative; this
 doc mirrors them in Chinese.

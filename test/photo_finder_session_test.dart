@@ -6,11 +6,12 @@ import 'package:photoid/models/application_task.dart';
 class FakeFinder implements FinderGateway {
   final calls = <String>[];
   final pending = Completer<Map>();
-  bool wait = false;
+  bool wait = false, cancel = false;
   @override
   Future<dynamic> call(String method, Map<String, dynamic> args) async {
     calls.add(method);
     if (method == 'chooseDirectory') {
+      if (cancel) return null;
       return {
         'session': 's',
         'visited': 2,
@@ -35,6 +36,22 @@ class FakeFinder implements FinderGateway {
 }
 
 void main() {
+  test('canceling a replacement selection preserves the previous photos',
+      () async {
+    final g = FakeFinder();
+    final session = PhotoFinderSession([], gateway: g);
+    await session.open('chooseDirectory');
+    expect(session.candidates.length, 2);
+    g.cancel = true;
+    await session.open('chooseDirectory');
+    expect(session.candidates.length, 2);
+    expect(session.hasSelection, true);
+    expect(g.calls.where((c) => c == 'close'), isEmpty);
+    await session.clear();
+    expect(session.hasSelection, false);
+    session.dispose();
+  });
+
   test(
       'listing cannot start analysis until foreground and clear invalidates it',
       () async {
@@ -66,6 +83,17 @@ void main() {
     s.dispose();
   });
 
+  test('changing target reranks existing analyses without native rescan',
+      () async {
+    final g = FakeFinder();
+    final s = PhotoFinderSession([], gateway: g);
+    await s.open('chooseDirectory');
+    final calls = g.calls.length;
+    s.updateOutputs([]);
+    expect(s.candidates.length, 2);
+    expect(g.calls.length, calls);
+    s.dispose();
+  });
   test('scans sequentially, includes skips and closes permission session',
       () async {
     final g = FakeFinder();

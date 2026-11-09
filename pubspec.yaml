@@ -1,7 +1,7 @@
 name: photoid
 description: 智能证件照 - 本地照片准备与文件交付
 publish_to: 'none'
-version: 1.2.0+50
+version: 1.2.0+51
 
 environment:
   sdk: ^3.5.0
@@ -48,6 +48,7 @@ flutter:
   assets:
     - assets/demo/portrait.jpg
     - assets/demo/portrait.heic
+    - assets/demo/wide.heic
     - assets/demo/requirements-zh.png
     - assets/demo/requirements.png
     - assets/photo_specs.json

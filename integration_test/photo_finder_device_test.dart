@@ -18,6 +18,18 @@ import 'package:photoid/services/application_delivery.dart';
 import 'package:photoid/models/photo_spec.dart';
 import 'package:photoid/services/photo_finder_session.dart';
 
+class FixturePhotoGateway implements FinderGateway {
+  FixturePhotoGateway(this.paths);
+  final List<String> paths;
+  final native = NativeFinderGateway();
+  @override
+  Future<dynamic> call(String method, Map<String, dynamic> args) =>
+      ['choosePhotos', 'chooseFiles', 'chooseDirectory'].contains(method)
+          ? native.call(
+              'openDemo', {'paths': paths, 'asPhotoProviders': Platform.isIOS})
+          : native.call(method, args);
+}
+
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   testWidgets(
@@ -32,15 +44,16 @@ void main() {
       paths.add(
           (await File('${root.path}/corrupt.jpg').writeAsString('invalid'))
               .path);
-      paths.add(
-          (await File('${root.path}/unsupported.gif').writeAsString('invalid'))
-              .path);
-      // JPEG bytes with HEIC extension exercise the conversion branch independently
-      // of device HEIC encoder availability; genuine HEIC codec QA is separate.
-      paths.add((await File('${root.path}/wide.heic')
-              .writeAsBytes(img.encodeJpg(img.Image(width: 8000, height: 300))))
+      paths.add((await File('${root.path}/unsupported.gif')
+              .writeAsBytes(img.encodeGif(img.Image(width: 16, height: 16))))
           .path);
-      final listing = await g.call('openDemo', {'paths': paths});
+      final wideAsset = await rootBundle.load('assets/demo/wide.heic');
+      paths.add((await File('${root.path}/wide.heic').writeAsBytes(wideAsset
+              .buffer
+              .asUint8List(wideAsset.offsetInBytes, wideAsset.lengthInBytes)))
+          .path);
+      final listing = await g.call(
+          'openDemo', {'paths': paths, 'asPhotoProviders': Platform.isIOS});
       session = listing['session'] as String;
       final values = <String, Map>{};
       for (final raw in listing['entries']) {
@@ -229,41 +242,43 @@ void main() {
     }
   });
   testWidgets(
-      'production finder UI runs actual sample analysis and captures review evidence',
+      'simple production finder flow captures real provider-backed results',
       (tester) async {
     if (Platform.isIOS && binding.lifecycleState != AppLifecycleState.resumed) {
-      markTestSkipped(
-          'Unlock iPhone and bring the app to foreground before native UI capture.');
+      markTestSkipped('Foreground required for visible native captures.');
       return;
     }
     final temp = await getTemporaryDirectory();
-    final root = await temp.createTemp('finder_ui_');
-    final captures = await Directory('${temp.path}/finder_review_captures')
+    final root = await temp.createTemp('simple_finder_');
+    final captures = await Directory('${temp.path}/finder_simple_captures')
         .create(recursive: true);
     final store = ApplicationTaskStore(root);
+    final paths = await writeFinderDemo(root);
+    if (Platform.isAndroid) await binding.convertFlutterSurfaceToImage();
     try {
-      final task = await DemoTask.open(store, 'en');
-      if (Platform.isAndroid) await binding.convertFlutterSurfaceToImage();
-      for (final locale in ['en', 'zh']) {
+      for (final lang in ['en', 'zh']) {
         await tester.pumpWidget(MaterialApp(
-            key: ValueKey(locale),
+            key: ValueKey(lang),
             debugShowCheckedModeBanner: false,
-            locale: Locale(locale),
+            locale: Locale(lang),
             theme: photoIdTheme(Brightness.light),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: PhotoFinderPage(taskId: task.id, store: store)));
+            home: PhotoFinderPage(
+                store: store, gateway: FixturePhotoGateway(paths))));
         await tester.pumpAndSettle();
-        expect(find.byKey(const Key('finder-manual')), findsOneWidget);
-        final setupImage = await binding.takeScreenshot('finder-setup-$locale');
-        await File('${captures.path}/finder-setup-$locale.png')
-            .writeAsBytes(setupImage);
-        final demo = find.text(locale == 'en' ? 'Try sample photos' : '体验示例照片');
-        await tester.scrollUntilVisible(demo, 300,
-            scrollable: find.byType(Scrollable).first);
-        await tester.tap(demo);
+        expect(find.text('Try sample photos'), findsNothing);
+        expect(find.text('体验示例照片'), findsNothing);
+        await tester.tap(find.byKey(const Key('finder-size')));
         await tester.pumpAndSettle();
-        // File IO/native detection continue asynchronously between rendered frames.
+        await File('${captures.path}/sizes-$lang.png')
+            .writeAsBytes(await binding.takeScreenshot('sizes-$lang'));
+        await tester.tap(find.byKey(const ValueKey('preset-one_inch')));
+        await tester.pumpAndSettle();
+        final setup = await binding.takeScreenshot('sources-$lang');
+        await File('${captures.path}/sources-$lang.png').writeAsBytes(setup);
+        await tester.tap(find.byKey(const Key('finder-photos')));
+        await tester.pumpAndSettle();
         for (var n = 0;
             n < 120 &&
                 find.byType(LinearProgressIndicator).evaluate().isNotEmpty;
@@ -272,32 +287,21 @@ void main() {
           await tester.pumpAndSettle();
         }
         expect(find.byType(LinearProgressIndicator), findsNothing);
-        final result = find.byKey(const ValueKey('finder-result-portrait.jpg'));
-        await tester.scrollUntilVisible(result, 300,
+        final results = await binding.takeScreenshot('results-$lang');
+        expect(results, isNot(orderedEquals(setup)));
+        await File('${captures.path}/results-$lang.png').writeAsBytes(results);
+        final portrait =
+            find.byKey(const ValueKey('finder-result-portrait.jpg'));
+        await tester.scrollUntilVisible(portrait, 250,
             scrollable: find.byType(Scrollable).first);
         await tester.pumpAndSettle();
-        final resultImage =
-            await binding.takeScreenshot('finder-results-$locale');
-        expect(resultImage, isNot(orderedEquals(setupImage)),
-            reason:
-                'Native captures must reflect a changed visible screen, not a cached launch screen.');
-        await File('${captures.path}/finder-results-$locale.png')
-            .writeAsBytes(resultImage);
-        final crops =
-            find.descendant(of: result, matching: find.byType(ExpansionTile));
-        await tester.ensureVisible(crops);
+        await tester.tap(portrait);
         await tester.pumpAndSettle();
-        await tester.tap(crops);
-        await tester.pumpAndSettle();
-        final cropNote = find.text(locale == 'en'
-            ? 'Approximate crop from face location; not a full-head or official framing assessment. Final framing stays editable.'
-            : '根据人脸位置估计裁剪区域，并非完整头部检测或机构构图评估，最终仍可手动调整。');
-        await tester.ensureVisible(cropNote);
-        await tester.pumpAndSettle();
-        await File('${captures.path}/finder-crops-$locale.png')
-            .writeAsBytes(await binding.takeScreenshot('finder-crops-$locale'));
-        expect(find.byKey(const ValueKey('finder-result-portrait.jpg')),
-            findsOneWidget);
+        expect(find.byKey(const Key('finder-use')), findsOneWidget);
+        await File('${captures.path}/preview-$lang.png')
+            .writeAsBytes(await binding.takeScreenshot('preview-$lang'));
+        expect(await store.list(), isEmpty,
+            reason: 'Selecting a target or batch must not create records.');
         expect(tester.takeException(), isNull);
       }
     } finally {

@@ -1218,4 +1218,84 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get startupContinue => 'Continue';
+
+  @override
+  String get finderPickSize => 'Choose photo size';
+
+  @override
+  String get finderSizeSearch => 'Search sizes, exams or destinations';
+
+  @override
+  String get finderCustomSize => 'Enter dimensions / KB limits';
+
+  @override
+  String get finderChooseTarget => 'What size do you need?';
+
+  @override
+  String get finderChooseSizeFirst =>
+      'Choose a size first, then select your photos.';
+
+  @override
+  String get finderBatchPhotos => 'Choose photos from library';
+
+  @override
+  String get finderOtherSources => 'Folder or photo files';
+
+  @override
+  String get finderSourceHint =>
+      'Select many photos in the system picker. Multi-select gestures depend on your system.';
+
+  @override
+  String get finderShortPrivacy =>
+      'Analyzed on your device. Only your chosen scope is read.';
+
+  @override
+  String get finderAdvanced => 'Formats, limits & privacy';
+
+  @override
+  String get finderRecommend => 'Recommended';
+
+  @override
+  String get finderAllPhotos => 'All photos';
+
+  @override
+  String get finderAnalyzing => 'Finding suitable photos…';
+
+  @override
+  String get finderNoRecommended =>
+      'No clear recommendation. You can still choose a photo manually.';
+
+  @override
+  String get finderStartHint =>
+      'Pick a size and a batch of photos. We’ll help you find a starting point.';
+
+  @override
+  String get finderDetails => 'Why this photo?';
+
+  @override
+  String get finderPrepare => 'Prepare with this photo';
+
+  @override
+  String get finderSaveRecords => 'Preparation history';
+
+  @override
+  String get finderSimpleIntro => 'Choose size → select photos → prepare';
+
+  @override
+  String get finderShortCaution =>
+      'Suggestions are references. Final acceptance is decided by the receiving organization.';
+
+  @override
+  String get finderProviderIos =>
+      'Use downloaded local folders. The system may retrieve photos or files you explicitly select from a provider.';
+
+  @override
+  String get finderChangePhotos => 'Choose another batch';
+
+  @override
+  String get finderPreparingSource => 'Preparing your photo…';
+
+  @override
+  String get finderNoPhotos =>
+      'No supported photos found here. Try another folder or choose photos from your library.';
 }

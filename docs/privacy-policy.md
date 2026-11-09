@@ -176,3 +176,10 @@ Only a photo you explicitly adopt is saved as a task source copy. The original i
 文件名、相对路径、人脸框和候选结果限于本次会话。私有缩略图缓存上限 100 MB，清除、切换范围或离开页面时删除；异常退出残留在下次初始化时清理超过 24 小时的原生缓存。停止保留已完成结果，清除或退出后结束访问；进入后台停止后续扫描，单次在途计算可能完成但旧返回被忽略。
 
 只有你明确采用的照片会作为任务原图副本保存，不更改、重命名、移动或删除外部原文件。采用前复核文件字节及任务要求/原图版本。ZIP 不包含扫描清单、未选照片或人脸分析。公共示例变体属于演示素材，并非用户私人照片；任务副本、备份及主动导出仍按上文规则管理。
+
+
+### Simplified selection / 简版选图（build51）
+
+The finder opens without creating a task. Choosing a specification, inspecting a batch or canceling does not create a preparation record. Explicitly adopting a photo saves an app-owned source copy and requirement. System multi-photo selection grants access only to selected items; iOS retains provider handles and reads one bounded representation at a time. Providers may download explicitly selected content. Canceling replacement selection keeps the prior active batch; clearing or leaving releases its session. Example creation entries have been removed; existing records are not automatically deleted.
+
+找照片入口不先建任务。选规格、查看照片或取消不会新建制作记录，明确采用后才保存应用内原图副本与要求。系统相册多选只授权所选项目；iOS 保留提供方句柄、逐张有界读取，不预先复制整批原图。提供方可能下载明确选中的内容。取消换批次保留原有会话，清除或退出结束访问。示例创建入口已移除，不自动删除已有记录。

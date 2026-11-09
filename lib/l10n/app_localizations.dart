@@ -2269,6 +2269,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Continue'**
   String get startupContinue;
+
+  /// No description provided for @finderPickSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose photo size'**
+  String get finderPickSize;
+
+  /// No description provided for @finderSizeSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search sizes, exams or destinations'**
+  String get finderSizeSearch;
+
+  /// No description provided for @finderCustomSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter dimensions / KB limits'**
+  String get finderCustomSize;
+
+  /// No description provided for @finderChooseTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'What size do you need?'**
+  String get finderChooseTarget;
+
+  /// No description provided for @finderChooseSizeFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a size first, then select your photos.'**
+  String get finderChooseSizeFirst;
+
+  /// No description provided for @finderBatchPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose photos from library'**
+  String get finderBatchPhotos;
+
+  /// No description provided for @finderOtherSources.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder or photo files'**
+  String get finderOtherSources;
+
+  /// No description provided for @finderSourceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select many photos in the system picker. Multi-select gestures depend on your system.'**
+  String get finderSourceHint;
+
+  /// No description provided for @finderShortPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzed on your device. Only your chosen scope is read.'**
+  String get finderShortPrivacy;
+
+  /// No description provided for @finderAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Formats, limits & privacy'**
+  String get finderAdvanced;
+
+  /// No description provided for @finderRecommend.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get finderRecommend;
+
+  /// No description provided for @finderAllPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'All photos'**
+  String get finderAllPhotos;
+
+  /// No description provided for @finderAnalyzing.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding suitable photos…'**
+  String get finderAnalyzing;
+
+  /// No description provided for @finderNoRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'No clear recommendation. You can still choose a photo manually.'**
+  String get finderNoRecommended;
+
+  /// No description provided for @finderStartHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a size and a batch of photos. We’ll help you find a starting point.'**
+  String get finderStartHint;
+
+  /// No description provided for @finderDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Why this photo?'**
+  String get finderDetails;
+
+  /// No description provided for @finderPrepare.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare with this photo'**
+  String get finderPrepare;
+
+  /// No description provided for @finderSaveRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation history'**
+  String get finderSaveRecords;
+
+  /// No description provided for @finderSimpleIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose size → select photos → prepare'**
+  String get finderSimpleIntro;
+
+  /// No description provided for @finderShortCaution.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions are references. Final acceptance is decided by the receiving organization.'**
+  String get finderShortCaution;
+
+  /// No description provided for @finderProviderIos.
+  ///
+  /// In en, this message translates to:
+  /// **'Use downloaded local folders. The system may retrieve photos or files you explicitly select from a provider.'**
+  String get finderProviderIos;
+
+  /// No description provided for @finderChangePhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose another batch'**
+  String get finderChangePhotos;
+
+  /// No description provided for @finderPreparingSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing your photo…'**
+  String get finderPreparingSource;
+
+  /// No description provided for @finderNoPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'No supported photos found here. Try another folder or choose photos from your library.'**
+  String get finderNoPhotos;
 }
 
 class _AppLocalizationsDelegate

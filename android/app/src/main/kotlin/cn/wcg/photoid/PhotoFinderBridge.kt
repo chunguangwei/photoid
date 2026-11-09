@@ -9,6 +9,11 @@ import android.media.ExifInterface
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
+import android.provider.MediaStore
+import android.os.Build
+import android.os.ext.SdkExtensions
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
@@ -43,16 +48,23 @@ class PhotoFinderBridge(private val activity: Activity, messenger: BinaryMesseng
         MethodChannel(messenger, "photoid/photo_finder").setMethodCallHandler { call, result ->
             val args = call.arguments as? Map<*, *> ?: emptyMap<String, Any>()
             when (call.method) {
-                "chooseDirectory", "chooseFiles" -> {
+                "chooseDirectory", "chooseFiles", "choosePhotos" -> {
                     if (pending != null) { result.error("busy", "Picker busy", null); return@setMethodCallHandler }
                     pending = result
                     recursive = args["recursive"] == true
                     directory = call.method == "chooseDirectory"
-                    val intent = if (directory) Intent(Intent.ACTION_OPEN_DOCUMENT_TREE) else
-                        Intent(Intent.ACTION_OPEN_DOCUMENT).apply { type = "image/*"; addCategory(Intent.CATEGORY_OPENABLE); putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true) }
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    try { activity.startActivityForResult(intent, pickerRequest) }
-                    catch (_: Exception) { pending = null; result.error("access", "Picker unavailable", null) }
+                    try {
+                        val nativePicker = Build.VERSION.SDK_INT >= 33 ||
+                            (Build.VERSION.SDK_INT >= 30 && SdkExtensions.getExtensionVersion(Build.VERSION_CODES.R) >= 2)
+                        val limit = if (nativePicker) minOf(500, MediaStore.getPickImagesMaxLimit()) else 150
+                        val intent = if (call.method == "choosePhotos") {
+                            ActivityResultContracts.PickMultipleVisualMedia(limit).createIntent(activity, PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        } else if (directory) Intent(Intent.ACTION_OPEN_DOCUMENT_TREE) else
+                            Intent(Intent.ACTION_OPEN_DOCUMENT).apply { type="image/*";addCategory(Intent.CATEGORY_OPENABLE);putExtra(Intent.EXTRA_ALLOW_MULTIPLE,true) }
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        activity.startActivityForResult(intent,pickerRequest)
+                    } catch (_: Exception) { pending=null;result.error("access","Picker unavailable",null) }
+
                 }
                 "openDemo" -> executor.execute {
                     try {

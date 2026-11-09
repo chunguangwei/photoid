@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/application_task.dart';
 import '../services/application_task_store.dart';
-import '../services/demo_task.dart';
 import '../widgets/task_details_dialog.dart';
 import '../widgets/photo_input.dart';
 import 'application_task_page.dart';
@@ -61,21 +60,6 @@ class _ApplicationTasksPageState extends State<ApplicationTasksPage> {
     }
   }
 
-  Future<void> _demo() async {
-    if (_creating || _store == null) return;
-    final locale = AppLocalizations.of(context).localeName;
-    setState(() => _creating = true);
-    try {
-      final task = await DemoTask.open(_store!, locale);
-      if (!mounted) return;
-      await _open(task);
-    } catch (e) {
-      if (mounted) showPhotoActionError(context, e);
-    } finally {
-      if (mounted) setState(() => _creating = false);
-    }
-  }
-
   Future<void> _open(ApplicationTask t) async {
     await Navigator.push(
         context,
@@ -103,13 +87,6 @@ class _ApplicationTasksPageState extends State<ApplicationTasksPage> {
                 : ListView(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
                     children: [
-                        OutlinedButton.icon(
-                            onPressed:
-                                _creating || _store == null ? null : _demo,
-                            icon: const Icon(Icons.play_circle_outline),
-                            label: Text(l.workflowDemo)),
-                        Text(l.workflowDemoNote),
-                        const SizedBox(height: 12),
                         Text(l.tasksDesc,
                             style: Theme.of(context).textTheme.bodyLarge),
                         const SizedBox(height: 20),

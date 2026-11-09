@@ -5,13 +5,9 @@ import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 import '../models/photo_spec.dart';
 import '../services/custom_spec_store.dart';
-import '../services/application_task_store.dart';
-import '../services/demo_task.dart';
-import '../models/application_task.dart';
-import 'application_task_page.dart';
+import 'photo_finder_page.dart';
 import '../services/spec_library.dart';
 import '../widgets/glass_surface.dart';
-import '../widgets/photo_input.dart';
 import 'custom_spec_page.dart';
 import 'application_tasks_page.dart';
 import 'photo_check_page.dart';
@@ -80,16 +76,12 @@ class _HomeTab extends StatefulWidget {
 class _HomeTabState extends State<_HomeTab> {
   /// 已保存的自定义规格（首页展示，可删除）
   List<PhotoSpec> _customSpecs = [];
-  ApplicationTask? _recent;
-  int _ongoing = 0;
-  bool _demoBusy = false;
   Future<List<PhotoSpec>> _specsFuture = SpecLibrary.load();
 
   @override
   void initState() {
     super.initState();
     _loadCustomSpecs();
-    _loadTasks();
   }
 
   Future<void> _loadCustomSpecs() async {
@@ -97,48 +89,10 @@ class _HomeTabState extends State<_HomeTab> {
     if (mounted) setState(() => _customSpecs = list);
   }
 
-  Future<void> _loadTasks() async {
-    try {
-      final store = await ApplicationTaskStore.open();
-      final tasks = await store.list();
-      if (mounted) {
-        setState(() {
-          _recent = tasks.isEmpty ? null : tasks.first;
-          _ongoing = tasks.where((t) => !t.complete).length;
-        });
-      }
-    } catch (_) {
-      /* Existing tools remain usable when local task storage is unavailable. */
-    }
-  }
-
   Future<void> _openTasks() async {
     await Navigator.push(context,
         MaterialPageRoute(builder: (_) => const ApplicationTasksPage()));
-    if (mounted) await _loadTasks();
-  }
-
-  Future<void> _demo() async {
-    if (_demoBusy) return;
-    final locale = AppLocalizations.of(context).localeName;
-    setState(() => _demoBusy = true);
-    try {
-      final store = await ApplicationTaskStore.open();
-      final task = await DemoTask.open(store, locale);
-      if (!mounted) return;
-      await Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (_) =>
-                  ApplicationTaskPage(taskId: task.id, store: store)));
-    } catch (e) {
-      if (mounted) showPhotoActionError(context, e);
-    } finally {
-      if (mounted) {
-        setState(() => _demoBusy = false);
-        await _loadTasks();
-      }
-    }
+    if (mounted) await _loadCustomSpecs();
   }
 
   final TextEditingController _searchCtrl = TextEditingController();
@@ -294,75 +248,38 @@ class _HomeTabState extends State<_HomeTab> {
   }
 
   Widget _applicationEntries(BuildContext context, AppLocalizations l) =>
-      Column(
-        children: [
-          Card(
-              child: ListTile(
-            key: const Key('home-tasks'),
-            contentPadding: const EdgeInsets.all(16),
-            leading: Icon(Icons.folder_copy_outlined,
-                color: Theme.of(context).colorScheme.primary),
-            title: Text(l.tasksTitle,
-                style: Theme.of(context).textTheme.titleMedium),
-            subtitle: Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child:
-                    Text('${l.tasksDesc}\n$_ongoing ${l.workflowInProgress}')),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: _openTasks,
-          )),
-          Card(
-              child: ListTile(
-                  key: const Key('home-photo-finder'),
-                  leading: const Icon(Icons.image_search_outlined),
-                  title: Text(l.finderTitle),
-                  subtitle: Text(l.finderIntro),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () async {
-                    await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) =>
-                                const ApplicationTasksPage(findPhotos: true)));
-                    if (mounted) await _loadTasks();
-                  })),
-          if (_recent != null)
-            ListTile(
-                title: Text(l.workflowRecent),
-                subtitle: Text(_recent!.name),
+      Column(children: [
+        Card(
+            child: ListTile(
+                key: const Key('home-photo-finder'),
+                contentPadding: const EdgeInsets.all(16),
+                leading: const Icon(Icons.image_search_outlined),
+                title: Text(l.finderTitle,
+                    style: Theme.of(context).textTheme.titleMedium),
+                subtitle: Text(l.finderSimpleIntro),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () async {
                   await Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) =>
-                              ApplicationTaskPage(taskId: _recent!.id)));
-                  if (mounted) await _loadTasks();
-                }),
-          OutlinedButton.icon(
-              onPressed: _demoBusy ? null : _demo,
-              icon: const Icon(Icons.play_circle_outline),
-              label: Text(l.workflowDemo)),
-          const SizedBox(height: 12),
-          Card(
-              child: ListTile(
-            key: const Key('home-check'),
-            contentPadding: const EdgeInsets.all(16),
-            leading: Icon(Icons.fact_check_outlined,
-                color: Theme.of(context).colorScheme.primary),
-            title: Text(l.checkExistingTitle,
-                style: Theme.of(context).textTheme.titleMedium),
-            subtitle: Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text(l.checkExistingDesc)),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const PhotoCheckPage())),
-          )),
-        ],
-      );
+                          builder: (_) => const PhotoFinderPage()));
+                  if (mounted) await _loadCustomSpecs();
+                })),
+        Wrap(spacing: 12, children: [
+          TextButton.icon(
+              key: const Key('home-tasks'),
+              onPressed: _openTasks,
+              icon: const Icon(Icons.history),
+              label: Text(l.finderSaveRecords)),
+          TextButton.icon(
+              key: const Key('home-check'),
+              onPressed: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const PhotoCheckPage())),
+              icon: const Icon(Icons.fact_check_outlined),
+              label: Text(l.checkExistingTitle)),
+        ]),
+      ]);
 
-  /// 2×2 主功能大卡：拍证件照 / 换底色 / 改KB / 我的相册。
   Widget _primaryGrid(BuildContext context, AppLocalizations l) {
     final items = <(IconData, Color, String, VoidCallback)>[
       (

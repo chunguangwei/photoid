@@ -9,7 +9,7 @@ import 'package:photoid/services/demo_task.dart';
 import 'application_workflow_test.dart' show host, settleFiles;
 
 void main() {
-  testWidgets('demo entry visible and creates an ordinary incomplete task',
+  testWidgets('preparation history does not offer an example task',
       (tester) async {
     final dir =
         (await tester.runAsync(() => Directory.systemTemp.createTemp()))!;
@@ -17,20 +17,15 @@ void main() {
     final store = ApplicationTaskStore(dir);
     await tester.pumpWidget(host(ApplicationTasksPage(store: store)));
     await settleFiles(tester);
-    expect(find.text('Try a demo task'), findsOneWidget);
-    await tester.tap(find.text('Try a demo task'));
-    await settleFiles(tester, until: find.byType(ApplicationTaskPage));
-    expect(find.text('Demo · Application photos'), findsOneWidget);
-    final tasks = await tester.runAsync(() => store.list());
-    expect(tasks!.single.complete, false);
-    expect(tasks.single.outputs.length, 2);
+    expect(find.text('Try a demo task'), findsNothing);
+    expect((await tester.runAsync(() => store.list()))!, isEmpty);
   });
   testWidgets('startup finishes brand motion and shows home without countdown',
       (tester) async {
     await tester.pumpWidget(host(const SplashPage()));
     await tester.pumpAndSettle();
     expect(find.textContaining('Skip'), findsNothing);
-    expect(find.text('Application tasks'), findsOneWidget);
+    expect(find.text('AI photo finder'), findsOneWidget);
   });
   for (final lang in ['zh', 'en']) {
     for (final dark in [false, true]) {
