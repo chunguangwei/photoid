@@ -56,3 +56,5 @@ Flutter `test` 默认在集成测试结束后卸载应用。本轮首次真机�
 - Android 模拟器：4 项原生测试通过，包括上述链路和生产简版 UI，生成中英文 8 张[工程图](device-captures-simple/README.md)。素材注入不替代系统相册选择器授权/取消/连续勾选的交互验收。
 - 独立审查提出的自定义值未预填、旧版 Android picker 数量限制/异常 pending 两项 Important 已修复并复审；会话交接无未解决 Important/Critical。
 - 原生选择器、iPad、最终完整应用 Store 尺寸素材仍须验收。未上传或重新送审；build50 产物不代表本版界面。新包与真机恢复结果另行记录。
+
+最终原签名 APK 与 App Store 分发 IPA 已打包核对；49→51 安卓覆盖升级保持 appId/首次安装时间。正常入口 App 已原位装回并启动 iPhone，设备清单确认 1.2.0(51)。[完整包记录](candidate-1.2.0-build51.md)。GitHub 仅更新草稿，未公开发布或送审。

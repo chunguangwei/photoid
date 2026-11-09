@@ -1,6 +1,6 @@
 # build51 简版工程采集
 
-2026-11-09，Android 模拟器（imagepilot_caption_test），生产 PhotoFinderPage、生产主题，真实原生检测。测试通过应用私有临时素材注入批次，不操作系统选择器，也不提供用户示例入口。截图不是最终 App Store 上架素材。
+源码 e40736d（本轮简版），2026-11-09，Android 模拟器（imagepilot_caption_test），生产 PhotoFinderPage、生产主题，真实原生检测。测试通过应用私有临时素材注入批次，不操作系统选择器，也不提供用户示例入口。截图不是最终 App Store 上架素材。
 
 八张图片为 EN/ZH 规格、来源、结果和采用预览；已检查中文画面，无溢出。结果为实际模型输出。iPhone 处理测试三项通过，但截图因未处于前台而跳过，不以 Android 代替 iPhone。
 
