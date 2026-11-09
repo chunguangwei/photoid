@@ -6,7 +6,7 @@ permalink: /privacy-policy
 
 # Privacy Policy / 隐私政策
 
-**Effective date / 生效日期：2026-11-06**
+**Effective date / 生效日期：2026-11-09**
 **App: PhotoID Studio（智能证件照）**
 
 ---
@@ -157,3 +157,22 @@ Existing-file checks read the selected bytes without modifying them. Files selec
 Requirement screenshots are recognized locally using Apple Vision on iOS and bundled ML Kit on Android. Only selected images are processed. Recognition images and text are not uploaded for recognition. Android ML Kit may send technical diagnostics and usage metrics as disclosed above. User-confirmed short excerpts stay in local tasks and are included in reports only on explicit export. Review excerpts and remove personal information before saving or sharing. Changes to the source or requirements require confirmation again.
 
 要求截图在本机识别：iOS 使用 Apple Vision，Android 使用随包 ML Kit。仅处理用户选中的图片，不为识别上传图片或文字。Android ML Kit 可按上文披露发送技术诊断与使用指标。用户确认的短摘录保存在本地任务中，仅在主动导出报告时包含；请在保存与分享前移除个人信息。来源或要求改变后需重新核对，确认不代表机构认证。
+
+
+## Local photo finder / 本机照片寻找
+
+The optional finder reads only the folder or files you explicitly select; subfolders are opt-in. It uses on-device face detection, dimensions and advisory image measurements to suggest candidates for your task. It does not identify people, build identity embeddings, index the full library, persist directory bookmarks or request all-files access. Manual Files, Photos and camera selection remain available.
+
+File providers may retrieve files you explicitly select. Folder scanning skips undownloaded or unverified remote items; Android directory access is restricted to known local providers. This is not a claim that every file-provider interaction is offline. Processing does not upload photos. ML Kit diagnostics remain as disclosed above.
+
+File names, relative paths, face boxes and candidate results stay within the active session. Private thumbnails use a 100 MB limit and are deleted when clearing, changing scope or leaving. After abnormal termination, stale native caches older than 24 hours are removed at the next initialization. Stopping a scan keeps completed results until you clear or leave; backgrounding stops further scanning. One in-flight operation can finish but its late result is ignored.
+
+Only a photo you explicitly adopt is saved as a task source copy. The original is not modified, renamed, moved or deleted. Adoption rechecks original bytes and the task's requirements/source revision. Shared ZIP files exclude the scan listing, unselected photos and face analysis. App-owned public sample variants are demonstration assets, not user photos. Task copies, backups and explicit exports follow the existing storage rules above.
+
+可选的找照片功能仅访问你明确选择的目录或文件，子目录需主动勾选。通过本机人脸检测、像素和画质参考寻找任务候选，不识别身份、不生成身份向量、不索引整个相册、不持久保存目录书签、不申请所有文件访问。人工文件、图库、拍照入口保留。
+
+文件提供方可能下载你明确选择的文件。目录扫描跳过未下载或无法确认本地状态的项目；Android 目录仅接受已知本地提供方。这不代表所有文件提供方交互都离线。照片不为处理上传，ML Kit 的技术诊断披露仍适用。
+
+文件名、相对路径、人脸框和候选结果限于本次会话。私有缩略图缓存上限 100 MB，清除、切换范围或离开页面时删除；异常退出残留在下次初始化时清理超过 24 小时的原生缓存。停止保留已完成结果，清除或退出后结束访问；进入后台停止后续扫描，单次在途计算可能完成但旧返回被忽略。
+
+只有你明确采用的照片会作为任务原图副本保存，不更改、重命名、移动或删除外部原文件。采用前复核文件字节及任务要求/原图版本。ZIP 不包含扫描清单、未选照片或人脸分析。公共示例变体属于演示素材，并非用户私人照片；任务副本、备份及主动导出仍按上文规则管理。

@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:photoid/services/application_task_store.dart';
 import 'package:photoid/models/photo_spec.dart';
+import 'package:photoid/models/application_task.dart';
 import 'photo_file_inspection_test.dart' show requirement;
 
 void main() {
@@ -20,6 +21,24 @@ void main() {
   });
   Uint8List jpeg() =>
       Uint8List.fromList(img.encodeJpg(img.Image(width: 100, height: 140)));
+  test('finder cannot adopt after source or requirements changed', () async {
+    final t = await store.create(name: 'Finder');
+    final snapshot = await store.addOutput(t.id, requirement(), 'one');
+    final token = sourceSelectionToken(snapshot);
+    await store.addOutput(t.id, requirement(), 'two');
+    await expectLater(
+        store.setSource(t.id, jpeg(), expectedSelectionToken: token),
+        throwsStateError);
+    expect((await store.get(t.id)).hasSource, isFalse);
+    final current = await store.get(t.id);
+    await store.setSource(t.id, jpeg(),
+        expectedSelectionToken: sourceSelectionToken(current));
+    await expectLater(
+        store.setSource(t.id, jpeg(),
+            expectedSelectionToken: sourceSelectionToken(current)),
+        throwsStateError);
+    expect((await store.get(t.id)).sourceRevision, 1);
+  });
   test('delivery snapshot blocks mutations until its work completes', () async {
     final t = await store.create(name: 'Task');
     final entered = Completer<void>();

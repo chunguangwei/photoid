@@ -1054,4 +1054,165 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get workflowExcerptExport =>
       'Only this short excerpt will be saved and included in your exported reports. Remove unrelated or personal information.';
+
+  @override
+  String get finderTitle => 'AI photo finder';
+
+  @override
+  String get finderIntro =>
+      'Find candidates for this task in a folder or selected files. You choose which photo to use.';
+
+  @override
+  String get finderManual => 'Choose a photo manually';
+
+  @override
+  String get finderFolder => 'Choose a local folder';
+
+  @override
+  String get finderFiles => 'Select multiple photos';
+
+  @override
+  String get finderDemo => 'Try sample photos';
+
+  @override
+  String get finderRecursive => 'Include subfolders';
+
+  @override
+  String get finderScope =>
+      'Only the scope you select is read. Face detection runs on your device. No identity recognition or photo uploads.';
+
+  @override
+  String get finderProvider =>
+      'Use downloaded local files. Android 11+ cannot select the Downloads root; choose a subfolder or multiple files. A file provider may download files you explicitly select. Unverified or undownloaded folder items are skipped.';
+
+  @override
+  String get finderLimits =>
+      'Limits: 2,000 directory items, 500 photos, 5 folder levels; 30 MB and 24 megapixels per photo. JPEG, PNG and decodable HEIC.';
+
+  @override
+  String get finderNeedRequirements =>
+      'Add at least one photo requirement in the task before searching. Manual selection is available now.';
+
+  @override
+  String get finderDisclaimer =>
+      'These are preparation references, not an acceptance or compliance check. Face pose and quality estimates may be wrong. Check clothing, expression and the receiving organization’s requirements yourself.';
+
+  @override
+  String get finderStop => 'Stop scan';
+
+  @override
+  String get finderClear => 'Clear results and access';
+
+  @override
+  String get finderPartial =>
+      'Partial scan — completed results are kept. Limits reached or scan stopped.';
+
+  @override
+  String get finderSearch => 'Search file name or relative path';
+
+  @override
+  String get finderAll => 'All results';
+
+  @override
+  String get finderPriority => 'Review first';
+
+  @override
+  String get finderManualGroup => 'Manual review';
+
+  @override
+  String get finderPixels => 'Check crop resolution';
+
+  @override
+  String get finderUnknown => 'Unknown / skipped';
+
+  @override
+  String get finderUse => 'Use this photo';
+
+  @override
+  String get finderEmpty =>
+      'No results yet. Choose a source or try the sample photos.';
+
+  @override
+  String get finderNoMatches =>
+      'No matching results. Change your filter or search.';
+
+  @override
+  String get finderCrops => 'Estimated crops for task outputs';
+
+  @override
+  String get finderCropNote =>
+      'Approximate crop from face location; not a full-head or official framing assessment. Final framing stays editable.';
+
+  @override
+  String get finderStale =>
+      'Task requirements or source changed. Exit and search again before using a result.';
+
+  @override
+  String get finderFailed =>
+      'Could not complete this action. Use a local folder, retry, or choose manually.';
+
+  @override
+  String get finderChanged =>
+      'The original file changed or is no longer accessible. Scan it again.';
+
+  @override
+  String get finderSingle =>
+      'Single face; pose estimate within the reference range';
+
+  @override
+  String get finderMultiple =>
+      'Multiple faces detected — choose and crop manually';
+
+  @override
+  String get finderPoseUnknown => 'Face pose could not be estimated';
+
+  @override
+  String get finderTurned => 'Estimated head turn or tilt needs review';
+
+  @override
+  String get finderSmallFace => 'Face region has few original pixels';
+
+  @override
+  String get finderQualityUnknown => 'Face quality could not be measured';
+
+  @override
+  String get finderSoft => 'Face region may be soft or blurred';
+
+  @override
+  String get finderExposure => 'Face region may be too dark or bright';
+
+  @override
+  String get finderNoFace => 'No face detected — cannot determine suitability';
+
+  @override
+  String get finderUnsupported => 'Unsupported format';
+
+  @override
+  String get finderOversized => 'File exceeds the size or pixel limit';
+
+  @override
+  String get finderRemote => 'Not confirmed locally downloaded — skipped';
+
+  @override
+  String get finderUnreadable => 'File could not be read or analyzed';
+
+  @override
+  String get finderCacheLimit => 'Thumbnail cache limit reached';
+
+  @override
+  String get finderDemoNote =>
+      'Sample variants use a licensed portrait and artificial edits. Real detection runs on each image; results vary by device.';
+
+  @override
+  String get finderFaces => 'detected faces';
+
+  @override
+  String get finderItems => 'Directory items checked';
+
+  @override
+  String get finderPreview => 'Photo preview (up to 1280 px)';
+
+  @override
+  String get finderCropFraming =>
+      'Estimated crop may cut the face — adjust framing manually';
 }

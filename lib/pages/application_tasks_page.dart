@@ -8,8 +8,9 @@ import '../widgets/photo_input.dart';
 import 'application_task_page.dart';
 
 class ApplicationTasksPage extends StatefulWidget {
-  const ApplicationTasksPage({super.key, this.store});
+  const ApplicationTasksPage({super.key, this.store, this.findPhotos = false});
   final ApplicationTaskStore? store;
+  final bool findPhotos;
   @override
   State<ApplicationTasksPage> createState() => _ApplicationTasksPageState();
 }
@@ -79,7 +80,8 @@ class _ApplicationTasksPageState extends State<ApplicationTasksPage> {
     await Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (_) => ApplicationTaskPage(taskId: t.id, store: _store)));
+            builder: (_) => ApplicationTaskPage(
+                taskId: t.id, store: _store, launchFinder: widget.findPhotos)));
     if (mounted) await _load();
   }
 
@@ -87,7 +89,8 @@ class _ApplicationTasksPageState extends State<ApplicationTasksPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return Scaffold(
-        appBar: AppBar(title: Text(l.tasksTitle)),
+        appBar: AppBar(
+            title: Text(widget.findPhotos ? l.finderTitle : l.tasksTitle)),
         floatingActionButton: FloatingActionButton.extended(
             key: const Key('new-task'),
             onPressed: _creating || _store == null ? null : _create,

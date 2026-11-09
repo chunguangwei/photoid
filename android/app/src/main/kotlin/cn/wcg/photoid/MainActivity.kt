@@ -1,6 +1,7 @@
 package cn.wcg.photoid
 
 import android.graphics.BitmapFactory
+import android.content.Intent
 import android.net.Uri
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
@@ -13,15 +14,22 @@ import java.io.File
 import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
+    private var photoFinder: PhotoFinderBridge? = null
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (photoFinder?.onActivityResult(requestCode,resultCode,data)==true) return
+        super.onActivityResult(requestCode,resultCode,data)
+    }
     private val recognitionExecutor = Executors.newSingleThreadExecutor()
 
     override fun onDestroy() {
+        photoFinder?.dispose()
         recognitionExecutor.shutdown()
         super.onDestroy()
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        photoFinder = PhotoFinderBridge(this,flutterEngine.dartExecutor.binaryMessenger)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "photoid/requirements_ocr")
             .setMethodCallHandler { call, result ->
                 if (call.method != "recognize") {

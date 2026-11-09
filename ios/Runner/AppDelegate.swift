@@ -5,6 +5,7 @@ import ImageIO
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
+  private var photoFinder: PhotoFinderBridge?
   private var transparencyObserver: NSObjectProtocol?
   override func application(
     _ application: UIApplication,
@@ -15,6 +16,7 @@ import ImageIO
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "PhotoIDPhotoFinder") { photoFinder = PhotoFinderBridge(registrar: registrar) }
     if let ocrRegistrar = engineBridge.pluginRegistry.registrar(forPlugin: "PhotoIDRequirementsOCR") {
       let ocr = FlutterMethodChannel(name: "photoid/requirements_ocr", binaryMessenger: ocrRegistrar.messenger())
       ocr.setMethodCallHandler { call, result in

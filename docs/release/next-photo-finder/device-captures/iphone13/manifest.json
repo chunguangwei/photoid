@@ -1,0 +1,26 @@
+{
+  "finder-setup-zh.png": {
+    "bytes": 322542,
+    "sha256": "406828a91c74924f867102453c82f8cd33c85f141771bf44cd5eb3d926a742ad"
+  },
+  "finder-results-zh.png": {
+    "bytes": 819403,
+    "sha256": "20be785899170e01ec3aabd4f5667d5fc49b0e1620beb4630dae347290301595"
+  },
+  "finder-setup-en.png": {
+    "bytes": 290630,
+    "sha256": "567cd5930c157c7d9bc5c8f1037e85f296cdce8f9c979ba528fd86836b6fc4bf"
+  },
+  "finder-results-en.png": {
+    "bytes": 790879,
+    "sha256": "3a961044a21663d685227d86abc821f38e2ca8584368576e948539ccc63757e4"
+  },
+  "finder-crops-en.png": {
+    "bytes": 1057193,
+    "sha256": "4196132d2179aa89e5e91b6503695324eab49ed31c2788575570934f143201d2"
+  },
+  "finder-crops-zh.png": {
+    "bytes": 1085203,
+    "sha256": "a799d0053a30a67c1d31d8a6018fe166ea3d27f6170c93af45fe9baf52f43f07"
+  }
+}

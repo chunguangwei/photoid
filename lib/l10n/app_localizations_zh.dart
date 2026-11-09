@@ -998,4 +998,151 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get workflowExcerptExport => '仅下方短摘录会保存到任务并包含在导出报告中，请移除无关内容或个人信息。';
+
+  @override
+  String get finderTitle => 'AI 找照片';
+
+  @override
+  String get finderIntro => '从指定文件夹或所选文件中，寻找适合当前任务的候选照片，由你决定采用哪张。';
+
+  @override
+  String get finderManual => '人工选图 / 拍照';
+
+  @override
+  String get finderFolder => '选择本地文件夹';
+
+  @override
+  String get finderFiles => '多选照片文件';
+
+  @override
+  String get finderDemo => '体验示例照片';
+
+  @override
+  String get finderRecursive => '包含子文件夹';
+
+  @override
+  String get finderScope => '仅读取你选择的范围，在设备上检测人脸，不识别身份、不上传照片。';
+
+  @override
+  String get finderProvider =>
+      '请使用已下载的本地文件。Android 11 及以上无法选择“下载”根目录，可选子文件夹或多选文件。文件提供方可能下载你明确选择的文件；文件夹中未下载或无法确认本地状态的项目会跳过。';
+
+  @override
+  String get finderLimits =>
+      '上限：2000 个目录项目、500 张照片、5 层目录；单张 30 MB、2400 万像素。支持 JPEG、PNG 及可解码的 HEIC。';
+
+  @override
+  String get finderNeedRequirements => '先在任务中添加至少一份照片要求，再开始筛选。现在仍可人工选图。';
+
+  @override
+  String get finderDisclaimer =>
+      '筛选仅供制作参考，不代表合规或获准受理。姿态和画质估计可能有误，请自行核对服装、表情及接收方要求。';
+
+  @override
+  String get finderStop => '停止筛选';
+
+  @override
+  String get finderClear => '清除结果并结束访问';
+
+  @override
+  String get finderPartial => '本次未完整扫描：已保留完成的结果，可能已达上限或被停止。';
+
+  @override
+  String get finderSearch => '搜索文件名或相对路径';
+
+  @override
+  String get finderAll => '全部结果';
+
+  @override
+  String get finderPriority => '优先查看';
+
+  @override
+  String get finderManualGroup => '人工判断';
+
+  @override
+  String get finderPixels => '裁剪像素不足';
+
+  @override
+  String get finderUnknown => '未知 / 已跳过';
+
+  @override
+  String get finderUse => '采用此照片';
+
+  @override
+  String get finderEmpty => '暂无结果。请选择来源，或体验示例照片。';
+
+  @override
+  String get finderNoMatches => '没有匹配的结果，请调整筛选或搜索词。';
+
+  @override
+  String get finderCrops => '各项任务的裁剪估计';
+
+  @override
+  String get finderCropNote => '根据人脸位置估计裁剪区域，并非完整头部检测或机构构图评估，最终仍可手动调整。';
+
+  @override
+  String get finderStale => '任务要求或原图已改变，请退出并重新筛选后再采用。';
+
+  @override
+  String get finderFailed => '操作未能完成。请改用本地文件夹、重试或人工选图。';
+
+  @override
+  String get finderChanged => '原始文件已改变或不可访问，请重新筛选。';
+
+  @override
+  String get finderSingle => '单人脸，姿态估计在参考范围内';
+
+  @override
+  String get finderMultiple => '检测到多个人脸，请人工选择及裁剪';
+
+  @override
+  String get finderPoseUnknown => '无法估计人脸姿态';
+
+  @override
+  String get finderTurned => '估计头部有转向或倾斜，请复核';
+
+  @override
+  String get finderSmallFace => '人脸区域的原始像素偏少';
+
+  @override
+  String get finderQualityUnknown => '无法测量人脸区域画质';
+
+  @override
+  String get finderSoft => '人脸区域可能不够清晰';
+
+  @override
+  String get finderExposure => '人脸区域可能过暗或过亮';
+
+  @override
+  String get finderNoFace => '未检测到人脸，无法判断是否适合';
+
+  @override
+  String get finderUnsupported => '暂不支持此格式';
+
+  @override
+  String get finderOversized => '文件大小或像素超过上限';
+
+  @override
+  String get finderRemote => '未确认已下载到本地，已跳过';
+
+  @override
+  String get finderUnreadable => '无法读取或分析此文件';
+
+  @override
+  String get finderCacheLimit => '已达缩略图缓存上限';
+
+  @override
+  String get finderDemoNote => '示例使用已授权肖像及人工处理变体，每张均实际运行检测，结果可能因设备而异。';
+
+  @override
+  String get finderFaces => '个检测到的人脸';
+
+  @override
+  String get finderItems => '已检查目录项目';
+
+  @override
+  String get finderPreview => '照片预览（最长边 1280 像素）';
+
+  @override
+  String get finderCropFraming => '预估裁剪可能切到脸部，请人工调整构图';
 }

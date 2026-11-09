@@ -1,0 +1,25 @@
+Draft for the next binary — replace the version/build after checking App Store Connect. Do not submit this draft against the old build.
+
+PhotoID Studio remains the same application and App ID. This update adds a task-aware local photo-finding workflow, alongside the requirements extraction and file delivery workflow. All manual photo tools remain available.
+
+Reproducible walkthrough:
+1. On Home, open AI photo finder and choose “Try a demo task”. The sample contains fictional editable output requirements, not an official standard.
+2. The photo finder shows the task’s requirements. Tap “Try sample photos”. It generates variants of a licensed portrait and performs the same real on-device detection used for user-selected files; there are no preassigned recommendation results.
+3. Inspect the detected faces, reasons and estimated crop resolution for each task output. Single portraits, multiple faces, a small photo, a blurred variant and a no-portrait sample can be reviewed. Detection results can differ between devices.
+4. Use group filters or file/path search. Expand an output’s estimated crop; this is a preparation reference, not a full-head or institutional acceptance check.
+5. Choose “Use this photo”. Confirm replacing the demo source. The selected file is checked again, then copied into the local task. Existing prepared outputs become incomplete. Prepare each file in the existing editor, review actual file checks, and export the ZIP.
+6. To test personal sources, choose a downloaded local folder or select multiple files. Subfolders are opt-in. The app reads only the selected scope, has bounded scanning and a stop/clear option, and ends access on exit. On Android 11+, Downloads root is restricted by the system; a subfolder or multiple files can be used.
+7. “Choose a photo manually” remains visible. It returns to the existing Files / Photos / camera choices. The finder is optional.
+8. For requirements extraction, attach a requirement screenshot in the task, extract text locally, verify values and the short source excerpt, and confirm explicitly. Final delivery includes prepared outputs and checks, not scanned directories or unselected photos.
+
+Implementation: iOS uses Apple Vision and scoped document access. Android uses SAF and bundled ML Kit face detection. Image dimensions, crop estimates and quality references are measured locally. No photo-processing server, model download, account or identity recognition is required. Third-party SDK technical diagnostics are disclosed in the privacy policy; file providers can download explicitly selected files.
+
+We understand the previous 4.3(a) concern. This update changes the working flow from choosing and styling one portrait to finding a source against saved task requirements, reviewing traceable requirements, preparing separate files and checking the resulting delivery. We provide a public sample so these changes are directly testable. We do not claim unique implementation alone guarantees eligibility, or that any photo is officially accepted.
+
+Independent source and development history:
+https://github.com/chunguangwei/photoid
+
+Privacy policy:
+https://chunguangwei.github.io/photoid/privacy-policy
+
+No login is required. The application is not affiliated with a government agency, does not issue identity documents and does not guarantee acceptance.

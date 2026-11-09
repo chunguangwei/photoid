@@ -12,13 +12,16 @@ import '../services/photo_file_inspection.dart';
 import '../widgets/photo_input.dart';
 import '../widgets/task_details_dialog.dart';
 import 'custom_spec_page.dart';
+import 'photo_finder_page.dart';
 import 'edit_page.dart';
 import 'requirements_import_page.dart';
 import 'delivery_overview_page.dart';
 
 class ApplicationTaskPage extends StatefulWidget {
-  const ApplicationTaskPage({super.key, required this.taskId, this.store});
+  const ApplicationTaskPage(
+      {super.key, required this.taskId, this.store, this.launchFinder = false});
   final String taskId;
+  final bool launchFinder;
   final ApplicationTaskStore? store;
   @override
   State<ApplicationTaskPage> createState() => _ApplicationTaskPageState();
@@ -27,7 +30,7 @@ class ApplicationTaskPage extends StatefulWidget {
 class _ApplicationTaskPageState extends State<ApplicationTaskPage> {
   ApplicationTaskStore? _store;
   ApplicationTask? _task;
-  bool _busy = false, _error = false;
+  bool _busy = false, _error = false, _finderLaunched = false;
   @override
   void initState() {
     super.initState();
@@ -43,6 +46,10 @@ class _ApplicationTaskPageState extends State<ApplicationTaskPage> {
           _task = task;
           _error = false;
         });
+      }
+      if (mounted && widget.launchFinder && !_finderLaunched) {
+        _finderLaunched = true;
+        await _findPhoto();
       }
     } catch (_) {
       if (mounted) setState(() => _error = true);
@@ -92,6 +99,18 @@ class _ApplicationTaskPageState extends State<ApplicationTaskPage> {
           sourceReference: details.reference,
           verifiedDate: details.date);
     });
+  }
+
+  Future<void> _findPhoto() async {
+    if (_task == null || _store == null || _busy) return;
+    final result = await Navigator.push<PhotoFinderResult>(
+        context,
+        MaterialPageRoute(
+            builder: (_) =>
+                PhotoFinderPage(taskId: widget.taskId, store: _store!)));
+    if (!mounted) return;
+    await _load();
+    if (result == PhotoFinderResult.manual && mounted) await _source();
   }
 
   Future<void> _source({bool evidence = false}) async {
@@ -408,6 +427,12 @@ class _ApplicationTaskPageState extends State<ApplicationTaskPage> {
                                           label: Text(task.hasSource
                                               ? l.taskReplaceSource
                                               : l.taskChooseSource)),
+                                      TextButton.icon(
+                                          key: const Key('task-photo-finder'),
+                                          onPressed: _busy ? null : _findPhoto,
+                                          icon: const Icon(
+                                              Icons.image_search_outlined),
+                                          label: Text(l.finderTitle)),
                                       if (!task.hasSource)
                                         Text(l.taskNoSource,
                                             style: Theme.of(context)

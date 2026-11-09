@@ -5,7 +5,7 @@ English readers: the codebase comments and ARB sources are authoritative; this
 doc mirrors them in Chinese.
 
 - 技术栈：Flutter 3.47.2（Dart ^3.5.0）
-- 端侧 AI：MODNet（ONNX Runtime）人像抠图 + Google ML Kit Face Detection
+- 端侧 AI：MODNet（ONNX Runtime）人像抠图；现有编辑器使用 ML Kit，新找照片功能使用 iOS Vision / Android 随包 ML Kit Face Detection
 - 图像处理：`image` 包 + 自研原始缓冲区算子（`photo_effects.dart`）
 - 平台：Android 8.0+（minSdk 26）/ iOS 15.5+
 - 仓库：https://github.com/chunguangwei/photoid
@@ -540,46 +540,26 @@ HEIC 会漏入；99 强制转 JPG 且质量损失可忽略）。
 宽 ÷ `aspect` 推导——结构上不可能产生非等比拉伸。
 
 ### SplashPage（lib/pages/splash_page.dart）
-启动页：全 Dart 矢量绘制的「**Logo 自我组装**」序列（`CustomPainter`）。
-视觉语言与应用图标严格同构——同一套深蓝紫渐变、同一组取景角标、同一个
-头肩剪影与合规徽章，动画结束时的定格画面基本就是 Logo 本身。用户从桌面
-图标点进来，看到的是这个图标「活过来」再拼回去的过程。
 
-动画按四拍推进，每一拍都对应产品真实在做的事：
+当前直接呈现可用首页并在后台预热模型，无倒计时或广告等待页。旧启动动画记录在 Git 历史中，不能作为当前 UI 说明。
 
-| 拍 | 时间切片 | 画面 | 语义 |
-| --- | --- | --- | --- |
-| ① 取景 | 0.00–0.16 | 四角从画面外沿对角线滑入并收拢 | 对准、构图 |
-| ② 识别 | 0.10–0.42 | 人像轮廓被一笔描出 | 检测到人了 |
-| ③ 处理 | 0.38–0.76 | 扫描光带自上而下，线框逐段变实体 | 抠图、换底 |
-| ④ 通过 | 0.76–0.94 | 徽章弹入（elasticOut）+ 打勾 | 合规校验通过 |
+### 报名任务、截图要求和本机找照片
 
-切片是 `Interval` 相对主控制器 `_stage`（3.6s）的比例，刻意**首尾重叠**
-（如 ②③ 在 0.38–0.42 交叠），让各拍之间是连贯推进而不是一顿一顿的。
-剩余时间留给呼吸状态，避免动画结束得太突然。6 秒倒计时可跳过，底部预留
-广告位槽，同时在这段空闲期调用 `ModnetSegmenter.warmUp()` 预热抠图模型。
+当前主流程：任务要求 → 原图寻找或人工选择 → 分别制作 → 文件实测总览 → ZIP。任务支持最多五份要求、可编辑短来源摘录及版本失效保护。iOS 要求 OCR 使用 Vision，Android 随包中文/拉丁 ML Kit。
 
-实现上的三个要点：
+新找照片功能的会话协议、原生授权、解码/缓存限制、质量阈值、过期采用拦截和模型选择见 [架构](photo-finder.md)。首页和任务页均可进入，手工选图不依赖 AI。`sourceSelectionToken` 与存储事务中的 `expectedSelectionToken` 防止采用旧要求下的结果；`materialize` 重新读取并核对原文件 SHA-256。
 
-1. **轮廓描边**用 `PathMetric.extractPath(0, len × t)`，而不是 dash 偏移。
-   前者按弧长精确截断，曲率剧烈变化处速度依然均匀；
-2. **扫描揭色**是「线框层 + 实体层 + `clipRect`」三件套：实体层按进度从上
-   往下裁出来盖在线框层上，一次绘制两种状态，不需要逐像素处理；
-3. **光带两端必须羽化**。直接画矩形会在取景框边缘留下两道生硬的竖切口，
-   像贴了张纸条。用 `saveLayer` + `BlendMode.dstIn` 叠一层横向羽化遮罩，
-   光带与亮线一起被裁成「中间实、两端虚」。
+运行验证：
 
-> **原生闪屏必须同步改色**。点击图标到 Flutter 引擎绘制首帧之间，系统显示的
-> 是 `android/.../drawable{,-v21}/launch_background.xml` 与 iOS 的
-> `LaunchScreen.storyboard`。Flutter 模板默认给的是**纯白**，配深色启动页
-> 会先白闪一下再跳深色，那一下足以毁掉整段动画的质感。两处已改为与
-> `_BackdropPainter._stops` 对齐的深蓝紫（Android 用三段 gradient，iOS
-> storyboard 不便做渐变、取中间色 `#46578F`）。**改启动页配色时记得一并改。**
+```bash
+flutter analyze
+flutter test
+flutter test integration_test/photo_finder_device_test.dart -d <device-id> --no-uninstall
+flutter build ios --release --no-codesign
+flutter build apk --debug
+```
 
-早期版本是一张 1.59MB 的 `splash_loading.png`（撑包体、高分屏发糊），
-之后换成过一个会眨眼、举手机自拍的卡通机器人。改成几何剪影是因为卡通
-形象与「科技质感」的诉求天然冲突，且与 Logo 不是一套语言；代价是失去了
-眨眼这类拟人动效——几何剪影没有五官。旧实现保留在 git 历史中。
+真机集成测试使用应用私有临时目录，不读取个人照片。真实样例运行实际模型，检查人数、原文件变化、损坏/不支持文件和缓存删除，并可采集生产页面的测试截图。最终 Store 素材仍需与选定版本/build、设备规格及完整用户流程核对。原生目录提供方授权、Photos、后台和签名升级另做人工验收。不要把测试 APK 或未签名 iOS 产物当作可发布包。
 
 ## 4. i18n 架构
 

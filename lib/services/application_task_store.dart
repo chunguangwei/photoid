@@ -195,10 +195,15 @@ class ApplicationTaskStore {
     if (check.width == null) throw ArgumentError('Unreadable image');
   }
 
-  Future<ApplicationTask> setSource(String id, Uint8List bytes) =>
+  Future<ApplicationTask> setSource(String id, Uint8List bytes,
+          {String? expectedSelectionToken}) =>
       _serial(() async {
         await _validateImage(bytes);
         final t = await get(id);
+        if (expectedSelectionToken != null &&
+            expectedSelectionToken != sourceSelectionToken(t)) {
+          throw StateError('Photo search requirements or source changed');
+        }
         // Version the source first; metadata remains readable if the process stops.
         final nextRevision = t.sourceRevision + 1;
         await _atomic(

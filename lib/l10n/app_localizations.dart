@@ -1975,6 +1975,294 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Only this short excerpt will be saved and included in your exported reports. Remove unrelated or personal information.'**
   String get workflowExcerptExport;
+
+  /// No description provided for @finderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI photo finder'**
+  String get finderTitle;
+
+  /// No description provided for @finderIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Find candidates for this task in a folder or selected files. You choose which photo to use.'**
+  String get finderIntro;
+
+  /// No description provided for @finderManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a photo manually'**
+  String get finderManual;
+
+  /// No description provided for @finderFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a local folder'**
+  String get finderFolder;
+
+  /// No description provided for @finderFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Select multiple photos'**
+  String get finderFiles;
+
+  /// No description provided for @finderDemo.
+  ///
+  /// In en, this message translates to:
+  /// **'Try sample photos'**
+  String get finderDemo;
+
+  /// No description provided for @finderRecursive.
+  ///
+  /// In en, this message translates to:
+  /// **'Include subfolders'**
+  String get finderRecursive;
+
+  /// No description provided for @finderScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the scope you select is read. Face detection runs on your device. No identity recognition or photo uploads.'**
+  String get finderScope;
+
+  /// No description provided for @finderProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Use downloaded local files. Android 11+ cannot select the Downloads root; choose a subfolder or multiple files. A file provider may download files you explicitly select. Unverified or undownloaded folder items are skipped.'**
+  String get finderProvider;
+
+  /// No description provided for @finderLimits.
+  ///
+  /// In en, this message translates to:
+  /// **'Limits: 2,000 directory items, 500 photos, 5 folder levels; 30 MB and 24 megapixels per photo. JPEG, PNG and decodable HEIC.'**
+  String get finderLimits;
+
+  /// No description provided for @finderNeedRequirements.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one photo requirement in the task before searching. Manual selection is available now.'**
+  String get finderNeedRequirements;
+
+  /// No description provided for @finderDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'These are preparation references, not an acceptance or compliance check. Face pose and quality estimates may be wrong. Check clothing, expression and the receiving organization’s requirements yourself.'**
+  String get finderDisclaimer;
+
+  /// No description provided for @finderStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop scan'**
+  String get finderStop;
+
+  /// No description provided for @finderClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear results and access'**
+  String get finderClear;
+
+  /// No description provided for @finderPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Partial scan — completed results are kept. Limits reached or scan stopped.'**
+  String get finderPartial;
+
+  /// No description provided for @finderSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search file name or relative path'**
+  String get finderSearch;
+
+  /// No description provided for @finderAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All results'**
+  String get finderAll;
+
+  /// No description provided for @finderPriority.
+  ///
+  /// In en, this message translates to:
+  /// **'Review first'**
+  String get finderPriority;
+
+  /// No description provided for @finderManualGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual review'**
+  String get finderManualGroup;
+
+  /// No description provided for @finderPixels.
+  ///
+  /// In en, this message translates to:
+  /// **'Check crop resolution'**
+  String get finderPixels;
+
+  /// No description provided for @finderUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown / skipped'**
+  String get finderUnknown;
+
+  /// No description provided for @finderUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this photo'**
+  String get finderUse;
+
+  /// No description provided for @finderEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No results yet. Choose a source or try the sample photos.'**
+  String get finderEmpty;
+
+  /// No description provided for @finderNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching results. Change your filter or search.'**
+  String get finderNoMatches;
+
+  /// No description provided for @finderCrops.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated crops for task outputs'**
+  String get finderCrops;
+
+  /// No description provided for @finderCropNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Approximate crop from face location; not a full-head or official framing assessment. Final framing stays editable.'**
+  String get finderCropNote;
+
+  /// No description provided for @finderStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Task requirements or source changed. Exit and search again before using a result.'**
+  String get finderStale;
+
+  /// No description provided for @finderFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not complete this action. Use a local folder, retry, or choose manually.'**
+  String get finderFailed;
+
+  /// No description provided for @finderChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The original file changed or is no longer accessible. Scan it again.'**
+  String get finderChanged;
+
+  /// No description provided for @finderSingle.
+  ///
+  /// In en, this message translates to:
+  /// **'Single face; pose estimate within the reference range'**
+  String get finderSingle;
+
+  /// No description provided for @finderMultiple.
+  ///
+  /// In en, this message translates to:
+  /// **'Multiple faces detected — choose and crop manually'**
+  String get finderMultiple;
+
+  /// No description provided for @finderPoseUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Face pose could not be estimated'**
+  String get finderPoseUnknown;
+
+  /// No description provided for @finderTurned.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated head turn or tilt needs review'**
+  String get finderTurned;
+
+  /// No description provided for @finderSmallFace.
+  ///
+  /// In en, this message translates to:
+  /// **'Face region has few original pixels'**
+  String get finderSmallFace;
+
+  /// No description provided for @finderQualityUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Face quality could not be measured'**
+  String get finderQualityUnknown;
+
+  /// No description provided for @finderSoft.
+  ///
+  /// In en, this message translates to:
+  /// **'Face region may be soft or blurred'**
+  String get finderSoft;
+
+  /// No description provided for @finderExposure.
+  ///
+  /// In en, this message translates to:
+  /// **'Face region may be too dark or bright'**
+  String get finderExposure;
+
+  /// No description provided for @finderNoFace.
+  ///
+  /// In en, this message translates to:
+  /// **'No face detected — cannot determine suitability'**
+  String get finderNoFace;
+
+  /// No description provided for @finderUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported format'**
+  String get finderUnsupported;
+
+  /// No description provided for @finderOversized.
+  ///
+  /// In en, this message translates to:
+  /// **'File exceeds the size or pixel limit'**
+  String get finderOversized;
+
+  /// No description provided for @finderRemote.
+  ///
+  /// In en, this message translates to:
+  /// **'Not confirmed locally downloaded — skipped'**
+  String get finderRemote;
+
+  /// No description provided for @finderUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'File could not be read or analyzed'**
+  String get finderUnreadable;
+
+  /// No description provided for @finderCacheLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Thumbnail cache limit reached'**
+  String get finderCacheLimit;
+
+  /// No description provided for @finderDemoNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Sample variants use a licensed portrait and artificial edits. Real detection runs on each image; results vary by device.'**
+  String get finderDemoNote;
+
+  /// No description provided for @finderFaces.
+  ///
+  /// In en, this message translates to:
+  /// **'detected faces'**
+  String get finderFaces;
+
+  /// No description provided for @finderItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Directory items checked'**
+  String get finderItems;
+
+  /// No description provided for @finderPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo preview (up to 1280 px)'**
+  String get finderPreview;
+
+  /// No description provided for @finderCropFraming.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated crop may cut the face — adjust framing manually'**
+  String get finderCropFraming;
 }
 
 class _AppLocalizationsDelegate

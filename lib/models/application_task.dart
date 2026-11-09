@@ -140,3 +140,10 @@ class ApplicationTask {
             .toList());
   }
 }
+
+/// Binds a photo search to the source and every editable output requirement.
+String sourceSelectionToken(ApplicationTask task) => jsonEncode([
+      task.sourceRevision,
+      for (final o in task.outputs)
+        [o.id, o.revision, o.fileName, requirementFingerprint(o.spec)]
+    ]);

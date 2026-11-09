@@ -9,6 +9,10 @@ preferred; email is for licensing and private reports).
 
 Architecture, build, test and release details: [docs/development.md](docs/development.md).
 
+## Photo finder changes
+
+Follow [the finder architecture and limits](docs/photo-finder.md). Preserve manual selection, scoped access, nullable detector evidence, crop-pixel explanations, bounded sequential decoding and cache cleanup. Never substitute fixture labels for real detections or put directory listings/unselected photos into exports. Test late returns, stale task/file adoption and source replacement. Native detector smoke tests are in `integration_test/photo_finder_device_test.dart`; widget tests are not device or picker acceptance evidence.
+
 ## Reporting Issues
 
 - Search existing issues before opening a new one.

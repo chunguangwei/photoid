@@ -311,6 +311,21 @@ class _HomeTabState extends State<_HomeTab> {
             trailing: const Icon(Icons.chevron_right),
             onTap: _openTasks,
           )),
+          Card(
+              child: ListTile(
+                  key: const Key('home-photo-finder'),
+                  leading: const Icon(Icons.image_search_outlined),
+                  title: Text(l.finderTitle),
+                  subtitle: Text(l.finderIntro),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () async {
+                    await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) =>
+                                const ApplicationTasksPage(findPhotos: true)));
+                    if (mounted) await _loadTasks();
+                  })),
           if (_recent != null)
             ListTile(
                 title: Text(l.workflowRecent),
