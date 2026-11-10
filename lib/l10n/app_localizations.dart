@@ -2267,7 +2267,7 @@ abstract class AppLocalizations {
   /// No description provided for @startupContinue.
   ///
   /// In en, this message translates to:
-  /// **'Continue'**
+  /// **'Skip'**
   String get startupContinue;
 
   /// No description provided for @finderPickSize.

@@ -16,7 +16,7 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _stage = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 1600))
+      vsync: this, duration: const Duration(milliseconds: 5000))
     ..addStatusListener((status) {
       if (status == AnimationStatus.completed) _finish();
     });

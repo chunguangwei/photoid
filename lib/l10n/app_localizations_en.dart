@@ -1217,7 +1217,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Estimated crop may cut the face — adjust framing manually';
 
   @override
-  String get startupContinue => 'Continue';
+  String get startupContinue => 'Skip';
 
   @override
   String get finderPickSize => 'Choose photo size';

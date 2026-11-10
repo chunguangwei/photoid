@@ -30,6 +30,11 @@
 - UI：找照片页加强版开关（首次开启提示下载 ~287MB）、语义搜索框、
   排序进度/可停止；未评分照片保持原序。文案含「语义参考排序」声明。
 - 隐私：政策（App 内 + docs/privacy-policy.md）补加强版段落。
+- 应用名：iOS `CFBundleDisplayName` 与 Android `app_name` 统一为
+  **PhotoID**（原「智能证件照」；Android values-en 本就是 PhotoID）。
+- 冷启动（用户 2026-11-10 改需求）：品牌动画 1.6s→5s，右上角按钮改
+  「跳过/Skip」；iOS LaunchScreen 去静态 Logo 只留品牌色底，消除
+  点击图标后的"短暂静态页"跳变。
 - 版本号 1.2.0（55）。
 
 ## 效果基准

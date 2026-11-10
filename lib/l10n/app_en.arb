@@ -541,7 +541,7 @@
   "finderItems": "Directory items checked",
   "finderPreview": "Photo preview (up to 1280 px)",
   "finderCropFraming": "Estimated crop may cut the face — adjust framing manually",
-  "startupContinue": "Continue",
+  "startupContinue": "Skip",
   "finderPickSize": "Choose photo size",
   "finderSizeSearch": "Search sizes, exams or destinations",
   "finderCustomSize": "Enter dimensions / KB limits",

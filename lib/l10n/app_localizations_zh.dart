@@ -1147,7 +1147,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get finderCropFraming => '预估裁剪可能切到脸部，请人工调整构图';
 
   @override
-  String get startupContinue => '进入首页';
+  String get startupContinue => '跳过';
 
   @override
   String get finderPickSize => '选择证件照尺寸';

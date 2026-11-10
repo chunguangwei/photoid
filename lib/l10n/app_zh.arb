@@ -446,7 +446,7 @@
   "finderItems": "已检查目录项目",
   "finderPreview": "照片预览（最长边 1280 像素）",
   "finderCropFraming": "预估裁剪可能切到脸部，请人工调整构图",
-  "startupContinue": "进入首页",
+  "startupContinue": "跳过",
   "finderPickSize": "选择证件照尺寸",
   "finderSizeSearch": "搜索尺寸、考试或用途",
   "finderCustomSize": "手动填写尺寸 / KB 要求",
