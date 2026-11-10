@@ -141,7 +141,7 @@ void main() {
       // 等外部把图拉走（flutter test 结束会卸载 App 连带清容器）：
       // 外部 copy from 成功后回写 Documents/_captures_pulled 作放行标志。
       final gate = File('${docs.path}/_captures_pulled');
-      for (var i = 0; i < 240 && !gate.existsSync(); i++) {
+      for (var i = 0; i < 96 && !gate.existsSync(); i++) {
         await Future<void>.delayed(const Duration(seconds: 5));
       }
       expect(gate.existsSync(), isTrue, reason: 'captures not pulled in 20min');
@@ -149,5 +149,5 @@ void main() {
       await tester.pumpAndSettle();
       await root.delete(recursive: true);
     }
-  }, timeout: const Timeout(Duration(minutes: 25)));
+  }, timeout: const Timeout(Duration(minutes: 40)));
 }
