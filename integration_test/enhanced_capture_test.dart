@@ -119,26 +119,15 @@ void main() {
             embeddingStore: store)));
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('finder-photos')));
-        // settle 驱动平台回调但有界吞超时；等待目标=toggle 本身（懒挂载安全）。
-        try {
-          await tester.pumpAndSettle(
-              const Duration(milliseconds: 100), EnginePhase.sendSemanticsUpdate,
-              const Duration(seconds: 20));
-        } catch (_) {}
+        // ↓ 以下等待块 = run11 全绿原样（勿改泵方式，run14/19 实证）。
+        await tester.pumpAndSettle();
+        note('post-tap-progress:${find.byType(LinearProgressIndicator).evaluate().length}');
         for (var n = 0;
-            n < 400 &&
-                find
-                    .byKey(const Key('enhanced-toggle'))
-                    .evaluate()
-                    .isEmpty;
+            n < 240 &&
+                find.byType(LinearProgressIndicator).evaluate().isNotEmpty;
             n++) {
           await Future<void>.delayed(const Duration(milliseconds: 250));
-          try {
-            await tester.pumpAndSettle(const Duration(milliseconds: 100),
-                EnginePhase.sendSemanticsUpdate, const Duration(seconds: 2));
-          } catch (_) {
-            await tester.pump(const Duration(milliseconds: 100));
-          }
+          await tester.pumpAndSettle();
         }
         note('analysis-done-$lang:${find.byKey(const Key("enhanced-toggle")).evaluate().length}');
         expect(find.byKey(const Key('enhanced-toggle')), findsOneWidget,
