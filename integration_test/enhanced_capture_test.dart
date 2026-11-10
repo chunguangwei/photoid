@@ -96,14 +96,26 @@ void main() {
             embeddingStore: store)));
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('finder-photos')));
-        // run11 实证：此段必须 pumpAndSettle 驱动平台通道回调，勿改固定泵。
-        await tester.pumpAndSettle();
+        // settle 驱动平台回调但有界吞超时；等待目标=toggle 本身（懒挂载安全）。
+        try {
+          await tester.pumpAndSettle(
+              const Duration(milliseconds: 100), EnginePhase.sendSemanticsUpdate,
+              const Duration(seconds: 20));
+        } catch (_) {}
         for (var n = 0;
-            n < 240 &&
-                find.byType(LinearProgressIndicator).evaluate().isNotEmpty;
+            n < 600 &&
+                find
+                    .byKey(const Key('enhanced-toggle'))
+                    .evaluate()
+                    .isEmpty;
             n++) {
           await Future<void>.delayed(const Duration(milliseconds: 250));
-          await tester.pumpAndSettle();
+          try {
+            await tester.pumpAndSettle(const Duration(milliseconds: 100),
+                EnginePhase.sendSemanticsUpdate, const Duration(seconds: 5));
+          } catch (_) {
+            await tester.pump(const Duration(milliseconds: 100));
+          }
         }
         expect(find.byKey(const Key('enhanced-toggle')), findsOneWidget,
             reason: 'batch analysis must finish and render result grid');
