@@ -5,7 +5,8 @@
     python3 test/tools/compose_screenshots.py
 
 输入：assets/screenshots/raw/*.png（真机实拍 1170×2532）
-输出：assets/screenshots/store/{zh,en}/{69,65}/0X.png（6.9" 1290×2796 / 6.5" 1242×2688）
+输出：assets/screenshots/store/{zh,en}/{61,63}/0X.png
+（带灵动岛 iPhone 中屏：6.1" 1179×2556 / 6.3" 1206×2622，ASC 现支持尺寸）
 """
 from pathlib import Path
 
@@ -15,27 +16,27 @@ ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / 'assets/screenshots/raw'
 OUT = ROOT / 'assets/screenshots/store'
 
-# 两档必交尺寸
-SIZES = {'69': (1290, 2796), '65': (1242, 2688)}
+# 两档必交尺寸（ASC「带灵动岛的 iPhone（中等显示屏）」）
+SIZES = {'61': (1179, 2556), '63': (1206, 2622)}
 
 # 叙事顺序与标题（改文案只动这里）
 SETS = {
     'zh': {
-        'shots': ['01_home.png', '02_edit_result.png', '03_sliders.png',
-                  '04_result.png', '05_edit_red.png'],
-        'titles': ['33+ 内置规格，开箱即用', 'AI 抠图换底，全在本机完成',
-                   '美颜与清晰度，随手微调', '保存前逐项合规检测',
-                   '蓝白红灰，底色秒切'],
+        'shots': ['01_home-zh.png', '02_sizes-zh.png', '03_sources-zh.png',
+                  '04_enhanced-zh.png', '05_model-zh.png'],
+        'titles': ['从一批照片里挑原图', '先选你需要的尺寸',
+                   '相册多选，或选一个文件夹', '一句话，加强版帮你排顺序',
+                   '模型可选可删，照片不上传'],
         'font': ('/System/Library/Fonts/Hiragino Sans GB.ttc', 2),  # W6
     },
     'en': {
-        'shots': ['en_01_home.png', 'en_02_edit.png', 'en_03_sliders.png',
-                  'en_04_result.png', 'en_05_red.png'],
-        'titles': ['33+ built-in specs, ready to use',
-                   'AI cutout and recolor, on your device',
-                   'Fine-tune skin and sharpness',
-                   'Checked before you save',
-                   'Blue, white, red — switch instantly'],
+        'shots': ['01_home-en.png', '02_sizes-en.png', '03_sources-en.png',
+                  '04_enhanced-en.png', '05_model-en.png'],
+        'titles': ['Find a starting photo in a batch',
+                   'Choose the size you need',
+                   'Select photos or a folder',
+                   'Describe it. Enhanced ranks your batch.',
+                   'Optional model. Photos stay on device.'],
         'font': ('/System/Library/Fonts/HelveticaNeue.ttc', 1),  # Bold
     },
 }
