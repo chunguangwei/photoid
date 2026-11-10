@@ -96,14 +96,14 @@ void main() {
             embeddingStore: store)));
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('finder-photos')));
-        // 进度条 indeterminate 动画会让 pumpAndSettle 死等 10 分钟；只用固定泵。
-        await tester.pump(const Duration(milliseconds: 300));
+        // run11 实证：此段必须 pumpAndSettle 驱动平台通道回调，勿改固定泵。
+        await tester.pumpAndSettle();
         for (var n = 0;
-            n < 600 &&
+            n < 240 &&
                 find.byType(LinearProgressIndicator).evaluate().isNotEmpty;
             n++) {
           await Future<void>.delayed(const Duration(milliseconds: 250));
-          await tester.pump(const Duration(milliseconds: 100));
+          await tester.pumpAndSettle();
         }
         expect(find.byKey(const Key('enhanced-toggle')), findsOneWidget,
             reason: 'batch analysis must finish and render result grid');
