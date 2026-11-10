@@ -35,6 +35,17 @@ void main() {
     expect(((await tester.runAsync(store.list))!), isEmpty);
     expect(find.text('ToDelete'), findsNothing);
   });
+  testWidgets('visible trash icon on the row deletes after confirm',
+      (tester) async {
+    final (_, store, id) = await seeded(tester);
+    await tester.pumpWidget(host(ApplicationTasksPage(store: store)));
+    await settleFiles(tester);
+    await tester.tap(find.byKey(Key('task-delete-$id')));
+    await settleFiles(tester);
+    await tester.tap(find.text('Delete task'));
+    await settleFiles(tester);
+    expect(((await tester.runAsync(store.list))!), isEmpty);
+  });
   testWidgets('detail page trash still deletes', (tester) async {
     final (_, store, _) = await seeded(tester);
     await tester.pumpWidget(host(ApplicationTasksPage(store: store)));

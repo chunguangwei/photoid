@@ -150,7 +150,19 @@ class _ApplicationTasksPageState extends State<ApplicationTasksPage> {
                                       title: Text(t.name),
                                       subtitle: Text(
                                           '${t.outputs.where((o) => o.ready).length} / ${t.outputs.length} ${l.taskFilesCount}'),
-                                      trailing: const Icon(Icons.chevron_right),
+                                      trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                                key: Key(
+                                                    'task-delete-${t.id}'),
+                                                tooltip: l.taskDelete,
+                                                onPressed: () =>
+                                                    _confirmDelete(t),
+                                                icon: const Icon(
+                                                    Icons.delete_outline)),
+                                            const Icon(Icons.chevron_right),
+                                          ]),
                                       onTap: () => _open(t),
                                       onLongPress: () => _confirmDelete(t)))),
                       ]));
