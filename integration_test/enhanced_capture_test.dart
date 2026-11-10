@@ -49,6 +49,9 @@ void main() {
     final root = await temp.createTemp('cap_task_');
     final taskStore = ApplicationTaskStore(root);
     final paths = await writeFinderDemo(root);
+    final docsDir = await getApplicationDocumentsDirectory();
+    final staleFlag = File('${docsDir.path}/_captures_pulled');
+    if (staleFlag.existsSync()) await staleFlag.delete();
     final queries = {'en': 'blue sky with clouds', 'zh': '证件照 人像'};
     try {
       for (final lang in ['en', 'zh']) {
@@ -135,6 +138,13 @@ void main() {
       for (final f in captures.listSync().whereType<File>()) {
         await f.copy('${out.path}/${f.uri.pathSegments.last}');
       }
+      // 等外部把图拉走（flutter test 结束会卸载 App 连带清容器）：
+      // 外部 copy from 成功后回写 Documents/_captures_pulled 作放行标志。
+      final gate = File('${docs.path}/_captures_pulled');
+      for (var i = 0; i < 240 && !gate.existsSync(); i++) {
+        await Future<void>.delayed(const Duration(seconds: 5));
+      }
+      expect(gate.existsSync(), isTrue, reason: 'captures not pulled in 20min');
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
       await root.delete(recursive: true);
