@@ -75,38 +75,52 @@ void main() {
                 store: taskStore,
                 gateway: FixturePhotoGateway(paths),
                 embeddingStore: store)));
-        await tester.pumpAndSettle();
+        for (var i = 0; i < 8; i++) {
+          await tester.pump(const Duration(milliseconds: 150));
+        }
         await tester.tap(find.byKey(const Key('finder-size')));
-        await tester.pumpAndSettle();
+        for (var i = 0; i < 8; i++) {
+          await tester.pump(const Duration(milliseconds: 120));
+        }
         await File('${captures.path}/02_sizes-$lang.png')
             .writeAsBytes(await binding.takeScreenshot('sizes-$lang'));
         await tester.tap(find.byKey(const ValueKey('preset-one_inch')));
-        await tester.pumpAndSettle();
+        for (var i = 0; i < 8; i++) {
+          await tester.pump(const Duration(milliseconds: 120));
+        }
         await File('${captures.path}/03_sources-$lang.png')
             .writeAsBytes(await binding.takeScreenshot('sources-$lang'));
         await tester.tap(find.byKey(const Key('finder-photos')));
         await tester.pump(const Duration(milliseconds: 300));
+        // 等结果网格渲染（toggle 出现即批次完成）；不依赖进度条出现时机。
         for (var n = 0;
-            n < 240 &&
-                find.byType(LinearProgressIndicator).evaluate().isNotEmpty;
+            n < 600 &&
+                find
+                    .byKey(const Key('enhanced-toggle'))
+                    .evaluate()
+                    .isEmpty;
             n++) {
           await Future<void>.delayed(const Duration(milliseconds: 250));
           await tester.pump(const Duration(milliseconds: 100));
         }
-        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('enhanced-toggle')), findsOneWidget);
         await tester.tap(find.byKey(const Key('enhanced-toggle')));
-        await tester.pumpAndSettle();
+        for (var i = 0; i < 8; i++) {
+          await tester.pump(const Duration(milliseconds: 120));
+        }
         expect(find.byKey(const Key('enhanced-input')), findsOneWidget);
         await tester.enterText(
             find.byKey(const Key('enhanced-input')), queries[lang]!);
         await tester.pump();
         await tester.tap(find.byIcon(Icons.arrow_forward));
+        final stopLabel = lang == 'zh' ? '停止排序' : 'Stop ranking';
+        for (var i = 0;
+            i < 20 && find.text(stopLabel).evaluate().isEmpty;
+            i++) {
+          await tester.pump(const Duration(milliseconds: 150));
+        }
         for (var n = 0;
-            n < 240 &&
-                find
-                    .text(lang == 'zh' ? '停止排序' : 'Stop ranking')
-                    .evaluate()
-                    .isNotEmpty;
+            n < 480 && find.text(stopLabel).evaluate().isNotEmpty;
             n++) {
           await Future<void>.delayed(const Duration(milliseconds: 500));
           await tester.pump(const Duration(milliseconds: 120));
