@@ -37,6 +37,21 @@ void main() {
     final temp = await getTemporaryDirectory();
     final captures =
         await Directory('${temp.path}/enhanced_captures').create(recursive: true);
+    // 步骤日志：外部每 20s 拉 Documents/enhanced_captures/status.txt 定位卡点。
+    final docs0 = await getApplicationDocumentsDirectory();
+    final statusDir =
+        Directory('${docs0.path}/enhanced_captures')
+      ..createSync(recursive: true);
+    final statusFile = File('${statusDir.path}/status.txt');
+    void note(String s) =>
+        statusFile.writeAsStringSync('${DateTime.now().toIso8601String()} $s\n',
+            mode: FileMode.append);
+    note('test-start');
+    if (binding.lifecycleState != AppLifecycleState.resumed) {
+      note('skip-not-foreground:${binding.lifecycleState}');
+      markTestSkipped('Foreground required for visible native captures.');
+      return;
+    }
     // 等模型包重推（App 文档目录 embedding_model/，5 文件字节齐）。
     final store = await EmbeddingModelStore.open();
     for (var i = 0;
@@ -44,6 +59,7 @@ void main() {
         i++) {
       await Future<void>.delayed(const Duration(seconds: 3));
     }
+    note('model-status:${store.status.name}');
     expect(store.status, EmbeddingModelStatus.ready,
         reason: 'push model pack to Documents/embedding_model/');
     final root = await temp.createTemp('cap_task_');
@@ -72,6 +88,7 @@ void main() {
         await tester.pumpAndSettle();
         await File('${captures.path}/01_home-$lang.png')
             .writeAsBytes(await binding.takeScreenshot('home-$lang'));
+        note('shot-01-$lang');
         // 2) 规格选择 + 来源区（draft 页，不依赖分析结果）。
         await tester.pumpWidget(wrap(PhotoFinderPage(
             store: taskStore,
@@ -82,10 +99,12 @@ void main() {
         await tester.pumpAndSettle();
         await File('${captures.path}/02_sizes-$lang.png')
             .writeAsBytes(await binding.takeScreenshot('sizes-$lang'));
+        note('shot-02-$lang');
         await tester.tap(find.byKey(const ValueKey('preset-one_inch')));
         await tester.pumpAndSettle();
         await File('${captures.path}/03_sources-$lang.png')
             .writeAsBytes(await binding.takeScreenshot('sources-$lang'));
+        note('shot-03-$lang');
         // 3) 加强版排序（run1 验证过：taskId 模式，规格已在任务内）。
         final task = await DemoTask.open(taskStore, lang);
         await tester.pumpWidget(wrap(PhotoFinderPage(
@@ -117,6 +136,7 @@ void main() {
             await tester.pump(const Duration(milliseconds: 100));
           }
         }
+        note('analysis-done-$lang:${find.byKey(const Key("enhanced-toggle")).evaluate().length}');
         expect(find.byKey(const Key('enhanced-toggle')), findsOneWidget,
             reason: 'batch analysis must finish and render result grid');
         await tester.tap(find.byKey(const Key('enhanced-toggle')));
@@ -149,13 +169,16 @@ void main() {
         } catch (_) {
           // 滚到底仍未找到时保持当前画面截图，不中断整轮采集。
         }
+        note('rank-done-$lang');
         await File('${captures.path}/04_enhanced-$lang.png')
             .writeAsBytes(await binding.takeScreenshot('enhanced-$lang'));
+        note('shot-04-$lang');
         // 4) 模型管理页（已装状态）。
         await tester.pumpWidget(wrap(EmbeddingModelPage(store: store)));
         await tester.pumpAndSettle();
         await File('${captures.path}/05_model-$lang.png')
             .writeAsBytes(await binding.takeScreenshot('model-$lang'));
+        note('shot-05-$lang');
       }
     } catch (e) {
       bodyError = e;
@@ -167,6 +190,7 @@ void main() {
       for (final f in captures.listSync().whereType<File>()) {
         await f.copy('${out.path}/${f.uri.pathSegments.last}');
       }
+      note('exported-${captures.listSync().length}');
       // 等外部把图拉走（flutter test 结束会卸载 App 连带清容器）：
       // 外部 copy from 成功后回写 Documents/_captures_pulled 作放行标志。
       final gate = File('${docs.path}/_captures_pulled');
@@ -178,6 +202,7 @@ void main() {
       for (var i = 0; i < 96 && !gate.existsSync(); i++) {
         await Future<void>.delayed(const Duration(seconds: 5));
       }
+      note('gate-checked:${gate.existsSync()}');
       expect(gate.existsSync(), isTrue, reason: 'captures not pulled in 8min');
     }
   }, timeout: const Timeout(Duration(minutes: 40)));
