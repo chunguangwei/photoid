@@ -1,7 +1,7 @@
-// build55 商店素材采集：加强版真机界面（首页/加强版排序/模型页）。
+// build55 商店素材采集：加强版真机界面（首页/规格/来源/加强版排序/模型页）。
 // 集成测试重装会清空容器：测试等待 devicectl 重推模型包（按字节判齐）。
 // 运行：flutter test integration_test/enhanced_capture_test.dart -d <device>
-// 采集落 Documents/captures/，用 devicectl copy from 拉回。
+// 采集落 Documents/enhanced_captures/，测试结束后立即用 devicectl copy from 拉回。
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +12,7 @@ import 'package:photoid/pages/embedding_model_page.dart';
 import 'package:photoid/pages/home_page.dart';
 import 'package:photoid/pages/photo_finder_page.dart';
 import 'package:photoid/services/application_task_store.dart';
+import 'package:photoid/services/demo_task.dart';
 import 'package:photoid/services/embedding_model_store.dart';
 import 'package:photoid/services/photo_finder_demo.dart';
 import 'package:photoid/services/photo_finder_session.dart';
@@ -51,63 +52,55 @@ void main() {
     final queries = {'en': 'blue sky with clouds', 'zh': '证件照 人像'};
     try {
       for (final lang in ['en', 'zh']) {
-        // 1) 首页（找照片入口所在）。
-        await tester.pumpWidget(MaterialApp(
-            key: ValueKey('home$lang'),
+        Widget wrap(Widget home) => MaterialApp(
+            key: ValueKey('$home$lang'),
             debugShowCheckedModeBanner: false,
             locale: Locale(lang),
             theme: photoIdTheme(Brightness.light),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: const HomePage()));
+            home: home);
+        // 1) 首页（找照片入口所在）。
+        await tester.pumpWidget(wrap(const HomePage()));
         await tester.pumpAndSettle();
         await File('${captures.path}/01_home-$lang.png')
             .writeAsBytes(await binding.takeScreenshot('home-$lang'));
-        // 2) 加强版排序结果。
-        await tester.pumpWidget(MaterialApp(
-            key: ValueKey('finder$lang'),
-            debugShowCheckedModeBanner: false,
-            locale: Locale(lang),
-            theme: photoIdTheme(Brightness.light),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: PhotoFinderPage(
-                store: taskStore,
-                gateway: FixturePhotoGateway(paths),
-                embeddingStore: store)));
-        for (var i = 0; i < 8; i++) {
-          await tester.pump(const Duration(milliseconds: 150));
-        }
+        // 2) 规格选择 + 来源区（draft 页，不依赖分析结果）。
+        await tester.pumpWidget(wrap(PhotoFinderPage(
+            store: taskStore,
+            gateway: FixturePhotoGateway(paths),
+            embeddingStore: store)));
+        await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('finder-size')));
-        for (var i = 0; i < 8; i++) {
-          await tester.pump(const Duration(milliseconds: 120));
-        }
+        await tester.pumpAndSettle();
         await File('${captures.path}/02_sizes-$lang.png')
             .writeAsBytes(await binding.takeScreenshot('sizes-$lang'));
         await tester.tap(find.byKey(const ValueKey('preset-one_inch')));
-        for (var i = 0; i < 8; i++) {
-          await tester.pump(const Duration(milliseconds: 120));
-        }
+        await tester.pumpAndSettle();
         await File('${captures.path}/03_sources-$lang.png')
             .writeAsBytes(await binding.takeScreenshot('sources-$lang'));
+        // 3) 加强版排序（run1 验证过：taskId 模式，规格已在任务内）。
+        final task = await DemoTask.open(taskStore, lang);
+        await tester.pumpWidget(wrap(PhotoFinderPage(
+            key: UniqueKey(),
+            taskId: task.id,
+            store: taskStore,
+            gateway: FixturePhotoGateway(paths),
+            embeddingStore: store)));
+        await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('finder-photos')));
-        await tester.pump(const Duration(milliseconds: 300));
-        // 等结果网格渲染（toggle 出现即批次完成）；不依赖进度条出现时机。
+        await tester.pumpAndSettle();
         for (var n = 0;
-            n < 600 &&
-                find
-                    .byKey(const Key('enhanced-toggle'))
-                    .evaluate()
-                    .isEmpty;
+            n < 240 &&
+                find.byType(LinearProgressIndicator).evaluate().isNotEmpty;
             n++) {
           await Future<void>.delayed(const Duration(milliseconds: 250));
-          await tester.pump(const Duration(milliseconds: 100));
+          await tester.pumpAndSettle();
         }
-        expect(find.byKey(const Key('enhanced-toggle')), findsOneWidget);
+        expect(find.byKey(const Key('enhanced-toggle')), findsOneWidget,
+            reason: 'batch analysis must finish and render result grid');
         await tester.tap(find.byKey(const Key('enhanced-toggle')));
-        for (var i = 0; i < 8; i++) {
-          await tester.pump(const Duration(milliseconds: 120));
-        }
+        await tester.pumpAndSettle();
         expect(find.byKey(const Key('enhanced-input')), findsOneWidget);
         await tester.enterText(
             find.byKey(const Key('enhanced-input')), queries[lang]!);
@@ -115,7 +108,7 @@ void main() {
         await tester.tap(find.byIcon(Icons.arrow_forward));
         final stopLabel = lang == 'zh' ? '停止排序' : 'Stop ranking';
         for (var i = 0;
-            i < 20 && find.text(stopLabel).evaluate().isEmpty;
+            i < 40 && find.text(stopLabel).evaluate().isEmpty;
             i++) {
           await tester.pump(const Duration(milliseconds: 150));
         }
@@ -128,15 +121,8 @@ void main() {
         await tester.pump(const Duration(milliseconds: 600));
         await File('${captures.path}/04_enhanced-$lang.png')
             .writeAsBytes(await binding.takeScreenshot('enhanced-$lang'));
-        // 3) 模型管理页（已装状态）。
-        await tester.pumpWidget(MaterialApp(
-            key: ValueKey('model$lang'),
-            debugShowCheckedModeBanner: false,
-            locale: Locale(lang),
-            theme: photoIdTheme(Brightness.light),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: EmbeddingModelPage(store: store)));
+        // 4) 模型管理页（已装状态）。
+        await tester.pumpWidget(wrap(EmbeddingModelPage(store: store)));
         await tester.pumpAndSettle();
         await File('${captures.path}/05_model-$lang.png')
             .writeAsBytes(await binding.takeScreenshot('model-$lang'));
@@ -144,8 +130,7 @@ void main() {
     } finally {
       // 复制到 Documents/enhanced_captures（tmp 目录 devicectl 拉不到）。
       final docs = await getApplicationDocumentsDirectory();
-      final out =
-          Directory('${docs.path}/enhanced_captures');
+      final out = Directory('${docs.path}/enhanced_captures');
       await out.create(recursive: true);
       for (final f in captures.listSync().whereType<File>()) {
         await f.copy('${out.path}/${f.uri.pathSegments.last}');
