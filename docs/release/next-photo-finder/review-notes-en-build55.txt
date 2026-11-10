@@ -1,0 +1,18 @@
+Prepared for version 1.2.0 (55). This walkthrough replaces the build51 draft and matches the uploaded binary.
+
+PhotoID adds an optional Enhanced photo finder that ranks a chosen batch of photos by meaning, entirely on the device. No login is required.
+
+1. Open AI photo finder on Home. Choose a size from the 33 common specifications (or custom dimensions/KB). Select photos from the library or a folder as before; on-device face detection and measurements work exactly like the previous review build.
+2. Optional Enhanced switch: the first tap offers a one-time, user-confirmed model download (about 287 MB, downloaded from Hugging Face / its China mirror / ModelScope into app storage, SHA-256 verified, resumable, with an optional Wi-Fi-only preference). Downloading transfers model files only; no photo or query text is uploaded. The model can be deleted anytime in Mine › Image model.
+3. With Enhanced enabled, type a plain-language query such as "office photo in a business suit" or 蓝天白云. The app embeds only the current batch's thumbnails on-device with a bundled EmbeddingGemma 2 model (ONNX Runtime, local inference) and reorders candidates by semantic similarity. Basic detection and grouping are unchanged; the ranking is advisory, no match percentages are shown, and turning the feature off releases the model immediately.
+4. Tap Prepare with this photo to enter the existing editor (crop/background/JPEG size). Adoption saves a source-backed record; manual selection and camera remain available.
+5. Preparation history, existing-file checks, requirement-screenshot OCR and file-delivery tools are unchanged.
+
+Why this release is more than a styling pass: it integrates an on-device instruction-tuned embedding model (BPE tokenizer and preprocessing ported to Dart, dual-ONNX-graph inference in a background isolate) into the photo-finding workflow, with an explicit download manager, integrity checks and privacy controls. This is a functional capability no screenshot-only portrait app provides, and it demonstrably changes how users locate a usable source photo.
+
+Implementation: Apple Vision + scoped PHPicker/document access; EmbeddingGemma 2 q4f16 (text + vision towers) via ONNX Runtime 1.30 on-device; photos never leave the device for processing. The ~287 MB pack is opt-in per user and fully deletable in-app. Google ML Kit diagnostics disclosure, scoped storage behavior and the privacy policy are unchanged from the previous submission.
+
+The app remains independent of government agencies, issues no documents and guarantees no acceptance; semantic ranking is presented as reference ordering only.
+
+Source: https://github.com/chunguangwei/photoid
+Privacy: https://chunguangwei.github.io/photoid/privacy-policy

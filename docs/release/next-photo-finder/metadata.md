@@ -1,6 +1,15 @@
-# 1.2.0（51）商店文案草稿
+# 1.2.0（55）商店文案
 
-保持同一 App ID。此稿替代 build50 的示例/任务入口文案；最终与上传构建、完整应用截图及隐私披露逐项核对。
+保持同一 App ID。此稿替代 build51 草稿；「更新说明」为本版实际增量，描述/关键词为在 51 稿基础上并入加强版能力的最终稿。
+
+## 简体中文（更新说明替换为）
+
+更新说明：
+• 新增可选「加强版找照片」：用本机运行的图像语义模型按自然语言（如"穿西装的职业照"）对当前批次照片重排，照片与查询不上传。
+• 模型（约 287MB）首次开启时经确认才下载，支持断点续传、完整性校验、仅 Wi-Fi 开关，可随时删除。
+• 加强版为语义参考排序，不影响原有检测与分组；关闭即释放。
+• 应用更名为 PhotoID；启动动画延长并可随时跳过。
+• 保留批量选图、文件夹筛选、制作记录与文件交付工具。
 
 ## 简体中文
 
@@ -17,6 +26,7 @@ PhotoID Studio 帮你从已有照片中找到适合制作的原图，并按所�
 • 批量找照片：多选相册照片，或选择文件夹；本机检测人脸，并按所选尺寸查看裁剪像素与画质参考。
 • 看图再决定：优先查看推荐，也能浏览全部照片。点开预览，按需查看理由，由你决定用哪张。
 • 直接制作：采用后进入原有编辑器，调整裁剪、底色和 JPEG 大小。也可人工选一张或直接拍照。
+• 加强版（可选）：开启后用本机语义模型按一句话描述重排当前批次照片，模型经你确认才下载、可随时删除，照片与查询不上传。
 • 保留制作记录：可继续制作、检查实际文件尺寸与字节，使用已有多份文件、要求截图识别和交付工具。
 
 品牌加载动效轻量呈现，可立即进入首页并支持减少动态效果。
@@ -61,9 +71,8 @@ Suggestions may miss faces or misjudge quality. This is not identity recognition
 Keywords: portrait,crop,pixels,jpeg,resize,background,photos,folder,local,requirements
 
 What’s New:
-• Simpler photo finding: choose a size, select a batch, tap a photo to prepare.
-• 33 common specifications plus custom dimensions and KB requirements.
-• System-library batch selection alongside folders, files and manual capture.
-• Removed example entries and simplified the result grid and explanations.
-• Reuse analysis when changing sizes; retain the previous batch on cancellation.
-• Brand intro, preparation history and delivery tools remain available.
+• Optional Enhanced finder: rank the current batch by a plain-language query (e.g. "office photo in a business suit") with an on-device semantic model. Photos and queries are never uploaded.
+• The ~287 MB model downloads only after your confirmation, with resume, integrity checks and a Wi-Fi-only option; delete it anytime.
+• Enhanced ranking is advisory and never changes the existing detection or grouping; turning it off releases the model.
+• The app is now named PhotoID; the startup animation is longer and can be skipped anytime.
+• Batch library selection, folder scanning, preparation history and delivery tools remain available.
