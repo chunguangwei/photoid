@@ -69,6 +69,36 @@ class _ApplicationTasksPageState extends State<ApplicationTasksPage> {
     if (mounted) await _load();
   }
 
+  /// Matches MyAlbumPage: long press a record to delete it, same as photos.
+  Future<void> _confirmDelete(ApplicationTask t) async {
+    if (_store == null) return;
+    final l = AppLocalizations.of(context);
+    final confirmed = await showAdaptiveDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog.adaptive(
+                    title: Text(t.name),
+                    content: Text(l.taskDeleteConfirm),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: Text(l.dialogCancel)),
+                      FilledButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: Text(l.taskDelete))
+                    ])) ??
+        false;
+    if (!confirmed || !mounted) return;
+    try {
+      await _store!.delete(t.id);
+      if (!mounted) return;
+      await _load();
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l.albumDeleted)));
+    } catch (e) {
+      if (mounted) showPhotoActionError(context, e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -121,7 +151,8 @@ class _ApplicationTasksPageState extends State<ApplicationTasksPage> {
                                       subtitle: Text(
                                           '${t.outputs.where((o) => o.ready).length} / ${t.outputs.length} ${l.taskFilesCount}'),
                                       trailing: const Icon(Icons.chevron_right),
-                                      onTap: () => _open(t)))),
+                                      onTap: () => _open(t),
+                                      onLongPress: () => _confirmDelete(t)))),
                       ]));
   }
 }
