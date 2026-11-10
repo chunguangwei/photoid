@@ -47,16 +47,20 @@ void main() {
         statusFile.writeAsStringSync('${DateTime.now().toIso8601String()} $s\n',
             mode: FileMode.append);
     note('test-start');
-    if (binding.lifecycleState != AppLifecycleState.resumed) {
-      note('skip-not-foreground:${binding.lifecycleState}');
-      markTestSkipped('Foreground required for visible native captures.');
-      return;
-    }
+    // 不设前台守卫：run11 实证 lifecycleState 非 resumed 时
+    // takeScreenshot 仍输出真实页面，skip 会误伤整轮采集。
     // 等模型包重推（App 文档目录 embedding_model/，5 文件字节齐）。
     final store = await EmbeddingModelStore.open();
     for (var i = 0;
-        i < 200 && store.status != EmbeddingModelStatus.ready;
+        i < 300 && store.status != EmbeddingModelStatus.ready;
         i++) {
+      if (i % 10 == 9) {
+        final docDir = (await getApplicationDocumentsDirectory()).path;
+        final sz = await Future.wait(['model_q4f16.onnx', 'model_q4f16.onnx_data', 'vision_encoder_q4f16.onnx', 'vision_encoder_q4f16.onnx_data', 'tokenizer.json'].map((f) async {
+          try { return await File('$docDir/embedding_model/$f').length(); } catch (_) { return -1; }
+        }));
+        note('model-wait-$i:${sz.join("/")}');
+      }
       await Future<void>.delayed(const Duration(seconds: 3));
     }
     note('model-status:${store.status.name}');
@@ -122,7 +126,7 @@ void main() {
               const Duration(seconds: 20));
         } catch (_) {}
         for (var n = 0;
-            n < 600 &&
+            n < 400 &&
                 find
                     .byKey(const Key('enhanced-toggle'))
                     .evaluate()
@@ -131,7 +135,7 @@ void main() {
           await Future<void>.delayed(const Duration(milliseconds: 250));
           try {
             await tester.pumpAndSettle(const Duration(milliseconds: 100),
-                EnginePhase.sendSemanticsUpdate, const Duration(seconds: 5));
+                EnginePhase.sendSemanticsUpdate, const Duration(seconds: 2));
           } catch (_) {
             await tester.pump(const Duration(milliseconds: 100));
           }
