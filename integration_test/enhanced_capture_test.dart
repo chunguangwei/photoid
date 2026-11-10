@@ -57,7 +57,6 @@ void main() {
       'zh': '穿西装的职业照'
     };
     Object? bodyError;
-    final errors = <Object>[];
     try {
       for (final lang in ['en', 'zh']) {
         Widget wrap(Widget home) => MaterialApp(
@@ -128,13 +127,15 @@ void main() {
           await tester.pump(const Duration(milliseconds: 120));
         }
         await tester.pump(const Duration(milliseconds: 600));
-        // 结果网格在输入框下方；滚到首张结果卡让查询+缩略图同屏。
+        // 结果网格在输入框下方；scrollUntilVisible 边滚边等懒构建条目出现。
         final firstCard =
             find.byKey(const ValueKey('finder-result-portrait.jpg'));
-        if (firstCard.evaluate().isNotEmpty) {
+        try {
           await tester.scrollUntilVisible(firstCard, 300,
               scrollable: find.byType(Scrollable).first);
           await tester.pump(const Duration(milliseconds: 500));
+        } catch (_) {
+          // 滚到底仍未找到时保持当前画面截图，不中断整轮采集。
         }
         await File('${captures.path}/04_enhanced-$lang.png')
             .writeAsBytes(await binding.takeScreenshot('enhanced-$lang'));
@@ -157,15 +158,15 @@ void main() {
       // 等外部把图拉走（flutter test 结束会卸载 App 连带清容器）：
       // 外部 copy from 成功后回写 Documents/_captures_pulled 作放行标志。
       final gate = File('${docs.path}/_captures_pulled');
-      for (var i = 0; i < 96 && !gate.existsSync(); i++) {
-        await Future<void>.delayed(const Duration(seconds: 5));
-      }
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
       await root.delete(recursive: true);
-      if (bodyError != null) errors.add(bodyError);
+      // 正文失败时无全量可拉：立即抛原始异常，不等闸门。
+      if (bodyError != null) throw bodyError;
+      for (var i = 0; i < 96 && !gate.existsSync(); i++) {
+        await Future<void>.delayed(const Duration(seconds: 5));
+      }
       expect(gate.existsSync(), isTrue, reason: 'captures not pulled in 8min');
-      if (errors.isNotEmpty) throw errors.first;
     }
   }, timeout: const Timeout(Duration(minutes: 40)));
 }
