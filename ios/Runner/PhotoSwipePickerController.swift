@@ -15,6 +15,7 @@ final class PhotoSwipePickerController: UIViewController, UICollectionViewDataSo
   private var point = CGPoint.zero
   private weak var sweepGesture: UIGestureRecognizer?
   private var holdGesture: UILongPressGestureRecognizer?
+  private var dragGesture: UIPanGestureRecognizer?
   private var layoutWidth: CGFloat = 0
   private var link: CADisplayLink?
   private let hint = UILabel()
@@ -65,6 +66,7 @@ final class PhotoSwipePickerController: UIViewController, UICollectionViewDataSo
     ])
     let drag = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
     drag.delegate = self; drag.maximumNumberOfTouches = 1
+    dragGesture = drag
     let hold = UILongPressGestureRecognizer(target: self, action: #selector(hold(_:)))
     hold.minimumPressDuration = 0.3; hold.allowableMovement = .greatestFiniteMagnitude
     holdGesture = hold
@@ -139,7 +141,8 @@ final class PhotoSwipePickerController: UIViewController, UICollectionViewDataSo
     cell.cancel = { [weak images] id in images?.cancelImageRequest(id) }
     cell.mark(selection.selected.contains(indexPath.item), label: text("照片 \(indexPath.item + 1)", "Photo \(indexPath.item + 1)"))
     let options = PHImageRequestOptions(); options.deliveryMode = .opportunistic; options.resizeMode = .fast
-    options.isNetworkAccessAllowed = false
+    // Small opportunistic thumbnails may download from iCloud; originals stay bounded reads.
+    options.isNetworkAccessAllowed = true
     cell.request = images.requestImage(for: asset, targetSize: CGSize(width: 300, height: 300), contentMode: .aspectFill, options: options) { [weak cell] image, _ in
       DispatchQueue.main.async { if cell?.assetID == asset.localIdentifier { cell?.image.image = image } }
     }
@@ -161,8 +164,12 @@ final class PhotoSwipePickerController: UIViewController, UICollectionViewDataSo
   }
   func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
     shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
-    // A pan crossing its threshold must not cancel an active long-press sweep.
-    gestureRecognizer === holdGesture || other === holdGesture
+    // Only the sweep pair may overlap: a pan crossing its threshold must not
+    // cancel an active long-press sweep (and vice versa). Everything else —
+    // notably grid scrolling — keeps exclusive recognition so vertical
+    // swipes browse instead of selecting.
+    (gestureRecognizer === holdGesture && other === dragGesture)
+      || (gestureRecognizer === dragGesture && other === holdGesture)
   }
   func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
     guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return true }
