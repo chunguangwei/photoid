@@ -26,7 +26,9 @@ void main() {
     for (var i = 0; i < 140; i++) {
       if (sizes.entries.every((e) =>
           File('${dir.path}/${e.key}').existsSync() &&
-          File('${dir.path}/${e.key}').lengthSync() == e.value)) break;
+          File('${dir.path}/${e.key}').lengthSync() == e.value)) {
+        break;
+      }
       await Future<void>.delayed(const Duration(seconds: 3));
     }
     for (final e in sizes.entries) {

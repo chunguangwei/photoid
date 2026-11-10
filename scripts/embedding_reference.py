@@ -38,7 +38,9 @@ def embed_text(q: str):
                           'audio_features': EMPTY})[1][0]
 
 def embed_image(path):
-    a = np.asarray(Image.open(path).convert('RGB').resize((320, 224)), np.float32) / 255.0
+    # BILINEAR：与出厂 Dart 实现（image.copyResize Interpolation.linear）对齐；
+    # PIL 默认 BICUBIC 会让视觉向量偏移 ~3%。
+    a = np.asarray(Image.open(path).convert('RGB').resize((320, 224), Image.BILINEAR), np.float32) / 255.0
     px = a.reshape(14, 16, 20, 16, 3).transpose(0, 2, 1, 3, 4).reshape(1, 280, 768)
     pid = np.stack([np.repeat(np.arange(14), 20), np.tile(np.arange(20), 14)], 1)[None]
     f = vis.run(None, {'pixel_values': px.astype(np.float32), 'pixel_position_ids': pid})[0]

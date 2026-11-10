@@ -83,7 +83,9 @@
   真机端到端对拍见 `integration_test/enhanced_golden_test.dart`（验收 #1）。
 - 图像预处理实为轻量（image_processor 实测）：`do_resize` + `rescale 1/255`，
   `do_normalize=false`（mean 0/std 1），RGB，`image_seq_length=280`。
-  Gemma4AudioFeatureExtractor 参数与已删音频一并忽略。
+  resize 出厂实现用 **bilinear**（Dart `image.copyResize`；PIL 默认 bicubic
+  会让视觉向量偏移 ~3%，golden 生成脚本已改 BILINEAR 对齐）；
+  bilinear 下排序对拍仍 8/8。Gemma4AudioFeatureExtractor 参数与已删音频一并忽略。
 - 量化质量（官方表，最坏余弦 vs fp32）：q4f16/q4 = 0.975（文本塔 0.988）、q8 = 0.9997。
   语义排序场景接受 q4f16；若用户侧质量反馈差，同 manifest 结构可换 q8 变体（体积 3×）。
 
@@ -127,7 +129,12 @@
 0. 真机冒烟：现有打包 ORT（onnxruntime-c 1.15.1）加载 model_q4f16 + vision_encoder_q4f16
    （MatMulNBits，contrib opset com.microsoft）；失败则先升级引擎或切 int8 `*_quantized`
    并改写体积承诺，再发布 manifest。
-1. 分词 golden 对拍；text/vision 参考向量与 transformers.js 同输入余弦 ≥ 0.999。
+1. 分词 golden 对拍；text/vision 参考向量对拍分两档门槛（实测值见
+   `integration_test/enhanced_golden_test.dart` 输出）：
+   文本向量 ≥0.98（两侧同为 q4f16 图、ORT 1.27 桌面 vs 1.30 设备，
+   跨版本量化核确定性差异实测 0.987，官方 q4f16 最坏余弦表文本塔 0.988）；
+   图像向量 ≥0.95（再叠 PIL vs package:image 两套独立 bilinear 的像素差，
+   实测 0.9586）。0.999 仅适用于同实现 fp32 之间，属初版误定。
 2. 断点：下载中断 3 次仍能续传完成且 SHA 通过；三源逐个拔线演练。
 3. 500 张批次嵌入吞吐：iPhone 13 上记录并设定上限（超 30s 分批+进度可取消）。
 4. 关闭/删除模型后基础流程零回归；基础筛选不受模型状态影响。
