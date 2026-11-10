@@ -54,12 +54,12 @@ PODS:
   - nanopb/encode (3.30910.0)
   - onnxruntime (0.0.1):
     - Flutter
-    - onnxruntime-objc (= 1.15.1)
-  - onnxruntime-c (1.15.1)
-  - onnxruntime-objc (1.15.1):
-    - onnxruntime-objc/Core (= 1.15.1)
-  - onnxruntime-objc/Core (1.15.1):
-    - onnxruntime-c (= 1.15.1)
+    - onnxruntime-objc (= 1.30.0)
+  - onnxruntime-c (1.30.0)
+  - onnxruntime-objc (1.30.0):
+    - onnxruntime-objc/Core (= 1.30.0)
+  - onnxruntime-objc/Core (1.30.0):
+    - onnxruntime-c (= 1.30.0)
   - open_filex (0.0.2):
     - Flutter
   - PromisesObjC (2.4.1)
@@ -113,9 +113,9 @@ SPEC CHECKSUMS:
   MLKitFaceDetection: 32549f1e70e6e7731261bf9cea2b74095e2531cb
   MLKitVision: 39a5a812db83c4a0794445088e567f3631c11961
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
-  onnxruntime: 2ab1957eb029c71d47f7bb35cc4efc9f0d297828
-  onnxruntime-c: ebdcfd8650bcbd10121c125262f99dea681b92a3
-  onnxruntime-objc: ae7acec7a3d03eaf072d340afed7a35635c1c2a6
+  onnxruntime: 1e1be256f929b6f936ae1972353de0cfdce06ade
+  onnxruntime-c: 36ca0f2cdbc89c6b330ec5287c3faf5ca6ed394d
+  onnxruntime-objc: b5edf18cf57daebe2ee59a7866aab12c8eeff940
   open_filex: 432f3cd11432da3e39f47fcc0df2b1603854eff1
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
 

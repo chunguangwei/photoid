@@ -24,6 +24,40 @@
 - 视觉 token 预算、图像 resize 参数、mean pooling、L2 归一化与查询前缀文案，
   以该 README「Best Practices」为准，实现时固化为常量并做参考向量对拍。
 
+- **引擎门槛审计（实测图头）**：q4f16 与 int8 `*_quantized` 变体**同样**要求
+  ai.onnx **opset 21** + com.microsoft 算子 `GatherBlockQuantized`（约 ORT ≥1.20）
+  /`MatMulNBits`/`RotaryEmbedding`/`SkipSimplifiedLayerNormalization`/`MultiHeadAttention`。
+  当前 pub 插件（onnxruntime 1.4.1，已为最新）podspec 钉死 `onnxruntime-objc 1.15.1`
+  ——**现有引擎加载不了 q4f16 图，int8 也救不了**。决策：**升级引擎**
+  （Podfile 显式声明 onnxruntime-objc/c ≥1.21 覆盖插件默认，Android 同步升
+  com.microsoft.onnxruntime AAR；ORT C API 向后兼容，插件封装不动），
+  升级后 MatuNet 现有链路回归 + q4f16 真机前向作为验收 #0；
+  若真机不通过，唯一备选是自导出降级图（工作量大，暂不承诺）。
+
+## 可行性冒烟结论（2026-11-10，验收 #0/#3 桌面等效，host ORT 1.27 CPU）
+
+- **验收 #0 真机通过（iPhone 13）**：fork 插件（`plugins/onnxruntime`，代码同 1.4.1，
+  podspec 引擎 1.15.1→**onnxruntime-objc/c 1.30.0**；Android 同 fork 内 jniLibs 换
+  官方 1.30.0 libonnxruntime.so）。`integration_test/ort_q4f16_smoke_test.dart`：
+  双图加载 + 视觉塔（29 image token）+ 文本塔前向（sentence_embedding L2 归一），
+  含会话构建总耗时 1.9s。MatuNet 全量 219 单测在 fork 下全绿。
+  **q4f16 ≈287MB 方案定案**，int8 回退不再需要。
+  测试注意：集成测试会重装 App 重建容器，模型文件须边跑边推（devicectl copy），
+  且必须按字节数轮询到传输完整再加载（存在≠完整）。
+
+- 双图加载通过（MatMulNBits 正常执行）；真实照片端到端：视觉塔输出 29×512 图像 token
+  （图内聚合 280 patch），文本塔融合后 `sentence_embedding` 输出 768 维且已 L2 归一化，
+  全程 NaN-free。
+- 语义效果冒烟：真实人像 + 3 张合成图（天空/草地/红墙），中英各 4 条查询，
+  **8/8 排序第一命中**，命中-次名分离度 ≈ 0.06–0.10（如"红色的墙壁"：红墙 0.723 vs 次名 0.636）。
+  随机 N(0,1) 假像素会致视觉塔饱和（-FLT_MAX），真实 /255 像素无此问题——
+  实现时预处理必须严格按 image_processor（resize + /255，无 normalize）。
+- 查询用官方非对称前缀 `task: search result | query: {q}`；图片不加前缀。
+- 吞吐（M 系 CPU，4 线程）：每张嵌入 ≈0.2s、查询 0.02s；500 张顺序批嵌 ~100s，
+  分批 + 进度 + 可取消按原设计执行；iPhone 13 真机数值另测（验收 #3）。
+- 待办（真机阶段）：目标 ORT（pod 1.15.1）同图冒烟 + opset 审计见下节；
+  不通过再谈升引擎或 int8 回退。
+
 ## 推理可行性核实（2026-11-10，实测图文件）
 
 - q4f16 两图用 **`com.microsoft.MatMulNBits`**（model_q4f16 ×146、vision_encoder_q4f16 ×113），
@@ -33,12 +67,11 @@
   （q4f16 新格式）的完备性仍需真机冒烟：发布 manifest 前必须加载 model_q4f16 +
   vision_encoder_q4f16 各跑一次前向。失败则先升级引擎或回退 `*_quantized` int8 变体——
   打包体积从 ~287MB 变 ~540MB（314+195+32），对用户承诺的下载大小随之改写。
-- **图契约（从 .onnx 字符串实测）**：文本图暴露 `input_ids`/`attention_mask` 且直接接收
-  `image_features`（图内出现 41 次，含 embedding_projection 融合分支），**没有** `inputs_embeds`；
-  视觉图输入 `pixel_values` 输出 `image_features`。
-  因此逐图嵌入 = vision_encoder(pixel_values) → 文本图(input_ids 含 `<|image|>` 占位 + image_features)
-  → 池化 768 维——每张照片仍跑整个 270M 文本骨干（prefill 280 vision token），
-  吞吐验收按此估算，不是只跑 170M 视觉塔。
+- **图契约（实测 + 前向验证）**：文本图暴露 `input_ids`/`attention_mask` +
+  `image_features`/`video_features`/`audio_features`（图内 multimodal_merge 融合），
+  **没有** `inputs_embeds`，输出含现成的 `sentence_embedding`（768 维、L2 归一化）。
+  视觉塔把 280 patch **聚合为约 29 个 512 维 token**（非 1:1 展开），
+  每张图的文本塔增量只有 ~29 token prefill，成本远低于最初按 280 token 的估算。
 - 图像预处理实为轻量（image_processor 实测）：`do_resize` + `rescale 1/255`，
   `do_normalize=false`（mean 0/std 1），RGB，`image_seq_length=280`。
   Gemma4AudioFeatureExtractor 参数与已删音频一并忽略。

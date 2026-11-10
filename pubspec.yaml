@@ -20,7 +20,10 @@ dependencies:
   image: ^4.9.2
   image_picker: ^1.2.3
   intl: ^0.20.3
-  onnxruntime: ^1.4.1
+  # 本地 fork（同 1.4.1 代码）：引擎 pod 从 1.15.1 解锁到 1.30.0，
+  # 支撑找照片加强版的 q4f16 图（opset21 + GatherBlockQuantized）；MatuNet 走同一 C API 不受影响
+  onnxruntime:
+    path: plugins/onnxruntime
   open_filex: ^4.7.0
   package_info_plus: ^10.2.1
   path: ^1.9.1
