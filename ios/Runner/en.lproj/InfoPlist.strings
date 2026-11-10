@@ -1,4 +1,4 @@
 "CFBundleDisplayName" = "PhotoID";
 "NSCameraUsageDescription" = "Used to take your ID photo.";
-"NSPhotoLibraryUsageDescription" = "Used to pick a photo from your library to make an ID photo.";
+"NSPhotoLibraryUsageDescription" = "Show photos you allow access to, so you can swipe-select a batch and analyze it on this device. Photos are not uploaded.";
 "NSPhotoLibraryAddUsageDescription" = "Used to save the finished ID photo to your library.";

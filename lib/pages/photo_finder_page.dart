@@ -155,7 +155,9 @@ class _PhotoFinderPageState extends State<PhotoFinderPage>
       _showAll = false;
     });
     try {
-      await _session!.open(method, recursive: _recursive);
+      await _session!.open(method,
+          recursive: _recursive,
+          languageCode: Localizations.localeOf(context).languageCode);
     } catch (_) {
       if (mounted) setState(() => _error = 'access');
     } finally {

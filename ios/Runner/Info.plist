@@ -60,7 +60,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>用于拍摄证件照</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>用于从相册选择照片制作证件照</string>
+	<string>用于显示你授权的照片，支持滑动批量选择和本机筛选；不会上传照片</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>用于将制作完成的证件照保存到相册</string>
 	<key>ITSAppUsesNonExemptEncryption</key>

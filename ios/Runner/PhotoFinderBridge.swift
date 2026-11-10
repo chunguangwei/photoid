@@ -1,6 +1,7 @@
 import Flutter
 import UIKit
 import PhotosUI
+import Photos
 import UniformTypeIdentifiers
 import Vision
 import ImageIO
@@ -10,9 +11,10 @@ import CryptoKit
 final class PhotoFinderBridge: NSObject, UIDocumentPickerDelegate, PHPickerViewControllerDelegate {
   private struct Entry {
     let url: URL?; let name: String; let relative: String
-    let provider: NSItemProvider?; let type: String?; let direct: Bool
-    init(url: URL, name: String, relative: String, direct: Bool = false) { self.url=url; self.name=name; self.relative=relative; self.direct=direct; provider=nil; type=nil }
-    init(provider: NSItemProvider, type: String, name: String) { self.provider=provider; self.type=type; self.name=name; relative=name; url=nil; direct=true }
+    let provider: NSItemProvider?; let type: String?; let direct: Bool; let asset: PHAsset?
+    init(url: URL, name: String, relative: String, direct: Bool = false) { self.url=url; self.name=name; self.relative=relative; self.direct=direct; provider=nil; type=nil; asset=nil }
+    init(provider: NSItemProvider, type: String, name: String) { self.provider=provider; self.type=type; self.name=name; relative=name; url=nil; direct=true; asset=nil }
+    init(asset: PHAsset, name: String) { self.asset=asset; self.name=name; relative=name; url=nil; provider=nil; type=nil; direct=true }
   }
   private final class Session {
     let id = UUID().uuidString
@@ -62,11 +64,16 @@ final class PhotoFinderBridge: NSObject, UIDocumentPickerDelegate, PHPickerViewC
     if call.method == "choosePhotos" {
       guard pending == nil else { fail("busy", result); return }
       pending=result
-      var config=PHPickerConfiguration(); config.filter = .images; config.selectionLimit=500
-      config.selection = .ordered; config.preferredAssetRepresentationMode = .current
-      let picker=PHPickerViewController(configuration:config); picker.delegate=self
       guard let vc=presenter() else { pending=nil; fail("access",result); return }
-      vc.present(picker,animated:true); return
+      let zh=(args["languageCode"] as? String ?? Locale.preferredLanguages.first ?? "en").hasPrefix("zh")
+      let picker=PhotoSwipePickerController(zh:zh, complete: { [weak self] assets in
+        guard let self=self, let result=self.pending else { return }; self.pending=nil
+        guard let assets=assets, !assets.isEmpty else { result(nil); return }
+        self.queue.async { do { self.reply(try self.makeAssetSession(assets),result) } catch { self.fail("access",result) } }
+      }, useSystem: { [weak self] in self?.presentSystemPhotos() })
+      let nav=UINavigationController(rootViewController:picker)
+      nav.modalPresentationStyle = .fullScreen; nav.isModalInPresentation=true
+      vc.present(nav,animated:true); return
     }
     if call.method == "chooseDirectory" || call.method == "chooseFiles" {
       guard pending == nil else { fail("busy", result); return }
@@ -142,6 +149,59 @@ final class PhotoFinderBridge: NSObject, UIDocumentPickerDelegate, PHPickerViewC
     var vc=UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.windows.first(where:{$0.isKeyWindow})?.rootViewController }.first
     while let next=vc?.presentedViewController { vc=next };return vc
   }
+  private func presentSystemPhotos() {
+    guard let result=pending else { return }
+    guard let vc=presenter() else { pending=nil;fail("access",result);return }
+    var config=PHPickerConfiguration();config.filter = .images;config.selectionLimit=500
+    config.selection = .ordered;config.preferredAssetRepresentationMode = .current
+    let picker=PHPickerViewController(configuration:config);picker.delegate=self
+    vc.present(picker,animated:true)
+  }
+  private func makeAssetSession(_ assets: [PHAsset]) throws -> [String:Any] {
+    let s=try Session(cacheRoot:cacheRoot)
+    for (index,asset) in assets.prefix(500).enumerated() {
+      let resources=PHAssetResource.assetResources(for:asset)
+      let resource=resources.first(where:{$0.type == .fullSizePhoto}) ?? resources.first(where:{$0.type == .photo})
+      let name=resource?.originalFilename ?? "Photo_\(index+1).jpg"
+      s.entries[UUID().uuidString]=Entry(asset:asset,name:name)
+    }
+    sessions[s.id]=s
+    return ["session":s.id,"visited":assets.count,"truncated":assets.count>500,"entries":s.entries.map {["id":$0.key,"name":$0.value.name,"relativePath":$0.value.relative]}.sorted {($0["name"] ?? "") < ($1["name"] ?? "")}]
+  }
+  /// Bounded streaming avoids allocating an entire cloud original before the size check.
+  private func readPhotoAsset(_ asset: PHAsset, _ sessionID: String) throws -> Data {
+    guard asset.pixelHeight > 0, asset.pixelWidth <= 24000000 / asset.pixelHeight else { throw FinderError.oversized }
+    let resources=PHAssetResource.assetResources(for:asset)
+    guard let resource=resources.first(where:{$0.type == .fullSizePhoto}) ?? resources.first(where:{$0.type == .photo}) else { throw FinderError.unreadable }
+    guard [UTType.jpeg.identifier,UTType.png.identifier,UTType.heic.identifier,"public.heif"].contains(resource.uniformTypeIdentifier) else { throw FinderError.unsupported }
+    let manager=PHAssetResourceManager.default(), options=PHAssetResourceRequestOptions()
+    options.isNetworkAccessAllowed=true // Only photos explicitly confirmed by the user.
+    let gate=DispatchSemaphore(value:0), lock=NSLock()
+    var bytes=Data(), outcome: Result<Data,Error>?, requestID: PHAssetResourceDataRequestID?
+    func complete(_ result: Result<Data,Error>) {
+      lock.lock();defer{lock.unlock()}
+      if outcome == nil { outcome=result;gate.signal() }
+    }
+    let id=manager.requestData(for:resource,options:options,dataReceivedHandler: { chunk in
+      lock.lock()
+      if outcome != nil { lock.unlock();return }
+      if chunk.count > 30*1024*1024-bytes.count {
+        outcome = .failure(FinderError.oversized);bytes.removeAll();let cancel=requestID;gate.signal();lock.unlock()
+        if let cancel=cancel { manager.cancelDataRequest(cancel) };return
+      }
+      bytes.append(chunk);lock.unlock()
+    },completionHandler: { error in
+      lock.lock();let result:Result<Data,Error> = error.map { .failure($0) } ?? .success(bytes);lock.unlock()
+      complete(result)
+    })
+    lock.lock();requestID=id;let alreadyFinished=outcome != nil;lock.unlock()
+    if alreadyFinished { manager.cancelDataRequest(id) }
+    requestLock.lock();activeSession=sessionID;cancelProvider={ complete(.failure(FinderError.cancelled));manager.cancelDataRequest(id) };requestLock.unlock()
+    defer { requestLock.lock();cancelProvider=nil;requestLock.unlock() }
+    if gate.wait(timeout:.now()+45) == .timedOut { complete(.failure(FinderError.access));manager.cancelDataRequest(id);throw FinderError.access }
+    lock.lock();let result=outcome;lock.unlock()
+    let data=try result!.get();_ = try imageInfo(data);return data
+  }
   func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
     let result=pending;pending=nil;picker.dismiss(animated:true)
     guard let result=result else { return }
@@ -161,6 +221,7 @@ final class PhotoFinderBridge: NSObject, UIDocumentPickerDelegate, PHPickerViewC
   }
   /// Retain provider handles, not hundreds of originals. Read one scoped representation at a time.
   private func readEntry(_ entry: Entry, _ sessionID: String) throws -> Data {
+    if let asset=entry.asset { return try readPhotoAsset(asset,sessionID) }
     guard let provider=entry.provider, let type=entry.type else { return try readLocal(entry.url!, direct:entry.direct) }
     let gate=DispatchSemaphore(value:0), lock=NSLock()
     var outcome: Result<Data,Error>?

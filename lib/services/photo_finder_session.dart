@@ -50,7 +50,9 @@ class PhotoFinderSession extends ChangeNotifier {
   }
 
   Future<void> open(String method,
-      {bool recursive = false, List<String>? demoPaths}) async {
+      {bool recursive = false,
+      List<String>? demoPaths,
+      String? languageCode}) async {
     if (_disposed) return;
     if (running) stop();
     final scope = ++_scope, scan = ++_scan;
@@ -58,8 +60,11 @@ class PhotoFinderSession extends ChangeNotifier {
     error = null;
     _notify();
     try {
-      final result = await gateway.call(method,
-          {'recursive': recursive, if (demoPaths != null) 'paths': demoPaths});
+      final result = await gateway.call(method, {
+        'recursive': recursive,
+        if (demoPaths != null) 'paths': demoPaths,
+        if (languageCode != null) 'languageCode': languageCode
+      });
       if (result == null) {
         if (_disposed || scope != _scope) return;
         choosing = false;
