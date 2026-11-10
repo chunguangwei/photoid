@@ -72,12 +72,15 @@
   **没有** `inputs_embeds`，输出含现成的 `sentence_embedding`（768 维、L2 归一化）。
   视觉塔把 280 patch **聚合为约 29 个 512 维 token**（非 1:1 展开），
   每张图的文本塔增量只有 ~29 token prefill，成本远低于最初按 280 token 的估算。
-  **融合布局（桌面 n=29 行 + iPhone 13 真机冒烟双验证）**：
-  `input_ids = [bos, 4642("image\n"), 258880(<|image|>), eos]` 单占位 +
-  `image_features` 传视觉塔全部 n×512 行；`video/audio_features` 传 `[0,512]`
-  空张量；n 个占位会 Gather 索引越界。输出取第 2 个 `sentence_embedding`。
+  **融合布局（桌面排序对拍定案）**：`input_ids = [bos] + n×258880(<|image|>) +
+  [eos]`，占位数 = `image_features` 行数 n；`video/audio_features` 传 `[0,512]`
+  空张量；输出取第 2 个 `sentence_embedding`。**单占位 `[2,4642,IMG,1]`
+  被否决**：merge 只消费 1 行特征，其余聚合 token 丢弃——4 图中英 8 查询
+  排序 n 占位 8/8 top-1（margin .008–.038）vs 单占位 3/8（margin ≤.014）。
+  真机冒烟当时用单占位仅证明有限性，不证明语义。
   参考实现固化于 `scripts/embedding_reference.py` +
-  `test/fixtures/embedding_golden.json`（真实人像 cos 基准）。
+  `test/fixtures/embedding_golden.json`（真实人像 cos 基准）；
+  真机端到端对拍见 `integration_test/enhanced_golden_test.dart`（验收 #1）。
 - 图像预处理实为轻量（image_processor 实测）：`do_resize` + `rescale 1/255`，
   `do_normalize=false`（mean 0/std 1），RGB，`image_seq_length=280`。
   Gemma4AudioFeatureExtractor 参数与已删音频一并忽略。

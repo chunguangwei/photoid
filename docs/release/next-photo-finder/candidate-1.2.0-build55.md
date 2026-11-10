@@ -22,7 +22,8 @@
 - 推理：`lib/services/gemma_tokenizer.dart`（Gemma BPE 纯 Dart 移植，
   对拍 HF tokenizers golden 16/16）+ `embedding_session.dart`
   （isolate 内双图推理；查询前缀 `task: search result | query: `；
-  单 `<|image|>` 占位融合布局，与真机冒烟一致）。
+  n×`<|image|>` 占位融合（占位数=特征行数；排序对拍 n 占位 8/8 vs
+  单占位 3/8 定案））。
   golden 参考：`scripts/embedding_reference.py` +
   `test/fixtures/embedding_golden.json`、`tokenizer_golden.json`。
 - UI：找照片页加强版开关（首次开启提示下载 ~287MB）、语义搜索框、

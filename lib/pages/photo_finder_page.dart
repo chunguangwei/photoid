@@ -51,7 +51,8 @@ class _PhotoFinderPageState extends State<PhotoFinderPage>
   bool _enhancedOn = false, _ranking = false;
   String _semanticQuery = '';
   final Map<String, double> _scores = {};
-  int _ranked = 0, _rankTotal = 0;
+  int _rankTotal = 0;
+  final ValueNotifier<int> _rankDone = ValueNotifier<int>(0);
   bool _rankCancel = false;
   EmbeddingSession? _embed;
   EmbeddingModelStatus _modelStatus = EmbeddingModelStatus.notInstalled;
@@ -162,7 +163,8 @@ class _PhotoFinderPageState extends State<PhotoFinderPage>
       _ranking = true;
       _rankCancel = false;
       _scores.clear();
-      _ranked = 0;
+      _rankTotal = 0;
+      _rankDone.value = 0;
     });
     try {
       final session = await _ensureSession();
@@ -176,15 +178,17 @@ class _PhotoFinderPageState extends State<PhotoFinderPage>
         if (_rankCancel || !mounted) break;
         try {
           final v = await session.embedImageBytes(
-              File(c.analysis.thumbnailPath).readAsBytesSync());
+              await File(c.analysis.thumbnailPath).readAsBytes());
           var dot = 0.0;
           for (var i = 0; i < 768; i++) {
             dot += query[i] * v[i];
           }
           _scores[c.analysis.id] = dot;
         } catch (_) {/* 不可解码的缩略图留在原位，不参与语义排序 */}
-        setState(() => _ranked++);
+        // 逐张只刷新进度行，不重建整个结果列表。
+        _rankDone.value++;
       }
+      if (mounted) setState(() {}); // 排序完成后整体重排一次
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -219,6 +223,7 @@ class _PhotoFinderPageState extends State<PhotoFinderPage>
     _session?.removeListener(_refresh);
     _session?.dispose();
     _embed?.dispose();
+    _rankDone.dispose();
     super.dispose();
   }
 
@@ -695,22 +700,32 @@ class _PhotoFinderPageState extends State<PhotoFinderPage>
                                         setState(() => _semanticQuery = v),
                                     onSubmitted: (_) => _rank()),
                                 if (_ranking)
-                                  Row(children: [
-                                    Expanded(
-                                        child: LinearProgressIndicator(
-                                            value: _rankTotal == 0
-                                                ? null
-                                                : _ranked / _rankTotal)),
-                                    const SizedBox(width: 8),
-                                    TextButton(
-                                        onPressed: () =>
-                                            _rankCancel = true,
-                                        child: Text(l.enhancedStop)),
-                                  ]),
-                                if (_ranking)
-                                  Text(l.enhancedSorting(_ranked, _rankTotal),
-                                      style:
-                                          Theme.of(context).textTheme.bodySmall),
+                                  ValueListenableBuilder<int>(
+                                      valueListenable: _rankDone,
+                                      builder: (ctx, done, _) => Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.stretch,
+                                          children: [
+                                            Row(children: [
+                                              Expanded(
+                                                  child:
+                                                      LinearProgressIndicator(
+                                                          value: _rankTotal == 0
+                                                              ? null
+                                                              : done /
+                                                                  _rankTotal)),
+                                              const SizedBox(width: 8),
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      _rankCancel = true,
+                                                  child: Text(l.enhancedStop)),
+                                            ]),
+                                            Text(l.enhancedSorting(done, _rankTotal),
+                                                style:
+                                                    Theme.of(context)
+                                                        .textTheme
+                                                        .bodySmall),
+                                          ])),
                               ],
                               if (_searching)
                                 TextField(

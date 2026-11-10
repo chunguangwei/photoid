@@ -52,6 +52,7 @@ flutter:
   # 应用代码从不 load，列进来会白白打进包体 1.4MB
   assets:
     - assets/demo/portrait.jpg
+    - test/fixtures/embedding_golden.json
     - assets/demo/portrait.heic
     - assets/demo/wide.heic
     - assets/demo/requirements-zh.png

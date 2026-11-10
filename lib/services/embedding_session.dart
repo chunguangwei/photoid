@@ -86,10 +86,12 @@ class EmbeddingSession {
   static const _visionModelFile = 'vision_encoder_q4f16.onnx';
   static const _tokenizerFile = 'tokenizer.json';
 
-  /// 文本塔单图占位模板：`<bos>` + "image\n" + `<|image|>` + `<eos>`
-  /// （4642="image\n"，258880=`<|image|>`；复刻已真机验证的
-  /// integration_test/ort_q4f16_smoke_test.dart 调用序列）。
-  static const _imageInputIds = <int>[2, 4642, 258880, 1];
+  /// 文本塔图片模板：`<bos>` + n×`<|image|>`（258880，与 image_features
+  /// 行数一致）+ `<eos>`。桌面排序对拍：n 占位 8/8 top-1（margin
+  /// .008–.038）vs 单占位 3/8——单占位只消费 1 行特征，其余 28 patch
+  /// 聚合 token 被丢弃。
+  static List<int> imageInputIds(int rows) =>
+      [2, ...List.filled(rows, 258880), 1];
 
   static final ReceivePort _replies = ReceivePort()
     ..listen((message) {
@@ -332,8 +334,8 @@ class EmbeddingSession {
       if (!rows.every((e) => e.isFinite)) {
         throw StateError('vision encoder produced non-finite features');
       }
-      // 真机验证的单图占位调用序列。
-      return _runTextTower(text, _imageInputIds, rows, n);
+      // n 占位融合（与特征行数一致；单占位丢特征，桌面 8/8 vs 3/8 实证）。
+      return _runTextTower(text, imageInputIds(n), rows, n);
     } finally {
       pxV.release();
       pidV.release();
