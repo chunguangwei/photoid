@@ -56,6 +56,8 @@ void main() {
       'en': 'office photo in a business suit',
       'zh': '穿西装的职业照'
     };
+    Object? bodyError;
+    final errors = <Object>[];
     try {
       for (final lang in ['en', 'zh']) {
         Widget wrap(Widget home) => MaterialApp(
@@ -95,13 +97,14 @@ void main() {
             embeddingStore: store)));
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('finder-photos')));
-        await tester.pumpAndSettle();
+        // 进度条 indeterminate 动画会让 pumpAndSettle 死等 10 分钟；只用固定泵。
+        await tester.pump(const Duration(milliseconds: 300));
         for (var n = 0;
-            n < 240 &&
+            n < 600 &&
                 find.byType(LinearProgressIndicator).evaluate().isNotEmpty;
             n++) {
           await Future<void>.delayed(const Duration(milliseconds: 250));
-          await tester.pumpAndSettle();
+          await tester.pump(const Duration(milliseconds: 100));
         }
         expect(find.byKey(const Key('enhanced-toggle')), findsOneWidget,
             reason: 'batch analysis must finish and render result grid');
@@ -125,11 +128,14 @@ void main() {
           await tester.pump(const Duration(milliseconds: 120));
         }
         await tester.pump(const Duration(milliseconds: 600));
-        // 结果网格在输入框下方；上滚让查询+缩略图同屏。
-        await tester.drag(
-            find.byType(Scrollable).first, const Offset(0, -360));
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.pump(const Duration(milliseconds: 500));
+        // 结果网格在输入框下方；滚到首张结果卡让查询+缩略图同屏。
+        final firstCard =
+            find.byKey(const ValueKey('finder-result-portrait.jpg'));
+        if (firstCard.evaluate().isNotEmpty) {
+          await tester.scrollUntilVisible(firstCard, 300,
+              scrollable: find.byType(Scrollable).first);
+          await tester.pump(const Duration(milliseconds: 500));
+        }
         await File('${captures.path}/04_enhanced-$lang.png')
             .writeAsBytes(await binding.takeScreenshot('enhanced-$lang'));
         // 4) 模型管理页（已装状态）。
@@ -138,6 +144,8 @@ void main() {
         await File('${captures.path}/05_model-$lang.png')
             .writeAsBytes(await binding.takeScreenshot('model-$lang'));
       }
+    } catch (e) {
+      bodyError = e;
     } finally {
       // 复制到 Documents/enhanced_captures（tmp 目录 devicectl 拉不到）。
       final docs = await getApplicationDocumentsDirectory();
@@ -152,10 +160,12 @@ void main() {
       for (var i = 0; i < 96 && !gate.existsSync(); i++) {
         await Future<void>.delayed(const Duration(seconds: 5));
       }
-      expect(gate.existsSync(), isTrue, reason: 'captures not pulled in 20min');
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
       await root.delete(recursive: true);
+      if (bodyError != null) errors.add(bodyError);
+      expect(gate.existsSync(), isTrue, reason: 'captures not pulled in 8min');
+      if (errors.isNotEmpty) throw errors.first;
     }
   }, timeout: const Timeout(Duration(minutes: 40)));
 }
