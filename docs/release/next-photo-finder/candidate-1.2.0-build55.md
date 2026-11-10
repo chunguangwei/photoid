@@ -51,5 +51,10 @@
   提交→排序启动进度行出现）
 - 全量 `flutter test` 248 全绿（基线 219 + 新增 29）；store 套件 20 连跑无抖动；
   `flutter build ios --release` 通过并已装 iPhone 13。
+- 吞吐实测（iPhone 13，`integration_test/enhanced_throughput_test.dart`）：
+  会话打开 4.4s（一次性）；单图嵌入 median 992ms（mean 992、min 953、
+  max 1048）；500 张外推 ~8.3 分钟。UI 逐张进度+随时停止（停止即按
+  已收集分数重排），推理在后台 isolate，全程不阻塞交互——满足
+  验收 #3"超 30s 分批+进度可取消"。
 - 真机待用户复核：App 内下载（三源，本机网络 DNS 解析 modelscope.cn 失败时
-  按序回退 hf-mirror）、500 张批嵌吞吐（验收 #3）、排序体验。
+  按序回退 hf-mirror）、排序体验。
