@@ -1,7 +1,7 @@
 name: photoid
 description: 智能证件照 - 本地照片准备与文件交付
 publish_to: 'none'
-version: 1.2.0+54
+version: 1.2.0+55
 
 environment:
   sdk: ^3.5.0
@@ -9,6 +9,8 @@ environment:
 dependencies:
   archive: ^4.5.2
   camera: ^0.12.1
+  # 加强版模型下载完整性校验（SHA-256）；版本与现有传递依赖一致
+  crypto: ^3.0.5
   file_selector: ^1.1.0
   flutter:
     sdk: flutter

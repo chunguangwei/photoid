@@ -635,7 +635,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyPolicyBody =>
-      'Updated November 6, 2026\n\nPhotos and face detection results are processed on your device and are not uploaded for processing. No account is required, and the app has no advertising SDK.\n\nCamera access is used to take photos. Photo library access is used to choose photos and save finished images, only when you use those features.\n\nSaved results are also stored in the app’s private album. Delete them in My Photos. Exported copies must be deleted separately in the system photo library. System photo syncing and backups follow your device settings. Language and custom specifications are stored locally.\n\nGoogle ML Kit performs face detection locally, but can send technical diagnostics and usage metrics to Google, including device/app information, per-installation identifiers, API events, performance and errors. These metrics do not include your input photos or detection results. ONNX Runtime runs the bundled background-removal model locally.\n\nAndroid checks GitHub for app updates and downloads updates on request. iOS updates come from the App Store. Opening the online policy uses your browser.\n\nQuestions: chunguangwee@gmail.com. The online policy provides further details and links to Google’s SDK disclosures.\n\nTemporary export copies are kept in the app cache so receiving apps can read them. Copies older than one day are removed at the next app launch or export.\n\nApplication tasks are stored locally with your notes, requirement references, optional screenshots, source photo and prepared versions. Sources you record are not independently verified. Delete a task to remove its app-owned copies; system originals and files you already exported are kept. Existing-file checks read the selected bytes without changing them. ZIP delivery packages contain photo files and requirement/check reports; only share them with recipients you choose.\n\nRequirement screenshots are read locally using Apple Vision on iOS and bundled ML Kit text recognition on Android. Only selected images are processed; text is not uploaded for recognition. Confirmed excerpts remain in your task and are shared in reports only when you export them. Changed requirements or screenshots require rechecking. Recognition and user confirmation are not institutional certification.';
+      'Updated November 10, 2026\n\nPhotos and face detection results are processed on your device and are not uploaded for processing. No account is required, and the app has no advertising SDK.\n\nCamera access is used to take photos. Photo library access is used to choose photos and save finished images, only when you use those features.\n\nSaved results are also stored in the app’s private album. Delete them in My Photos. Exported copies must be deleted separately in the system photo library. System photo syncing and backups follow your device settings. Language and custom specifications are stored locally.\n\nGoogle ML Kit performs face detection locally, but can send technical diagnostics and usage metrics to Google, including device/app information, per-installation identifiers, API events, performance and errors. These metrics do not include your input photos or detection results. ONNX Runtime runs the bundled background-removal model locally.\n\nAndroid checks GitHub for app updates and downloads updates on request. iOS updates come from the App Store. Opening the online policy uses your browser.\n\nQuestions: chunguangwee@gmail.com. The online policy provides further details and links to Google’s SDK disclosures.\n\nTemporary export copies are kept in the app cache so receiving apps can read them. Copies older than one day are removed at the next app launch or export.\n\nApplication tasks are stored locally with your notes, requirement references, optional screenshots, source photo and prepared versions. Sources you record are not independently verified. Delete a task to remove its app-owned copies; system originals and files you already exported are kept. Existing-file checks read the selected bytes without changing them. ZIP delivery packages contain photo files and requirement/check reports; only share them with recipients you choose.\n\nRequirement screenshots are read locally using Apple Vision on iOS and bundled ML Kit text recognition on Android. Only selected images are processed; text is not uploaded for recognition. Confirmed excerpts remain in your task and are shared in reports only when you export them. Changed requirements or screenshots require rechecking. Recognition and user confirmation are not institutional certification.\n\nThe optional Enhanced photo finder uses a ~287MB EmbeddingGemma image-semantics model. After your confirmation, model files download from Hugging Face (including its China mirror) or ModelScope into the app\'s private storage and can be deleted anytime; downloads transfer model files only and never upload your photos. When enabled, embeddings are computed on-device for the current photo batch only and used solely to reorder candidates; there is no full-library index and nothing is uploaded. Turning it off or clearing the session releases the data.';
 
   @override
   String get linkOpenFailed =>
@@ -1298,4 +1298,100 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get finderNoPhotos =>
       'No supported photos found here. Try another folder or choose photos from your library.';
+
+  @override
+  String get modelTitle => 'Image model';
+
+  @override
+  String get modelDesc =>
+      'Enhanced photo search needs a semantic model download. Photos are analyzed on this device and never uploaded.';
+
+  @override
+  String get modelSizeApprox => 'about 287 MB';
+
+  @override
+  String get modelStatusReady => 'Installed';
+
+  @override
+  String get modelStatusMissing => 'Not downloaded';
+
+  @override
+  String get modelStatusPartial => 'Partially downloaded. You can resume.';
+
+  @override
+  String get modelStatusDownloading => 'Downloading';
+
+  @override
+  String get modelStatusCorrupt =>
+      'Model incomplete. Delete and download again.';
+
+  @override
+  String get modelDownload => 'Download model';
+
+  @override
+  String get modelPause => 'Pause';
+
+  @override
+  String get modelResume => 'Resume download';
+
+  @override
+  String get modelDelete => 'Delete model';
+
+  @override
+  String get modelDeleteConfirm =>
+      'Delete the downloaded model? Enhanced search is unavailable until you download it again.';
+
+  @override
+  String get modelOnlyWifi => 'Download over Wi-Fi only';
+
+  @override
+  String get modelWifiHint =>
+      'Wi-Fi recommended; cellular download may cost data.';
+
+  @override
+  String modelProgress(Object received, Object total) {
+    return '$received / $total MB';
+  }
+
+  @override
+  String modelInstalledAt(Object size) {
+    return 'Installed ($size MB)';
+  }
+
+  @override
+  String get enhancedTitle => 'Enhanced';
+
+  @override
+  String get enhancedIntro =>
+      'Describe in one sentence to rank this batch semantically';
+
+  @override
+  String get enhancedEnableTitle => 'Enable Enhanced?';
+
+  @override
+  String get enhancedEnableBody =>
+      'Needs a one-time ~287 MB semantic model download, then works offline. Photos stay on this device and are never uploaded.';
+
+  @override
+  String get enhancedSearchHint => 'e.g. office photo in a business suit';
+
+  @override
+  String enhancedSorting(Object done, Object total) {
+    return 'Ranking… ($done/$total)';
+  }
+
+  @override
+  String get enhancedStop => 'Stop ranking';
+
+  @override
+  String get enhancedDisclaimer =>
+      'Semantic reference ranking; results not guaranteed. ID-photo checks are unaffected.';
+
+  @override
+  String get enhancedModelMissing =>
+      'Model not installed. Download it in Mine › Image model.';
+
+  @override
+  String get modelWifiBlocked =>
+      'Not on Wi-Fi; download paused per your setting.';
 }

@@ -7,6 +7,7 @@ import '../l10n/app_localizations.dart';
 import '../services/locale_service.dart';
 import '../services/update_service.dart';
 import 'update_dialog.dart';
+import 'embedding_model_page.dart';
 import 'my_album_page.dart';
 import 'privacy_policy_page.dart';
 
@@ -107,6 +108,15 @@ class _SettingsPageState extends State<SettingsPage> {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => const MyAlbumPage(),
+              )),
+            ),
+          if (Platform.isIOS || Platform.isAndroid)
+            ListTile(
+              leading: const Icon(Icons.memory_outlined),
+              title: Text(l.modelTitle),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const EmbeddingModelPage(),
               )),
             ),
           ListTile(

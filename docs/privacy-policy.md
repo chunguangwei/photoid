@@ -6,7 +6,7 @@ permalink: /privacy-policy
 
 # Privacy Policy / 隐私政策
 
-**Effective date / 生效日期：2026-11-09**
+**Effective date / 生效日期：2026-11-10**
 **App: PhotoID Studio（智能证件照）**
 
 ---
@@ -149,7 +149,14 @@ Existing-file checks read the selected bytes without modifying them. Files selec
 
 任务名称、备注、用户提供的要求来源与日期、可选要求截图、原图和成片保存在应用文档目录。应用不抓取或独立验证来源。删除任务会删除应用内副本，不影响系统原图及已导出文件；设备备份由系统设置决定。
 
+
 已有照片检查只读取、不改写所选字节。“文件”选取保留所选文件字节，图库或相机可能提供系统转换副本。ZIP 交付包包含照片、要求和检查报告，仅通过你选择的分享目标离开应用。近期交付副本按上述临时导出缓存规则保留。
+
+## Enhanced photo finder / 加强版找照片
+
+The optional Enhanced photo finder uses a ~287MB EmbeddingGemma image-semantics model. After your confirmation, model files download from Hugging Face (including its China mirror) or ModelScope into the app's private storage and can be deleted anytime in Settings. Downloads transfer model files only; your photos are never uploaded. When enabled, embeddings are computed on-device for the current photo batch only and used solely to reorder candidates; there is no full-library index, and nothing is uploaded. Turning it off or clearing the session releases the data.
+
+可选的「加强版找照片」使用约 287MB 的 EmbeddingGemma 图像语义模型。模型文件经你确认后从 Hugging Face（含国内镜像）或 ModelScope 下载到 App 私有目录，可随时在「我的」页删除；下载仅传输模型文件，不上传你的照片。开启后仅对当前选择的照片批次在设备本地生成语义向量并按相似度重排候选，不建立全相册索引、不上传向量或照片；关闭或清除会话即释放。
 
 
 ## Requirement screenshots / 要求截图

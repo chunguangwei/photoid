@@ -8,8 +8,11 @@ import '../l10n/l10n_helpers.dart';
 import '../models/application_task.dart';
 import '../models/photo_spec.dart';
 import '../services/application_task_store.dart';
+import '../services/embedding_model_store.dart';
+import '../services/embedding_session.dart';
 import '../services/photo_finder_models.dart';
 import '../services/photo_finder_session.dart';
+import 'embedding_model_page.dart';
 import '../widgets/photo_input.dart';
 import 'photo_spec_picker_page.dart';
 import 'edit_page.dart';
@@ -19,10 +22,11 @@ enum PhotoFinderResult { used, manual }
 /// Choose one size, select a batch, tap a photo to prepare.
 /// Existing task callers retain their saved requirements and replacement guard.
 class PhotoFinderPage extends StatefulWidget {
-  const PhotoFinderPage({super.key, this.taskId, this.store, this.gateway});
+  const PhotoFinderPage({super.key, this.taskId, this.store, this.gateway, this.embeddingStore});
   final String? taskId;
   final ApplicationTaskStore? store;
   final FinderGateway? gateway;
+  final EmbeddingModelStore? embeddingStore;
   @override
   State<PhotoFinderPage> createState() => _PhotoFinderPageState();
 }
@@ -43,6 +47,14 @@ class _PhotoFinderPageState extends State<PhotoFinderPage>
       _searching = false;
   String? _error;
   String _query = '';
+  // 加强版（语义排序）：仅对当前批次缩略图本机嵌入，结果只影响排序。
+  bool _enhancedOn = false, _ranking = false;
+  String _semanticQuery = '';
+  final Map<String, double> _scores = {};
+  int _ranked = 0, _rankTotal = 0;
+  bool _rankCancel = false;
+  EmbeddingSession? _embed;
+  EmbeddingModelStatus _modelStatus = EmbeddingModelStatus.notInstalled;
   bool get _draft => widget.taskId == null;
   PhotoSpec? get _spec =>
       _task?.outputs.isNotEmpty == true ? _task!.outputs.first.spec : null;
@@ -84,6 +96,106 @@ class _PhotoFinderPageState extends State<PhotoFinderPage>
     if (mounted) setState(() {});
   }
 
+  Future<void> _checkModel() async {
+    try {
+      final store = widget.embeddingStore ?? await EmbeddingModelStore.open();
+      if (mounted) setState(() => _modelStatus = store.status);
+    } catch (_) {
+      if (mounted) setState(() => _modelStatus = EmbeddingModelStatus.corrupt);
+    }
+  }
+
+  /// 首次开启加强版：未装模型先弹下载确认；就绪才打开。
+  Future<void> _toggleEnhanced() async {
+    if (_enhancedOn) {
+      setState(() {
+        _enhancedOn = false;
+        _rankCancel = true;
+        _scores.clear();
+        // 关闭即释放模型会话（隐私承诺：不常驻）；再开启时 _ensureSession 重建。
+        final e = _embed;
+        _embed = null;
+        unawaited(e?.dispose());
+      });
+      return;
+    }
+    await _checkModel();
+    if (_modelStatus != EmbeddingModelStatus.ready) {
+      if (!mounted) return;
+      final l = AppLocalizations.of(context);
+      final go = await showAdaptiveDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog.adaptive(
+                  title: Text(l.enhancedEnableTitle),
+                  content: Text(l.enhancedEnableBody),
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: Text(l.dialogCancel)),
+                    FilledButton(
+                        key: const Key('enhanced-download'),
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: Text(l.modelDownload))
+                  ])) ??
+          false;
+      if (!go) return;
+      if (!mounted) return;
+      await Navigator.push(context, MaterialPageRoute(
+          builder: (_) => EmbeddingModelPage(store: widget.embeddingStore)));
+      if (!mounted) return;
+      await _checkModel();
+      if (_modelStatus != EmbeddingModelStatus.ready) return;
+    }
+    setState(() => _enhancedOn = true);
+  }
+
+  Future<EmbeddingSession> _ensureSession() async {
+    if (_embed != null) return _embed!;
+    final store = widget.embeddingStore ?? await EmbeddingModelStore.open();
+    return _embed = await EmbeddingSession.open(store.directoryPath);
+  }
+
+  Future<void> _rank() async {
+    final l = AppLocalizations.of(context);
+    if (_ranking || _semanticQuery.trim().isEmpty) return;
+    setState(() {
+      _ranking = true;
+      _rankCancel = false;
+      _scores.clear();
+      _ranked = 0;
+    });
+    try {
+      final session = await _ensureSession();
+      final all = _session?.candidates ?? const <FinderCandidate>[];
+      final targets =
+          all.where((c) => c.analysis.thumbnailPath.isNotEmpty).toList();
+      setState(() => _rankTotal = targets.length);
+      final query = await session
+          .embedText(EmbeddingSession.queryText(_semanticQuery.trim()));
+      for (final c in targets) {
+        if (_rankCancel || !mounted) break;
+        try {
+          final v = await session.embedImageBytes(
+              File(c.analysis.thumbnailPath).readAsBytesSync());
+          var dot = 0.0;
+          for (var i = 0; i < 768; i++) {
+            dot += query[i] * v[i];
+          }
+          _scores[c.analysis.id] = dot;
+        } catch (_) {/* 不可解码的缩略图留在原位，不参与语义排序 */}
+        setState(() => _ranked++);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l.enhancedModelMissing)));
+        setState(() => _enhancedOn = false);
+      }
+    } finally {
+      if (mounted) setState(() => _ranking = false);
+    }
+  }
+
   Future<void> _waitForForeground() {
     if (_foreground || !mounted) return Future<void>.value();
     return (_resumed ??= Completer<void>()).future;
@@ -106,6 +218,7 @@ class _PhotoFinderPageState extends State<PhotoFinderPage>
     _resumed?.complete();
     _session?.removeListener(_refresh);
     _session?.dispose();
+    _embed?.dispose();
     super.dispose();
   }
 
@@ -380,6 +493,19 @@ class _PhotoFinderPageState extends State<PhotoFinderPage>
             .toLowerCase()
             .contains(_query.toLowerCase()))
         .toList();
+    if (_enhancedOn && _scores.isNotEmpty) {
+      // Dart sort 不稳定：并列分数（含未评分的 -2 组）按原始次序 tie-break。
+      final order = {
+        for (var i = 0; i < visible.length; i++) visible[i].analysis.id: i
+      };
+      visible.sort((a, b) {
+        final c = (_scores[b.analysis.id] ?? -2)
+            .compareTo(_scores[a.analysis.id] ?? -2);
+        return c != 0
+            ? c
+            : order[a.analysis.id]!.compareTo(order[b.analysis.id]!);
+      });
+    }
     final ready = _spec != null && !_busy;
     return PopScope(
         canPop: !_using,
@@ -538,8 +664,54 @@ class _PhotoFinderPageState extends State<PhotoFinderPage>
                                         tooltip: l.finderSearch,
                                         onPressed: () => setState(
                                             () => _searching = !_searching),
-                                        icon: const Icon(Icons.search))
+                                        icon: const Icon(Icons.search)),
+                                    ChoiceChip(
+                                        key: const Key('enhanced-toggle'),
+                                        avatar: const Icon(
+                                            Icons.auto_awesome_outlined,
+                                            size: 18),
+                                        label: Text(l.enhancedTitle),
+                                        selected: _enhancedOn,
+                                        onSelected:
+                                            _busy ? null : (_) => _toggleEnhanced()),
                                   ]),
+                              if (_enhancedOn) ...[
+                                Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(l.enhancedDisclaimer,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall)),
+                                TextField(
+                                    key: const Key('enhanced-input'),
+                                    decoration: InputDecoration(
+                                        hintText: l.enhancedSearchHint,
+                                        suffixIcon: IconButton(
+                                            onPressed:
+                                                _ranking ? null : _rank,
+                                            icon: const Icon(
+                                                Icons.arrow_forward))),
+                                    onChanged: (v) =>
+                                        setState(() => _semanticQuery = v),
+                                    onSubmitted: (_) => _rank()),
+                                if (_ranking)
+                                  Row(children: [
+                                    Expanded(
+                                        child: LinearProgressIndicator(
+                                            value: _rankTotal == 0
+                                                ? null
+                                                : _ranked / _rankTotal)),
+                                    const SizedBox(width: 8),
+                                    TextButton(
+                                        onPressed: () =>
+                                            _rankCancel = true,
+                                        child: Text(l.enhancedStop)),
+                                  ]),
+                                if (_ranking)
+                                  Text(l.enhancedSorting(_ranked, _rankTotal),
+                                      style:
+                                          Theme.of(context).textTheme.bodySmall),
+                              ],
                               if (_searching)
                                 TextField(
                                     decoration: InputDecoration(

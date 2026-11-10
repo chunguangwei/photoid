@@ -72,6 +72,12 @@
   **没有** `inputs_embeds`，输出含现成的 `sentence_embedding`（768 维、L2 归一化）。
   视觉塔把 280 patch **聚合为约 29 个 512 维 token**（非 1:1 展开），
   每张图的文本塔增量只有 ~29 token prefill，成本远低于最初按 280 token 的估算。
+  **融合布局（桌面 n=29 行 + iPhone 13 真机冒烟双验证）**：
+  `input_ids = [bos, 4642("image\n"), 258880(<|image|>), eos]` 单占位 +
+  `image_features` 传视觉塔全部 n×512 行；`video/audio_features` 传 `[0,512]`
+  空张量；n 个占位会 Gather 索引越界。输出取第 2 个 `sentence_embedding`。
+  参考实现固化于 `scripts/embedding_reference.py` +
+  `test/fixtures/embedding_golden.json`（真实人像 cos 基准）。
 - 图像预处理实为轻量（image_processor 实测）：`do_resize` + `rescale 1/255`，
   `do_normalize=false`（mean 0/std 1），RGB，`image_seq_length=280`。
   Gemma4AudioFeatureExtractor 参数与已删音频一并忽略。
@@ -97,8 +103,11 @@
 - `services/embedding_session.dart`：onnxruntime isolate 加载双编码器，
   逐图有界嵌入（复用 photo_finder_session 的 foreground/cancel 语义），
   768 维向量按候选 id 缓存于内存（不持久化，防跨库串数据）。
-- 分词：tokenizer.json 的 SentencePiece unigram 在 Dart 侧实现（词表+分数一次性加载），
-  用官方 README 样例做 golden token 对拍测试；分词不匹配即视为模型损坏，禁用加强版。
+- 分词：Gemma BPE（vocab 262144 + merges 514906、byte_fallback、
+  Split(" ", MergedWithPrevious) 预分词、TemplateProcessing `<bos>…<eos>`）
+  纯 Dart 实现（`services/gemma_tokenizer.dart`），
+  与 HF tokenizers 逐 id 对拍 `test/fixtures/tokenizer_golden.json`（16 条）；
+  分词不匹配即视为模型损坏，禁用加强版。
 - UI：
   - 「我的」→「图片处理模型」：状态卡（大小/源/进度/速度）、下载/暂停/删除；仅 Wi-Fi 默认开，可改。
   - 找照片页：加强版开关；未装模型时开启即弹下载确认（约 287MB、本地运行、不上传）。

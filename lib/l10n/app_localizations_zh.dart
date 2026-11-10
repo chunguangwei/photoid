@@ -615,7 +615,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get privacyPolicyBody =>
-      '更新日期：2026年11月6日\n\n照片与人脸检测结果在设备本地处理，不为处理而上传。无需账号，不含广告 SDK。\n\n相机权限用于拍照；照片库权限用于选择照片和保存成片，仅在使用相应功能时请求。\n\n保存的成片也保留在 App 私有相册，可在「我的相册」删除。导出的系统照片库副本需单独删除。系统照片同步与备份遵循设备设置。语言与自定义规格保存在本地。\n\nGoogle ML Kit 在本机检测人脸，但可向 Google 发送技术诊断与使用指标，包括设备和应用信息、安装级标识符、API 事件、性能与错误数据。这些指标不包含输入照片或检测结果。ONNX Runtime 在本机运行内置抠图模型。\n\nAndroid 会检查 GitHub 更新，并按用户选择下载；iOS 通过 App Store 更新。打开在线政策会使用系统浏览器。\n\n联系：chunguangwee@gmail.com。在线政策提供详细说明及 Google SDK 数据披露链接。\n\n为便于接收应用读取，临时导出副本会保留在 App 缓存中。超过一天的副本会在下次启动或导出时清理。\n\n报名任务及其中的备注、要求来源、可选截图、原图和各版本成片保存在本机。你记录的来源未经应用独立验证。删除任务会删除应用内副本，系统原图及已导出的文件会保留。已有照片检查只读取所选字节，不改写文件。ZIP 交付包包含照片与要求/检查报告，请仅分享给你选择的接收方。\n\n要求截图文字识别在本机进行：iOS 使用 Apple Vision，Android 使用随包的 ML Kit 文字识别模型。仅处理你选择的截图；识别文字不上传作识别。确认后的要求摘录保存在任务中，并随你主动导出的报告分享。修改要求或更换截图后需重新核对；识别和用户确认均不代表机构认证。';
+      '更新日期：2026年11月10日\n\n照片与人脸检测结果在设备本地处理，不为处理而上传。无需账号，不含广告 SDK。\n\n相机权限用于拍照；照片库权限用于选择照片和保存成片，仅在使用相应功能时请求。\n\n保存的成片也保留在 App 私有相册，可在「我的相册」删除。导出的系统照片库副本需单独删除。系统照片同步与备份遵循设备设置。语言与自定义规格保存在本地。\n\nGoogle ML Kit 在本机检测人脸，但可向 Google 发送技术诊断与使用指标，包括设备和应用信息、安装级标识符、API 事件、性能与错误数据。这些指标不包含输入照片或检测结果。ONNX Runtime 在本机运行内置抠图模型。\n\nAndroid 会检查 GitHub 更新，并按用户选择下载；iOS 通过 App Store 更新。打开在线政策会使用系统浏览器。\n\n联系：chunguangwee@gmail.com。在线政策提供详细说明及 Google SDK 数据披露链接。\n\n为便于接收应用读取，临时导出副本会保留在 App 缓存中。超过一天的副本会在下次启动或导出时清理。\n\n报名任务及其中的备注、要求来源、可选截图、原图和各版本成片保存在本机。你记录的来源未经应用独立验证。删除任务会删除应用内副本，系统原图及已导出的文件会保留。已有照片检查只读取所选字节，不改写文件。ZIP 交付包包含照片与要求/检查报告，请仅分享给你选择的接收方。\n\n要求截图文字识别在本机进行：iOS 使用 Apple Vision，Android 使用随包的 ML Kit 文字识别模型。仅处理你选择的截图；识别文字不上传作识别。确认后的要求摘录保存在任务中，并随你主动导出的报告分享。修改要求或更换截图后需重新核对；识别和用户确认均不代表机构认证。\n\n可选的「加强版找照片」使用约 287MB 的 EmbeddingGemma 图像语义模型。模型文件由你确认后从 Hugging Face（含国内镜像）或 ModelScope 下载到 App 私有目录，可随时删除；下载仅传输模型文件，不上传你的照片。开启后仅对你当前选择的照片批次在设备本地生成语义向量并按相似度重排候选，不建立全相册索引、不上传向量或照片；关闭或清除会话即释放。';
 
   @override
   String get linkOpenFailed => '无法打开链接，可复制后在浏览器中访问。';
@@ -1220,4 +1220,91 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get finderNoPhotos => '这里没有找到支持的照片，试试其他文件夹或从相册选择。';
+
+  @override
+  String get modelTitle => '图片处理模型';
+
+  @override
+  String get modelDesc => '加强版找照片需要下载语义模型。照片只在本机分析，不会上传。';
+
+  @override
+  String get modelSizeApprox => '约 287 MB';
+
+  @override
+  String get modelStatusReady => '已安装';
+
+  @override
+  String get modelStatusMissing => '未下载';
+
+  @override
+  String get modelStatusPartial => '已下载部分，可继续';
+
+  @override
+  String get modelStatusDownloading => '下载中';
+
+  @override
+  String get modelStatusCorrupt => '模型不完整，请删除后重新下载';
+
+  @override
+  String get modelDownload => '下载模型';
+
+  @override
+  String get modelPause => '暂停';
+
+  @override
+  String get modelResume => '继续下载';
+
+  @override
+  String get modelDelete => '删除模型';
+
+  @override
+  String get modelDeleteConfirm => '删除已下载的模型？加强版将不可用，直到重新下载。';
+
+  @override
+  String get modelOnlyWifi => '仅在 Wi-Fi 下载';
+
+  @override
+  String get modelWifiHint => '建议使用 Wi-Fi；流量下载可能产生费用。';
+
+  @override
+  String modelProgress(Object received, Object total) {
+    return '$received / $total MB';
+  }
+
+  @override
+  String modelInstalledAt(Object size) {
+    return '已安装 $size MB';
+  }
+
+  @override
+  String get enhancedTitle => '加强版';
+
+  @override
+  String get enhancedIntro => '用一句话描述，给本批照片做语义排序';
+
+  @override
+  String get enhancedEnableTitle => '开启加强版？';
+
+  @override
+  String get enhancedEnableBody => '需要先下载约 287 MB 语义模型，之后离线可用。照片仅在本机处理，不会上传。';
+
+  @override
+  String get enhancedSearchHint => '例如：在办公室穿正装的照片';
+
+  @override
+  String enhancedSorting(Object done, Object total) {
+    return '语义排序中…（$done/$total）';
+  }
+
+  @override
+  String get enhancedStop => '停止排序';
+
+  @override
+  String get enhancedDisclaimer => '语义参考排序，不保证检索结果；证件照检测不受影响。';
+
+  @override
+  String get enhancedModelMissing => '模型未安装，先在「我的-图片处理模型」下载';
+
+  @override
+  String get modelWifiBlocked => '当前非 Wi-Fi，已按开关暂停下载。';
 }
