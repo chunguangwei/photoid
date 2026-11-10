@@ -52,7 +52,10 @@ void main() {
     final docsDir = await getApplicationDocumentsDirectory();
     final staleFlag = File('${docsDir.path}/_captures_pulled');
     if (staleFlag.existsSync()) await staleFlag.delete();
-    final queries = {'en': 'blue sky with clouds', 'zh': '证件照 人像'};
+    final queries = {
+      'en': 'office photo in a business suit',
+      'zh': '穿西装的职业照'
+    };
     try {
       for (final lang in ['en', 'zh']) {
         Widget wrap(Widget home) => MaterialApp(
@@ -122,6 +125,11 @@ void main() {
           await tester.pump(const Duration(milliseconds: 120));
         }
         await tester.pump(const Duration(milliseconds: 600));
+        // 结果网格在输入框下方；上滚让查询+缩略图同屏。
+        await tester.drag(
+            find.byType(Scrollable).first, const Offset(0, -360));
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pump(const Duration(milliseconds: 500));
         await File('${captures.path}/04_enhanced-$lang.png')
             .writeAsBytes(await binding.takeScreenshot('enhanced-$lang'));
         // 4) 模型管理页（已装状态）。
