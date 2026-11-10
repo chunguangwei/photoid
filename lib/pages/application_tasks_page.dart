@@ -90,8 +90,8 @@ class _ApplicationTasksPageState extends State<ApplicationTasksPage> {
     if (!confirmed || !mounted) return;
     try {
       await _store!.delete(t.id);
-      if (!mounted) return;
       await _load();
+      if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l.albumDeleted)));
     } catch (e) {
