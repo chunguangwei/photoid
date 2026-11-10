@@ -1,17 +1,18 @@
 # 截图、图示与视频
 
-当前为 build51 简版流程。工程图示见 [功能流程图](../../photo-finder.md)。[build50 工程图](device-captures/README.md) 属于历史界面，不能作为本版上架素材。集成测试使用真实原生模型、内部授权素材和生产主题，不按 fixture 文件名预设推荐结果；工程采集不替代最终正常应用的 Store 素材验收。
+当前为 build55 加强版流程。工程图示见 [功能流程图](../../photo-finder.md)。[build50 工程图](device-captures/README.md) 属于历史界面，不能作为本版上架素材。集成测试使用真实原生模型、内部授权素材和生产主题，不按 fixture 文件名预设推荐结果；工程采集不替代最终正常应用的 Store 素材验收。
 
-## 最终 App Store 截图顺序
+## 最终 App Store 截图顺序（build55）
+
+设备类别：ASC「带灵动岛的 iPhone（中等显示屏）」，6.1" 1179×2556 / 6.3" 1206×2622；zh/en 各一套，由 `test/tools/compose_screenshots.py` 合成。
 
 | 图 | 实际画面 | 中文标题 | English title |
 |---|---|---|---|
 | 1 | 首页 AI 找照片入口，手动制作仍可见 | 从一批照片里挑原图 | Find a starting photo in a batch |
 | 2 | 33 个常用规格及自定义入口 | 先选你需要的尺寸 | Choose the size you need |
 | 3 | 相册批量与文件夹按钮 | 相册多选，或选一个文件夹 | Select photos or a folder |
-| 4 | 真实结果网格和预览 | 点一张，开始制作 | Tap a photo to prepare |
-| 5 | 裁切、底色与文件大小编辑 | 按尺寸与 KB 要求制作 | Prepare dimensions and file size |
-| 6 | 制作记录与成片实测 | 留下记录，检查成片 | Keep history. Inspect actual files. |
+| 4 | 加强版语义查询框与重排后的结果网格 | 一句话，加强版帮你排顺序 | Describe it. Enhanced ranks your batch. |
+| 5 | 「我的→图片处理模型」已装状态（大小/删除） | 模型可选可删，照片不上传 | Optional model. Photos stay on device. |
 
 避免“官方认证”“保证通过”“AI 自动选出合规照”“全相册自动分类”。估计在截图中保留标识，不隐藏人工核对提示。除明确允许的展示排版外，不伪造功能状态或涂改检测结果。
 
