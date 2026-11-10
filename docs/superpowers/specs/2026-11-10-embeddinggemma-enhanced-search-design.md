@@ -24,13 +24,35 @@
 - 视觉 token 预算、图像 resize 参数、mean pooling、L2 归一化与查询前缀文案，
   以该 README「Best Practices」为准，实现时固化为常量并做参考向量对拍。
 
+## 推理可行性核实（2026-11-10，实测图文件）
+
+- q4f16 两图用 **`com.microsoft.MatMulNBits`**（model_q4f16 ×146、vision_encoder_q4f16 ×113），
+  不是标准 MatMul4Bit。当前打包引擎：`onnxruntime` pub 插件 → `onnxruntime-c` pod **1.15.1**。
+  该 xcframework 二进制内 `com.microsoft`/contrib 字符串 103 处命中，contrib 算子
+  （含 MatMulNBits）为编译内置，积极信号；但 kernel 注册与 1.15.1 对 Gemma4 图
+  （q4f16 新格式）的完备性仍需真机冒烟：发布 manifest 前必须加载 model_q4f16 +
+  vision_encoder_q4f16 各跑一次前向。失败则先升级引擎或回退 `*_quantized` int8 变体——
+  打包体积从 ~287MB 变 ~540MB（314+195+32），对用户承诺的下载大小随之改写。
+- **图契约（从 .onnx 字符串实测）**：文本图暴露 `input_ids`/`attention_mask` 且直接接收
+  `image_features`（图内出现 41 次，含 embedding_projection 融合分支），**没有** `inputs_embeds`；
+  视觉图输入 `pixel_values` 输出 `image_features`。
+  因此逐图嵌入 = vision_encoder(pixel_values) → 文本图(input_ids 含 `<|image|>` 占位 + image_features)
+  → 池化 768 维——每张照片仍跑整个 270M 文本骨干（prefill 280 vision token），
+  吞吐验收按此估算，不是只跑 170M 视觉塔。
+- 图像预处理实为轻量（image_processor 实测）：`do_resize` + `rescale 1/255`，
+  `do_normalize=false`（mean 0/std 1），RGB，`image_seq_length=280`。
+  Gemma4AudioFeatureExtractor 参数与已删音频一并忽略。
+- 量化质量（官方表，最坏余弦 vs fp32）：q4f16/q4 = 0.975（文本塔 0.988）、q8 = 0.9997。
+  语义排序场景接受 q4f16；若用户侧质量反馈差，同 manifest 结构可换 q8 变体（体积 3×）。
+
 ## 下载稳定性（国内外）
 
 - 每个文件内嵌清单：文件名、字节数、SHA-256（HF 与 ModelScope 元数据一致后才发布）。
 - 源站候选（沿用 UpdateService 探测模式，Range 1 字节、4s 超时、按序回退）：
   1. `https://hf-mirror.com/onnx-community/embeddinggemma-2-ONNX/resolve/main/`（国内，已实测连通）
   2. `https://huggingface.co/onnx-community/embeddinggemma-2-ONNX/resolve/main/`
-  3. ModelScope 镜像（实现时核对同名仓库与逐文件 SHA 后再启用）
+  3. ModelScope 镜像 `onnx-community/embeddinggemma-2-ONNX`
+     （已实测其 API 列出 31 个 onnx 文件，含 q4f16 视觉塔；发布前逐文件核对 SHA-256）
 - 断点续传：临时文件 + `Range` 续传；整文件 SHA-256 校验后原子改名；校验失败换源重下。
 - 一次会话记住可用源；全部失败保留进度，用户可稍后继续。下载失败不阻塞基础筛选。
 - 磁盘检查：剩余空间 < 600MB（模型 + 双份缓冲）时先提示。执行下载来的数据，不执行下载来的代码。
@@ -57,6 +79,9 @@
 
 ## 验收
 
+0. 真机冒烟：现有打包 ORT（onnxruntime-c 1.15.1）加载 model_q4f16 + vision_encoder_q4f16
+   （MatMulNBits，contrib opset com.microsoft）；失败则先升级引擎或切 int8 `*_quantized`
+   并改写体积承诺，再发布 manifest。
 1. 分词 golden 对拍；text/vision 参考向量与 transformers.js 同输入余弦 ≥ 0.999。
 2. 断点：下载中断 3 次仍能续传完成且 SHA 通过；三源逐个拔线演练。
 3. 500 张批次嵌入吞吐：iPhone 13 上记录并设定上限（超 30s 分批+进度可取消）。
