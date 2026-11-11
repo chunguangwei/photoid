@@ -181,12 +181,17 @@ void main() {
         }
         final firstCard =
             find.byKey(const ValueKey('finder-result-portrait.jpg'));
-        try {
-          await tester.scrollUntilVisible(firstCard, 300,
-              scrollable: find.byType(Scrollable).first);
-          await tester.pump(const Duration(milliseconds: 500));
-        } catch (_) {
-          // 滚到底仍未找到时保持当前画面截图，不中断整轮采集。
+        // 首卡已在首屏则不滚，搜索框与网格同框讲「一句话排序」；
+        // 仅首卡出屏时小幅滚动入镜（run34 复盘：无脑滚动把输入框滚没了）。
+        if (firstCard.evaluate().isNotEmpty) {
+          final top = tester.getRect(firstCard).top;
+          if (top < 0 || top > 650) {
+            try {
+              await tester.drag(find.byType(Scrollable).first,
+                  const Offset(0, -350));
+              await tester.pump(const Duration(milliseconds: 400));
+            } catch (_) {}
+          }
         }
         note('rank-done-$lang');
         await export(lang, '04_enhanced', await binding.takeScreenshot('enhanced-$lang'));
