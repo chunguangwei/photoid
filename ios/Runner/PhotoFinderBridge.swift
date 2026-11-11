@@ -329,7 +329,9 @@ final class PhotoFinderBridge: NSObject, UIDocumentPickerDelegate, PHPickerViewC
     let request = VNDetectFaceRectanglesRequest()
     requestLock.lock(); activeSession=s.id; activeRequest = request; requestLock.unlock()
     defer { requestLock.lock(); activeRequest = nil; requestLock.unlock() }
+    NSLog("PhotoFinder perform-start name=%@", entry.name)
     try VNImageRequestHandler(cgImage: image, options: [:]).perform([request])
+    NSLog("PhotoFinder perform-done name=%@", entry.name)
     if s.interrupted { throw FinderError.cancelled }
     let thumb = s.cache.appendingPathComponent(id + ".jpg"); try jpeg(image, to: thumb)
     let bytes = (try? thumb.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
