@@ -121,11 +121,12 @@ void main() {
             embeddingStore: store)));
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('finder-photos')));
+        final analysisT0 = DateTime.now();
         // settle 一律 20s 有界：设备侧分析挂起要快失败、留痕，勿烧 10 分钟。
         try {
           await tester.pumpAndSettle(
               const Duration(milliseconds: 100),
-              EnginePhase.sendSemanticsUpdate, const Duration(seconds: 20));
+              EnginePhase.sendSemanticsUpdate, const Duration(seconds: 2));
         } catch (e) {
           note('settle-timeout-post-tap');
         }
@@ -134,12 +135,17 @@ void main() {
             n < 240 &&
                 find.byType(LinearProgressIndicator).evaluate().isNotEmpty;
             n++) {
+          if (DateTime.now().difference(analysisT0) >
+              const Duration(seconds: 150)) {
+            note('analysis-deadline-hit');
+            break;
+          }
           await Future<void>.delayed(const Duration(milliseconds: 250));
-          if (n % 20 == 19) note('analysis-wait-$n');
+          if (n % 40 == 39) note('analysis-wait-$n');
           try {
             await tester.pumpAndSettle(const Duration(milliseconds: 100),
                 EnginePhase.sendSemanticsUpdate,
-                const Duration(seconds: 20));
+                const Duration(seconds: 2));
           } catch (_) {}
         }
         note('analysis-done-$lang:${find.byKey(const Key("enhanced-toggle")).evaluate().length}');
