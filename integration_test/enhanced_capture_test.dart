@@ -172,8 +172,8 @@ void main() {
         }
         await tester.pump(const Duration(milliseconds: 600));
         // 结果网格在输入框下方；点「全部照片」让整批重排结果入镜。
-        final allChip = find.widgetWithText(
-            ChoiceChip, lang == 'zh' ? '全部照片' : 'All photos');
+        final allChip = find.textContaining(
+            lang == 'zh' ? '全部照片' : 'All photos');
         note('allchip:${allChip.evaluate().length}');
         if (allChip.evaluate().isNotEmpty) {
           await tester.tap(allChip.first);
