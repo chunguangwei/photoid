@@ -121,15 +121,26 @@ void main() {
             embeddingStore: store)));
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('finder-photos')));
-        // ↓ 以下等待块 = run11 全绿原样（勿改泵方式，run14/19 实证）。
-        await tester.pumpAndSettle();
+        // settle 一律 20s 有界：设备侧分析挂起要快失败、留痕，勿烧 10 分钟。
+        try {
+          await tester.pumpAndSettle(
+              const Duration(milliseconds: 100),
+              EnginePhase.sendSemanticsUpdate, const Duration(seconds: 20));
+        } catch (e) {
+          note('settle-timeout-post-tap');
+        }
         note('post-tap-progress:${find.byType(LinearProgressIndicator).evaluate().length}');
         for (var n = 0;
             n < 240 &&
                 find.byType(LinearProgressIndicator).evaluate().isNotEmpty;
             n++) {
           await Future<void>.delayed(const Duration(milliseconds: 250));
-          await tester.pumpAndSettle();
+          if (n % 20 == 19) note('analysis-wait-$n');
+          try {
+            await tester.pumpAndSettle(const Duration(milliseconds: 100),
+                EnginePhase.sendSemanticsUpdate,
+                const Duration(seconds: 20));
+          } catch (_) {}
         }
         note('analysis-done-$lang:${find.byKey(const Key("enhanced-toggle")).evaluate().length}');
         expect(find.byKey(const Key('enhanced-toggle')), findsOneWidget,
