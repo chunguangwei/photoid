@@ -72,6 +72,11 @@ void main() {
     final docsDir = await getApplicationDocumentsDirectory();
     final staleFlag = File('${docsDir.path}/_captures_pulled');
     if (staleFlag.existsSync()) await staleFlag.delete();
+    Future<void> export(String lang, String name, List<int> bytes) async {
+      await File('${captures.path}/$name-$lang.png').writeAsBytes(bytes);
+      await File('${statusDir.path}/$name-$lang.png').writeAsBytes(bytes);
+      note('export-$name-$lang');
+    }
     final queries = {
       'en': 'office photo in a business suit',
       'zh': '穿西装的职业照'
@@ -90,8 +95,7 @@ void main() {
         // 1) 首页（找照片入口所在）。
         await tester.pumpWidget(wrap(const HomePage()));
         await tester.pumpAndSettle();
-        await File('${captures.path}/01_home-$lang.png')
-            .writeAsBytes(await binding.takeScreenshot('home-$lang'));
+        await export(lang, '01_home', await binding.takeScreenshot('home-$lang'));
         note('shot-01-$lang');
         // 2) 规格选择 + 来源区（draft 页，不依赖分析结果）。
         await tester.pumpWidget(wrap(PhotoFinderPage(
@@ -101,13 +105,11 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('finder-size')));
         await tester.pumpAndSettle();
-        await File('${captures.path}/02_sizes-$lang.png')
-            .writeAsBytes(await binding.takeScreenshot('sizes-$lang'));
+        await export(lang, '02_sizes', await binding.takeScreenshot('sizes-$lang'));
         note('shot-02-$lang');
         await tester.tap(find.byKey(const ValueKey('preset-one_inch')));
         await tester.pumpAndSettle();
-        await File('${captures.path}/03_sources-$lang.png')
-            .writeAsBytes(await binding.takeScreenshot('sources-$lang'));
+        await export(lang, '03_sources', await binding.takeScreenshot('sources-$lang'));
         note('shot-03-$lang');
         // 3) 加强版排序（run1 验证过：taskId 模式，规格已在任务内）。
         final task = await DemoTask.open(taskStore, lang);
@@ -153,8 +155,8 @@ void main() {
         }
         await tester.pump(const Duration(milliseconds: 600));
         // 结果网格在输入框下方；点「全部照片」让整批重排结果入镜。
-        final allChip =
-            find.text(lang == 'zh' ? '全部照片' : 'All photos');
+        final allChip = find.textContaining(
+            lang == 'zh' ? '全部照片' : 'All photos', findRichText: true);
         if (allChip.evaluate().isNotEmpty) {
           await tester.tap(allChip);
           await tester.pump(const Duration(milliseconds: 400));
@@ -169,14 +171,12 @@ void main() {
           // 滚到底仍未找到时保持当前画面截图，不中断整轮采集。
         }
         note('rank-done-$lang');
-        await File('${captures.path}/04_enhanced-$lang.png')
-            .writeAsBytes(await binding.takeScreenshot('enhanced-$lang'));
+        await export(lang, '04_enhanced', await binding.takeScreenshot('enhanced-$lang'));
         note('shot-04-$lang');
         // 4) 模型管理页（已装状态）。
         await tester.pumpWidget(wrap(EmbeddingModelPage(store: store)));
         await tester.pumpAndSettle();
-        await File('${captures.path}/05_model-$lang.png')
-            .writeAsBytes(await binding.takeScreenshot('model-$lang'));
+        await export(lang, '05_model', await binding.takeScreenshot('model-$lang'));
         note('shot-05-$lang');
       }
     } catch (e) {
@@ -194,7 +194,7 @@ void main() {
       // 外部 copy from 成功后回写 Documents/_captures_pulled 作放行标志。
       final gate = File('${docs.path}/_captures_pulled');
       await tester.pumpWidget(const SizedBox());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 100));
       await root.delete(recursive: true);
       // 正文失败时无全量可拉：立即抛原始异常，不等闸门。
       if (bodyError != null) throw bodyError;
