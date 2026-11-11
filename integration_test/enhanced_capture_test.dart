@@ -155,10 +155,11 @@ void main() {
         }
         await tester.pump(const Duration(milliseconds: 600));
         // 结果网格在输入框下方；点「全部照片」让整批重排结果入镜。
-        final allChip = find.textContaining(
-            lang == 'zh' ? '全部照片' : 'All photos', findRichText: true);
+        final allChip = find.widgetWithText(
+            ChoiceChip, lang == 'zh' ? '全部照片' : 'All photos');
+        note('allchip:${allChip.evaluate().length}');
         if (allChip.evaluate().isNotEmpty) {
-          await tester.tap(allChip);
+          await tester.tap(allChip.first);
           await tester.pump(const Duration(milliseconds: 400));
         }
         final firstCard =
@@ -179,8 +180,12 @@ void main() {
         await export(lang, '05_model', await binding.takeScreenshot('model-$lang'));
         note('shot-05-$lang');
       }
-    } catch (e) {
+    } catch (e, st) {
       bodyError = e;
+      note('body-error:$e');
+      // ignore: unused_local_variable
+      final stackTrace = st.toString().split('\n').take(4).join(' <- ');
+      note('body-stack:$stackTrace');
     } finally {
       // 复制到 Documents/enhanced_captures（tmp 目录 devicectl 拉不到）。
       final docs = await getApplicationDocumentsDirectory();
