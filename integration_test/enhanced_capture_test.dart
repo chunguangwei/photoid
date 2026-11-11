@@ -152,7 +152,13 @@ void main() {
           await tester.pump(const Duration(milliseconds: 120));
         }
         await tester.pump(const Duration(milliseconds: 600));
-        // 结果网格在输入框下方；scrollUntilVisible 边滚边等懒构建条目出现。
+        // 结果网格在输入框下方；点「全部照片」让整批重排结果入镜。
+        final allChip =
+            find.text(lang == 'zh' ? '全部照片' : 'All photos');
+        if (allChip.evaluate().isNotEmpty) {
+          await tester.tap(allChip);
+          await tester.pump(const Duration(milliseconds: 400));
+        }
         final firstCard =
             find.byKey(const ValueKey('finder-result-portrait.jpg'));
         try {
